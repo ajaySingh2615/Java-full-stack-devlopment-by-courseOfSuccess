@@ -7,6 +7,4 @@ public class BmwCar {
     protected void drive() {
         System.out.println("rrrrr rrrr rrrr....engine start!");
     }
-
-    public void
 }

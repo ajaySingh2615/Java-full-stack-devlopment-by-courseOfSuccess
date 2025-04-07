@@ -18,6 +18,6 @@ public class ExceptionDemo3 {
     }
 
     public static void m4() {
-        System.out.println(10 / 0);
+        System.out.println(10 / 0 + 0);
     }
 }

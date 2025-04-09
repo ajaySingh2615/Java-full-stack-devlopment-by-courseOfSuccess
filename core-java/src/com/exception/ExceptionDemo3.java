@@ -1,5 +1,9 @@
 package com.exception;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
+
 public class ExceptionDemo3 {
     public static void main(String[] args) {
         m1();
@@ -15,15 +19,20 @@ public class ExceptionDemo3 {
     }
 
     public static void m2() {
-        m3();
+        try {
+            m3();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    public static void m3() {
+    public static void m3() throws FileNotFoundException {
         m4();
     }
 
-    public static void m4() {
+    public static void m4() throws FileNotFoundException {
 //        throw new ArithmeticException("Zero Divide");
-        System.out.println(10 / 0);
+        File file = new File("demo.txt");
+        Scanner scanner = new Scanner(file);
     }
 }

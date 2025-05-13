@@ -21,6 +21,10 @@ public class ListDemo {
         arr.add(10);
         System.out.println(arr);
 
+        System.out.println(arr.get(0));
+        System.out.println(arr.get(1));
+        System.out.println(arr.get(2));
+
         ArrayList<String> arr1 = new ArrayList<>(20);
 
     }

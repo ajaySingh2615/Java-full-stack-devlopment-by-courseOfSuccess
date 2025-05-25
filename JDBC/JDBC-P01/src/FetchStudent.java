@@ -14,7 +14,7 @@ public class FetchStudent {
         String query = "select * from students";
         try {
             //1. load karo
-            Class.forName("com.mysql.cj.jdbc.Driver");
+//            Class.forName("com.mysql.cj.jdbc.Driver");
             //2. connection bana rahe hai
             Connection connection = DriverManager.getConnection(url, username, password);
             //3. create statement
@@ -24,7 +24,13 @@ public class FetchStudent {
             //5. get result
             System.out.println("Id | Name | Age | Course");
             System.out.println("------------------------------");
-            
+            while (executeQuery.next()) {
+                System.out.println(executeQuery.getInt("id" ) + " | " + 
+                                executeQuery.getString("name" ) + " | " + 
+                                executeQuery.getInt("age") + " | " +
+                                executeQuery.getString("course") + " | ");
+            }
+
 
         } catch (Exception e) {
             e.printStackTrace();

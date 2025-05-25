@@ -1,9 +1,9 @@
 package entity;
 
 public class Theater {
-    int theaterId;
-    String name;
-    String city;
+    private int theaterId;
+    private String name;
+    private String city;
 
     public Theater(int theaterId, String name, String city) {
         this.theaterId = theaterId;

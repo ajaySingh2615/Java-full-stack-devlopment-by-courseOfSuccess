@@ -1,11 +1,11 @@
 package entity;
 
 public class Movie {
-    int movieId;
-    String title;
-    String genre;
-    String lang;
-    int duration;
+    private int movieId;
+    private String title;
+    private String genre;
+    private String lang;
+    private int duration;
 
     public Movie(int movieId, String title, String genre, String lang, int duration) {
         this.movieId = movieId;

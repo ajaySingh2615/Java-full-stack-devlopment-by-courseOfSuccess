@@ -14,6 +14,13 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.apache.tomcat/tomcat-servlet-api -->
+<!--    <dependency>-->
+<!--      <groupId>org.apache.tomcat</groupId>-->
+<!--      <artifactId>tomcat-servlet-api</artifactId>-->
+<!--      <version>11.0.1</version>-->
+<!--    </dependency>-->
   </dependencies>
   <build>
     <finalName>firstSevlet</finalName>

@@ -1,7 +1,7 @@
 package org.example;
 
 public class Car {
-    Engine engine;
+    private Engine engine;
 
     Car(Engine engine) {
         System.out.println("Argument constructor...");
@@ -12,6 +12,8 @@ public class Car {
         int start = engine.start();
         if (start >= 1) {
             System.out.println("Car is running");
+        } else {
+            System.out.println("Engine not start...");
         }
     }
 

@@ -9,8 +9,9 @@ import java.util.List;
 @Repository
 public class StudentRepo {
 
+    private static List<Student> studentList = new ArrayList<>();
+
     public List<Student> getAllStudent() {
-        List<Student> studentList = new ArrayList<>();
         Student s1 = new Student(1, "Ayush", "delhi", "JFS");
         Student s2 = new Student(2, "Ravi", "Mumbai", "JFS");
         Student s3 = new Student(3, "Priya", "Bangalore", "JFS");
@@ -36,5 +37,10 @@ public class StudentRepo {
         studentList.add(s11);
 
         return studentList;
+    }
+
+    public void saveStudent(Student student) {
+        studentList.add(student);
+        System.out.println("student saved!");
     }
 }

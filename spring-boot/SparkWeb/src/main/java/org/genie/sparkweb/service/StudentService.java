@@ -20,4 +20,8 @@ public class StudentService {
     public void saveStudent(Student student) {
         studentRepo.saveStudent(student);
     }
+
+    public void deleteStudentById(int id) {
+        studentRepo.deleteStudentById(id);
+    }
 }

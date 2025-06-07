@@ -9,7 +9,7 @@ import java.util.List;
 @Repository
 public class StudentRepo {
 
-    private static List<Student> studentList = new ArrayList<>();
+    List<Student> studentList = new ArrayList<>();
 
     public List<Student> getAllStudent() {
         Student s1 = new Student(1, "Ayush", "delhi", "JFS");
@@ -42,5 +42,14 @@ public class StudentRepo {
     public void saveStudent(Student student) {
         studentList.add(student);
         System.out.println("student saved!");
+    }
+
+    public void deleteStudentById(int id) {
+        for (Student student : studentList) {
+            if (student.getId() == id) {
+                studentList.remove(student);
+                System.out.println("Student Deleted!");
+            }
+        }
     }
 }

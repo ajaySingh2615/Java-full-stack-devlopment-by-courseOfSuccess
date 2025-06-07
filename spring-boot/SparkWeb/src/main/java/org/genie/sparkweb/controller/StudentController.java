@@ -25,4 +25,10 @@ public class StudentController {
         studentService.saveStudent(student);
         return student;
     }
+
+    @DeleteMapping("/{id}")
+    public void deleteStudentById(@PathVariable int id){
+        System.out.println("Student id " + id);
+        studentService.deleteStudentById(id);
+    }
 }

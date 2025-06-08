@@ -2,6 +2,8 @@ package org.genie;
 
 import jakarta.persistence.*;
 
+import java.util.List;
+
 @Entity
 public class Course {
 
@@ -9,6 +11,6 @@ public class Course {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToMany
-    private Student student;
+    @ManyToMany(mappedBy = "course")
+    private List<Student> student;
 }

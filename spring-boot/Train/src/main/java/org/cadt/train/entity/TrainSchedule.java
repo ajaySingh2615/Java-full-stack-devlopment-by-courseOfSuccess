@@ -1,5 +1,6 @@
 package org.cadt.train.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,6 +18,7 @@ public class TrainSchedule {
 
     @ManyToOne
     @JoinColumn(name = "train_id")
+    @JsonBackReference
     private Train train;
 
     @ManyToOne

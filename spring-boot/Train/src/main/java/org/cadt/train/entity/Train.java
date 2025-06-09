@@ -1,5 +1,6 @@
 package org.cadt.train.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,5 +22,6 @@ public class Train {
     private String trainNumber;
 
     @OneToMany(mappedBy = "train", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<TrainSchedule> scheduleList;
 }

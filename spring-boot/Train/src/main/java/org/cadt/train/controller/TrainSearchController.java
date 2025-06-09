@@ -2,15 +2,13 @@ package org.cadt.train.controller;
 
 import org.cadt.train.entity.TrainSchedule;
 import org.cadt.train.service.TrainSearchService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/search")
+@CrossOrigin
 public class TrainSearchController {
 
     private TrainSearchService trainSearchService;

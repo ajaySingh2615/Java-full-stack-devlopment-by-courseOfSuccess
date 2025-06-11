@@ -14,6 +14,22 @@ public class UserService {
     }
 
     public User registerUser(User user) {
-        return userRepository.save(user);
+        try{
+            User newUser = userRepository.save(user);
+            System.out.println(newUser + " register successfully!");
+            return newUser;
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public User loginUser(String email, String password) {
+        //check if user is there or not
+        User user = userRepository.findByEmail(email);
+        if(user != null && user.getPassword().equals(password)){
+            return user;
+        }
+        return null; //invalid credentials
     }
 }

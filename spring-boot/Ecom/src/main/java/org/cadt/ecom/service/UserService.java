@@ -4,6 +4,8 @@ import org.cadt.ecom.model.User;
 import org.cadt.ecom.repo.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UserService {
 
@@ -31,5 +33,10 @@ public class UserService {
             return user;
         }
         return null; //invalid credentials
+    }
+
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 }

@@ -22,7 +22,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @param orderId the order ID
      * @return List<OrderItem>
      */
-    @Query("SELECT oi FROM OrderItem oi WHERE oi.order.id = :orderId ORDER BY oi.id")
+    @Query("SELECT oi FROM OrderItem oi WHERE oi.order.orderId = :orderId ORDER BY oi.orderItemId")
     List<OrderItem> findByOrderId(@Param("orderId") Long orderId);
     
     /**
@@ -30,7 +30,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @param productId the product ID
      * @return List<OrderItem>
      */
-    @Query("SELECT oi FROM OrderItem oi WHERE oi.product.id = :productId ORDER BY oi.order.createdAt DESC")
+    @Query("SELECT oi FROM OrderItem oi WHERE oi.product.productId = :productId ORDER BY oi.order.orderDate DESC")
     List<OrderItem> findByProductId(@Param("productId") Long productId);
     
     /**
@@ -38,7 +38,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @param userId the user ID
      * @return List<OrderItem>
      */
-    @Query("SELECT oi FROM OrderItem oi WHERE oi.order.user.id = :userId ORDER BY oi.order.createdAt DESC")
+    @Query("SELECT oi FROM OrderItem oi WHERE oi.order.user.userId = :userId ORDER BY oi.order.orderDate DESC")
     List<OrderItem> findByUserId(@Param("userId") Long userId);
     
     /**
@@ -46,7 +46,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @param productId the product ID
      * @return Integer total quantity sold
      */
-    @Query("SELECT COALESCE(SUM(oi.quantity), 0) FROM OrderItem oi WHERE oi.product.id = :productId AND oi.order.paymentStatus = 'PAID'")
+    @Query("SELECT COALESCE(SUM(oi.quantity), 0) FROM OrderItem oi WHERE oi.product.productId = :productId AND oi.order.paymentStatus = 'COMPLETED'")
     Integer calculateTotalQuantitySoldForProduct(@Param("productId") Long productId);
     
     /**
@@ -54,7 +54,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @param productId the product ID
      * @return BigDecimal total revenue
      */
-    @Query("SELECT COALESCE(SUM(oi.subtotal), 0) FROM OrderItem oi WHERE oi.product.id = :productId AND oi.order.paymentStatus = 'PAID'")
+    @Query("SELECT COALESCE(SUM(oi.price * oi.quantity), 0) FROM OrderItem oi WHERE oi.product.productId = :productId AND oi.order.paymentStatus = 'COMPLETED'")
     BigDecimal calculateTotalRevenueForProduct(@Param("productId") Long productId);
     
     /**
@@ -62,9 +62,9 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @param limit number of products to return
      * @return List<Object[]> containing product ID and total quantity sold
      */
-    @Query("SELECT oi.product.id, SUM(oi.quantity) as totalQty FROM OrderItem oi " +
-           "WHERE oi.order.paymentStatus = 'PAID' " +
-           "GROUP BY oi.product.id " +
+    @Query("SELECT oi.product.productId, SUM(oi.quantity) as totalQty FROM OrderItem oi " +
+           "WHERE oi.order.paymentStatus = 'COMPLETED' " +
+           "GROUP BY oi.product.productId " +
            "ORDER BY totalQty DESC")
     List<Object[]> findTopSellingProductsByQuantity(@Param("limit") int limit);
     
@@ -73,9 +73,9 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @param limit number of products to return
      * @return List<Object[]> containing product ID and total revenue
      */
-    @Query("SELECT oi.product.id, SUM(oi.subtotal) as totalRevenue FROM OrderItem oi " +
-           "WHERE oi.order.paymentStatus = 'PAID' " +
-           "GROUP BY oi.product.id " +
+    @Query("SELECT oi.product.productId, SUM(oi.price * oi.quantity) as totalRevenue FROM OrderItem oi " +
+           "WHERE oi.order.paymentStatus = 'COMPLETED' " +
+           "GROUP BY oi.product.productId " +
            "ORDER BY totalRevenue DESC")
     List<Object[]> findTopSellingProductsByRevenue(@Param("limit") int limit);
     
@@ -85,7 +85,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @param endDate end date
      * @return List<OrderItem>
      */
-    @Query("SELECT oi FROM OrderItem oi WHERE oi.order.createdAt BETWEEN :startDate AND :endDate ORDER BY oi.order.createdAt DESC")
+    @Query("SELECT oi FROM OrderItem oi WHERE oi.order.orderDate BETWEEN :startDate AND :endDate ORDER BY oi.order.orderDate DESC")
     List<OrderItem> findByDateRange(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
     
     /**
@@ -94,7 +94,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @param endDate end date
      * @return BigDecimal total tax amount
      */
-    @Query("SELECT COALESCE(SUM(oi.taxAmount), 0) FROM OrderItem oi WHERE oi.order.createdAt BETWEEN :startDate AND :endDate AND oi.order.paymentStatus = 'PAID'")
+    @Query("SELECT COALESCE(SUM(oi.taxAmount), 0) FROM OrderItem oi WHERE oi.order.orderDate BETWEEN :startDate AND :endDate AND oi.order.paymentStatus = 'COMPLETED'")
     BigDecimal calculateTotalTaxCollectedByDateRange(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
     
     /**
@@ -103,6 +103,6 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @param maxPrice maximum unit price
      * @return List<OrderItem>
      */
-    @Query("SELECT oi FROM OrderItem oi WHERE oi.unitPrice BETWEEN :minPrice AND :maxPrice ORDER BY oi.unitPrice DESC")
+    @Query("SELECT oi FROM OrderItem oi WHERE oi.price BETWEEN :minPrice AND :maxPrice ORDER BY oi.price DESC")
     List<OrderItem> findByPriceRange(@Param("minPrice") BigDecimal minPrice, @Param("maxPrice") BigDecimal maxPrice);
 } 

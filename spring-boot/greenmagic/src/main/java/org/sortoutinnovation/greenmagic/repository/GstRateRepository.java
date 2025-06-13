@@ -18,54 +18,54 @@ import java.util.Optional;
 public interface GstRateRepository extends JpaRepository<GstRate, Long> {
     
     /**
-     * Find GST rate by rate value
-     * @param rate the GST rate value
+     * Find GST rate by percentage value
+     * @param percentage the GST percentage value
      * @return Optional<GstRate>
      */
-    Optional<GstRate> findByRate(BigDecimal rate);
+    Optional<GstRate> findByPercentage(BigDecimal percentage);
     
     /**
-     * Find GST rate by category
-     * @param category the GST rate category
+     * Find GST rate by rate name
+     * @param rateName the GST rate name
      * @return Optional<GstRate>
      */
-    Optional<GstRate> findByCategory(String category);
+    Optional<GstRate> findByRateName(String rateName);
     
     /**
-     * Check if GST rate exists by rate value
-     * @param rate the GST rate value
+     * Check if GST rate exists by percentage value
+     * @param percentage the GST percentage value
      * @return boolean
      */
-    boolean existsByRate(BigDecimal rate);
+    boolean existsByPercentage(BigDecimal percentage);
     
     /**
-     * Check if GST rate exists by category
-     * @param category the GST rate category
+     * Check if GST rate exists by rate name
+     * @param rateName the GST rate name
      * @return boolean
      */
-    boolean existsByCategory(String category);
+    boolean existsByRateName(String rateName);
     
     /**
-     * Find all active GST rates
+     * Find all GST rates ordered by percentage
      * @return List<GstRate>
      */
-    @Query("SELECT g FROM GstRate g WHERE g.isActive = true ORDER BY g.rate")
-    List<GstRate> findAllActiveGstRates();
+    @Query("SELECT g FROM GstRate g ORDER BY g.percentage")
+    List<GstRate> findAllOrderByPercentage();
     
     /**
-     * Find GST rates by rate range
-     * @param minRate minimum rate
-     * @param maxRate maximum rate
+     * Find GST rates by percentage range
+     * @param minPercentage minimum percentage
+     * @param maxPercentage maximum percentage
      * @return List<GstRate>
      */
-    @Query("SELECT g FROM GstRate g WHERE g.isActive = true AND g.rate BETWEEN :minRate AND :maxRate ORDER BY g.rate")
-    List<GstRate> findByRateRange(@Param("minRate") BigDecimal minRate, @Param("maxRate") BigDecimal maxRate);
+    @Query("SELECT g FROM GstRate g WHERE g.percentage BETWEEN :minPercentage AND :maxPercentage ORDER BY g.percentage")
+    List<GstRate> findByPercentageRange(@Param("minPercentage") BigDecimal minPercentage, @Param("maxPercentage") BigDecimal maxPercentage);
     
     /**
      * Find GST rates by description containing (case insensitive)
      * @param description the description to search
      * @return List<GstRate>
      */
-    @Query("SELECT g FROM GstRate g WHERE g.isActive = true AND LOWER(g.description) LIKE LOWER(CONCAT('%', :description, '%')) ORDER BY g.rate")
+    @Query("SELECT g FROM GstRate g WHERE LOWER(g.description) LIKE LOWER(CONCAT('%', :description, '%')) ORDER BY g.percentage")
     List<GstRate> findByDescriptionContaining(@Param("description") String description);
 } 

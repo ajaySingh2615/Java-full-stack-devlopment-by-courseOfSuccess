@@ -22,44 +22,37 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
      * @param userId the user ID
      * @return Optional<Cart>
      */
-    @Query("SELECT c FROM Cart c WHERE c.user.id = :userId")
+    @Query("SELECT c FROM Cart c WHERE c.user.userId = :userId")
     Optional<Cart> findByUserId(@Param("userId") Long userId);
     
     /**
-     * Find cart by session ID
-     * @param sessionId the session ID
-     * @return Optional<Cart>
-     */
-    Optional<Cart> findBySessionId(String sessionId);
-    
-    /**
-     * Find active carts (updated recently)
+     * Find carts created after a certain date
      * @param since datetime threshold
      * @return List<Cart>
      */
-    @Query("SELECT c FROM Cart c WHERE c.updatedAt >= :since ORDER BY c.updatedAt DESC")
-    List<Cart> findActiveCarts(@Param("since") LocalDateTime since);
+    @Query("SELECT c FROM Cart c WHERE c.createdAt >= :since ORDER BY c.createdAt DESC")
+    List<Cart> findRecentCarts(@Param("since") LocalDateTime since);
     
     /**
-     * Find abandoned carts (not updated recently)
+     * Find old carts (created before a certain date)
      * @param before datetime threshold
      * @return List<Cart>
      */
-    @Query("SELECT c FROM Cart c WHERE c.updatedAt < :before AND c.totalItems > 0 ORDER BY c.updatedAt")
-    List<Cart> findAbandonedCarts(@Param("before") LocalDateTime before);
+    @Query("SELECT c FROM Cart c WHERE c.createdAt < :before ORDER BY c.createdAt")
+    List<Cart> findOldCarts(@Param("before") LocalDateTime before);
     
     /**
      * Find carts with items
      * @return List<Cart>
      */
-    @Query("SELECT c FROM Cart c WHERE c.totalItems > 0 ORDER BY c.updatedAt DESC")
+    @Query("SELECT c FROM Cart c WHERE SIZE(c.cartItems) > 0 ORDER BY c.createdAt DESC")
     List<Cart> findCartsWithItems();
     
     /**
      * Find empty carts
      * @return List<Cart>
      */
-    @Query("SELECT c FROM Cart c WHERE c.totalItems = 0 ORDER BY c.updatedAt")
+    @Query("SELECT c FROM Cart c WHERE SIZE(c.cartItems) = 0 ORDER BY c.createdAt")
     List<Cart> findEmptyCarts();
     
     /**
@@ -67,7 +60,7 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
      * @param userId the user ID
      * @return long count of carts
      */
-    @Query("SELECT COUNT(c) FROM Cart c WHERE c.user.id = :userId")
+    @Query("SELECT COUNT(c) FROM Cart c WHERE c.user.userId = :userId")
     long countByUserId(@Param("userId") Long userId);
     
     /**
@@ -75,6 +68,6 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
      * @param before datetime threshold
      * @return number of deleted carts
      */
-    @Query("DELETE FROM Cart c WHERE c.totalItems = 0 AND c.updatedAt < :before")
+    @Query("DELETE FROM Cart c WHERE SIZE(c.cartItems) = 0 AND c.createdAt < :before")
     int deleteOldEmptyCarts(@Param("before") LocalDateTime before);
 } 

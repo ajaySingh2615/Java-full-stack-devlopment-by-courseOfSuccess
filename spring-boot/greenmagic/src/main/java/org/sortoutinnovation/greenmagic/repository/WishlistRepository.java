@@ -12,20 +12,20 @@ import java.util.Optional;
 @Repository
 public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
     
-    @Query("SELECT w FROM Wishlist w WHERE w.user.id = :userId ORDER BY w.createdAt DESC")
+    @Query("SELECT w FROM Wishlist w WHERE w.user.userId = :userId ORDER BY w.addedAt DESC")
     List<Wishlist> findByUserId(@Param("userId") Long userId);
     
-    @Query("SELECT w FROM Wishlist w WHERE w.user.id = :userId AND w.product.id = :productId")
+    @Query("SELECT w FROM Wishlist w WHERE w.user.userId = :userId AND w.product.productId = :productId")
     Optional<Wishlist> findByUserIdAndProductId(@Param("userId") Long userId, @Param("productId") Long productId);
     
-    @Query("SELECT w FROM Wishlist w WHERE w.product.id = :productId")
+    @Query("SELECT w FROM Wishlist w WHERE w.product.productId = :productId")
     List<Wishlist> findByProductId(@Param("productId") Long productId);
     
-    @Query("SELECT COUNT(w) FROM Wishlist w WHERE w.user.id = :userId")
+    @Query("SELECT COUNT(w) FROM Wishlist w WHERE w.user.userId = :userId")
     long countByUserId(@Param("userId") Long userId);
     
-    @Query("SELECT COUNT(w) FROM Wishlist w WHERE w.product.id = :productId")
+    @Query("SELECT COUNT(w) FROM Wishlist w WHERE w.product.productId = :productId")
     long countByProductId(@Param("productId") Long productId);
     
-    boolean existsByUserIdAndProductId(Long userId, Long productId);
+    boolean existsByUserUserIdAndProductProductId(Long userId, Long productId);
 } 

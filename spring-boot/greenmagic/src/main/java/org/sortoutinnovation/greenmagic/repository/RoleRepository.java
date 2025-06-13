@@ -16,23 +16,23 @@ import java.util.Optional;
 public interface RoleRepository extends JpaRepository<Role, Long> {
     
     /**
-     * Find role by name
-     * @param name the role name
+     * Find role by role name
+     * @param roleName the role name
      * @return Optional<Role>
      */
-    Optional<Role> findByName(String name);
+    Optional<Role> findByRoleName(String roleName);
     
     /**
-     * Check if role exists by name
-     * @param name the role name
+     * Check if role exists by role name
+     * @param roleName the role name
      * @return boolean
      */
-    boolean existsByName(String name);
+    boolean existsByRoleName(String roleName);
     
     /**
-     * Find all active roles
+     * Find all roles ordered by role name
      * @return List<Role>
      */
-    @Query("SELECT r FROM Role r WHERE r.isActive = true ORDER BY r.name")
-    List<Role> findAllActiveRoles();
+    @Query("SELECT r FROM Role r ORDER BY r.roleName")
+    List<Role> findAllOrderedByName();
 } 

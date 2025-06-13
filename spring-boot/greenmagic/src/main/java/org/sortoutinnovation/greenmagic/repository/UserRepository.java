@@ -61,33 +61,28 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByGoogleId(String googleId);
     
     /**
-     * Find all active users
+     * Find all users ordered by name
      * @return List<User>
      */
-    @Query("SELECT u FROM User u WHERE u.isActive = true ORDER BY u.firstName, u.lastName")
-    List<User> findAllActiveUsers();
+    @Query("SELECT u FROM User u ORDER BY u.name")
+    List<User> findAllUsers();
     
     /**
      * Find users by role
      * @param roleName the role name
      * @return List<User>
      */
-    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = :roleName AND u.isActive = true")
+    @Query("SELECT u FROM User u WHERE u.role.roleName = :roleName")
     List<User> findByRoleName(@Param("roleName") String roleName);
     
     /**
-     * Find users by first and last name containing (case insensitive)
-     * @param firstName the first name to search
-     * @param lastName the last name to search
+     * Find users by name containing (case insensitive)
+     * @param name the name to search
      * @param pageable pagination information
      * @return Page<User>
      */
-    @Query("SELECT u FROM User u WHERE u.isActive = true AND " +
-           "(LOWER(u.firstName) LIKE LOWER(CONCAT('%', :firstName, '%')) OR " +
-           "LOWER(u.lastName) LIKE LOWER(CONCAT('%', :lastName, '%')))")
-    Page<User> findByNameContaining(@Param("firstName") String firstName, 
-                                   @Param("lastName") String lastName, 
-                                   Pageable pageable);
+    @Query("SELECT u FROM User u WHERE LOWER(u.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    Page<User> findByNameContaining(@Param("name") String name, Pageable pageable);
     
     /**
      * Find users created today

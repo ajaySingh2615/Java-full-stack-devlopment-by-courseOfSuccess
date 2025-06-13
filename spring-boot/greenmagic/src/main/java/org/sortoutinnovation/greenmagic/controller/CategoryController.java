@@ -2,14 +2,14 @@ package org.sortoutinnovation.greenmagic.controller;
 
 import org.sortoutinnovation.greenmagic.dto.ApiResponseDto;
 import org.sortoutinnovation.greenmagic.model.Category;
-import org.sortoutinnovation.greenmagic.repository.CategoryRepository;
+import org.sortoutinnovation.greenmagic.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/categories")
@@ -17,12 +17,12 @@ import java.util.Optional;
 public class CategoryController {
 
     @Autowired
-    private CategoryRepository categoryRepository;
+    private CategoryService categoryService;
 
     @GetMapping
     public ResponseEntity<ApiResponseDto<List<Category>>> getAllCategories() {
         try {
-            List<Category> categories = categoryRepository.findAllActiveCategories();
+            List<Category> categories = categoryService.getAllActiveCategories();
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Categories retrieved successfully", categories));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -33,11 +33,10 @@ public class CategoryController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponseDto<Category>> getCategoryById(@PathVariable Long id) {
         try {
-            Optional<Category> category = categoryRepository.findById(id);
-            if (category.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "Category found", category.get()));
+            Category category = categoryService.getCategoryById(id);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Category found", category));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to retrieve category: " + e.getMessage(), null));
@@ -47,7 +46,7 @@ public class CategoryController {
     @GetMapping("/top-level")
     public ResponseEntity<ApiResponseDto<List<Category>>> getTopLevelCategories() {
         try {
-            List<Category> categories = categoryRepository.findTopLevelCategories();
+            List<Category> categories = categoryService.getTopLevelCategories();
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Top-level categories retrieved successfully", categories));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -56,18 +55,28 @@ public class CategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponseDto<Category>> createCategory(@RequestBody Category category) {
+    public ResponseEntity<ApiResponseDto<Category>> createCategory(@Valid @RequestBody Category category) {
         try {
-            if (categoryRepository.existsByName(category.getName())) {
-                return ResponseEntity.badRequest()
-                    .body(new ApiResponseDto<>(false, "Category name already exists", null));
-            }
-            Category savedCategory = categoryRepository.save(category);
+            Category savedCategory = categoryService.createCategory(category);
             return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDto<>(true, "Category created successfully", savedCategory));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(new ApiResponseDto<>(false, e.getMessage(), null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to create category: " + e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/{id}/subcategories")
+    public ResponseEntity<ApiResponseDto<List<Category>>> getSubcategories(@PathVariable Long id) {
+        try {
+            List<Category> subcategories = categoryService.getSubcategories(id);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Subcategories retrieved successfully", subcategories));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve subcategories: " + e.getMessage(), null));
         }
     }
 } 

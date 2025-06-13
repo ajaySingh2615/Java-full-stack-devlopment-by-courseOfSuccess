@@ -3,35 +3,36 @@ package org.sortoutinnovation.greenmagic.controller;
 import org.sortoutinnovation.greenmagic.dto.ApiResponseDto;
 import org.sortoutinnovation.greenmagic.model.Cart;
 import org.sortoutinnovation.greenmagic.model.CartItem;
-import org.sortoutinnovation.greenmagic.repository.CartRepository;
-import org.sortoutinnovation.greenmagic.repository.CartItemRepository;
+import org.sortoutinnovation.greenmagic.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
+/**
+ * REST Controller for Cart management operations
+ * Provides endpoints for shopping cart functionality
+ */
 @RestController
 @RequestMapping("/api/cart")
 @CrossOrigin(origins = "*")
 public class CartController {
 
     @Autowired
-    private CartRepository cartRepository;
-    
-    @Autowired
-    private CartItemRepository cartItemRepository;
+    private CartService cartService;
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<ApiResponseDto<Cart>> getCartByUserId(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponseDto<Cart>> getUserCart(@PathVariable Long userId) {
         try {
-            Optional<Cart> cart = cartRepository.findByUserId(userId);
-            if (cart.isEmpty()) {
+            Cart cart = cartService.getUserCart(userId);
+            if (cart == null) {
                 return ResponseEntity.notFound().build();
             }
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "Cart found", cart.get()));
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Cart retrieved successfully", cart));
+            
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to retrieve cart: " + e.getMessage(), null));
@@ -41,8 +42,9 @@ public class CartController {
     @GetMapping("/{cartId}/items")
     public ResponseEntity<ApiResponseDto<List<CartItem>>> getCartItems(@PathVariable Long cartId) {
         try {
-            List<CartItem> cartItems = cartItemRepository.findByCartId(cartId);
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "Cart items retrieved successfully", cartItems));
+            List<CartItem> items = cartService.getCartItems(cartId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Cart items retrieved successfully", items));
+            
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to retrieve cart items: " + e.getMessage(), null));
@@ -52,20 +54,13 @@ public class CartController {
     @PostMapping("/user/{userId}")
     public ResponseEntity<ApiResponseDto<Cart>> createCart(@PathVariable Long userId) {
         try {
-            // Check if cart already exists for user
-            Optional<Cart> existingCart = cartRepository.findByUserId(userId);
-            if (existingCart.isPresent()) {
-                return ResponseEntity.badRequest()
-                    .body(new ApiResponseDto<>(false, "Cart already exists for this user", null));
-            }
-
-            Cart cart = new Cart();
-            // Note: Cart entity only has user and cartItems fields
-            // No totalItems or totalAmount fields exist
-            
-            Cart savedCart = cartRepository.save(cart);
+            Cart cart = cartService.createCart(userId);
             return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponseDto<>(true, "Cart created successfully", savedCart));
+                .body(new ApiResponseDto<>(true, "Cart created successfully", cart));
+                
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(new ApiResponseDto<>(false, e.getMessage(), null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to create cart: " + e.getMessage(), null));
@@ -75,19 +70,17 @@ public class CartController {
     @PostMapping("/{cartId}/items")
     public ResponseEntity<ApiResponseDto<CartItem>> addItemToCart(
             @PathVariable Long cartId,
-            @RequestBody CartItem cartItem) {
+            @RequestParam Long productId,
+            @RequestParam Integer quantity) {
+        
         try {
-            // Set cart relationship
-            Optional<Cart> cartOpt = cartRepository.findById(cartId);
-            if (cartOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            
-            cartItem.setCart(cartOpt.get());
-            CartItem savedCartItem = cartItemRepository.save(cartItem);
-            
+            CartItem cartItem = cartService.addItemToCart(cartId, productId, quantity);
             return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponseDto<>(true, "Item added to cart successfully", savedCartItem));
+                .body(new ApiResponseDto<>(true, "Item added to cart successfully", cartItem));
+                
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(new ApiResponseDto<>(false, e.getMessage(), null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to add item to cart: " + e.getMessage(), null));
@@ -97,12 +90,11 @@ public class CartController {
     @DeleteMapping("/items/{itemId}")
     public ResponseEntity<ApiResponseDto<Void>> removeItemFromCart(@PathVariable Long itemId) {
         try {
-            if (!cartItemRepository.existsById(itemId)) {
-                return ResponseEntity.notFound().build();
-            }
-            
-            cartItemRepository.deleteById(itemId);
+            cartService.removeItemFromCart(itemId);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Item removed from cart successfully", null));
+            
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to remove item from cart: " + e.getMessage(), null));
@@ -112,22 +104,38 @@ public class CartController {
     @DeleteMapping("/{cartId}")
     public ResponseEntity<ApiResponseDto<Void>> clearCart(@PathVariable Long cartId) {
         try {
-            Optional<Cart> cartOpt = cartRepository.findById(cartId);
-            if (cartOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            
-            // Clear all items from cart
-            List<CartItem> cartItems = cartItemRepository.findByCartId(cartId);
-            cartItemRepository.deleteAll(cartItems);
-            
-            // Note: Cart entity doesn't have totalItems/totalAmount fields
-            // The cart totals would be calculated dynamically from cart items
-            
+            cartService.clearCart(cartId);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Cart cleared successfully", null));
+            
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to clear cart: " + e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/{cartId}/total")
+    public ResponseEntity<ApiResponseDto<BigDecimal>> getCartTotal(@PathVariable Long cartId) {
+        try {
+            BigDecimal total = cartService.getCartTotal(cartId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Cart total calculated successfully", total));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to calculate cart total: " + e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/{cartId}/count")
+    public ResponseEntity<ApiResponseDto<Integer>> getCartItemCount(@PathVariable Long cartId) {
+        try {
+            Integer count = cartService.getCartItemCount(cartId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Cart item count retrieved successfully", count));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to get cart item count: " + e.getMessage(), null));
         }
     }
 } 

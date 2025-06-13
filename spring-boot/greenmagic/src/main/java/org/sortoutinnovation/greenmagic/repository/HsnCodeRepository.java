@@ -31,26 +31,18 @@ public interface HsnCodeRepository extends JpaRepository<HsnCode, Long> {
     boolean existsByCode(String code);
     
     /**
-     * Find all active HSN codes
+     * Find all HSN codes ordered by code
      * @return List<HsnCode>
      */
-    @Query("SELECT h FROM HsnCode h WHERE h.isActive = true ORDER BY h.code")
-    List<HsnCode> findAllActiveHsnCodes();
-    
-    /**
-     * Find HSN codes by chapter
-     * @param chapter the HSN chapter
-     * @return List<HsnCode>
-     */
-    @Query("SELECT h FROM HsnCode h WHERE h.isActive = true AND h.chapter = :chapter ORDER BY h.code")
-    List<HsnCode> findByChapter(@Param("chapter") String chapter);
+    @Query("SELECT h FROM HsnCode h ORDER BY h.code")
+    List<HsnCode> findAllOrderByCode();
     
     /**
      * Find HSN codes by description containing (case insensitive)
      * @param description the description to search
      * @return List<HsnCode>
      */
-    @Query("SELECT h FROM HsnCode h WHERE h.isActive = true AND LOWER(h.description) LIKE LOWER(CONCAT('%', :description, '%')) ORDER BY h.code")
+    @Query("SELECT h FROM HsnCode h WHERE LOWER(h.description) LIKE LOWER(CONCAT('%', :description, '%')) ORDER BY h.code")
     List<HsnCode> findByDescriptionContaining(@Param("description") String description);
     
     /**
@@ -58,13 +50,13 @@ public interface HsnCodeRepository extends JpaRepository<HsnCode, Long> {
      * @param prefix the code prefix
      * @return List<HsnCode>
      */
-    @Query("SELECT h FROM HsnCode h WHERE h.isActive = true AND h.code LIKE CONCAT(:prefix, '%') ORDER BY h.code")
+    @Query("SELECT h FROM HsnCode h WHERE h.code LIKE CONCAT(:prefix, '%') ORDER BY h.code")
     List<HsnCode> findByCodeStartingWith(@Param("prefix") String prefix);
     
     /**
-     * Find HSN codes with GST rate
+     * Find HSN codes with default GST rate
      * @return List<HsnCode>
      */
-    @Query("SELECT h FROM HsnCode h WHERE h.isActive = true AND h.gstRate IS NOT NULL ORDER BY h.code")
-    List<HsnCode> findHsnCodesWithGstRate();
+    @Query("SELECT h FROM HsnCode h WHERE h.defaultGstRate IS NOT NULL ORDER BY h.code")
+    List<HsnCode> findHsnCodesWithDefaultGstRate();
 } 

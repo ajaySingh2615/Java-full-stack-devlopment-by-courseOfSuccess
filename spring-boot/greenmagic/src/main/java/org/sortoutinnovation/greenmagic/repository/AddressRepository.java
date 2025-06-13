@@ -21,7 +21,7 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
      * @param userId the user ID
      * @return List<Address>
      */
-    @Query("SELECT a FROM Address a WHERE a.user.id = :userId ORDER BY a.isDefault DESC, a.createdAt DESC")
+    @Query("SELECT a FROM Address a WHERE a.user.userId = :userId ORDER BY a.isDefault DESC, a.createdAt DESC")
     List<Address> findByUserId(@Param("userId") Long userId);
     
     /**
@@ -29,7 +29,7 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
      * @param userId the user ID
      * @return Optional<Address>
      */
-    @Query("SELECT a FROM Address a WHERE a.user.id = :userId AND a.isDefault = true")
+    @Query("SELECT a FROM Address a WHERE a.user.userId = :userId AND a.isDefault = true")
     Optional<Address> findDefaultAddressByUserId(@Param("userId") Long userId);
     
     /**
@@ -38,7 +38,7 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
      * @param addressType the address type
      * @return List<Address>
      */
-    @Query("SELECT a FROM Address a WHERE a.user.id = :userId AND a.addressType = :addressType ORDER BY a.isDefault DESC, a.createdAt DESC")
+    @Query("SELECT a FROM Address a WHERE a.user.userId = :userId AND a.addressType = :addressType ORDER BY a.isDefault DESC, a.createdAt DESC")
     List<Address> findByUserIdAndAddressType(@Param("userId") Long userId, @Param("addressType") Address.AddressType addressType);
     
     /**
@@ -58,19 +58,19 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
     List<Address> findByState(@Param("state") String state);
     
     /**
-     * Find addresses by pincode
-     * @param pincode the pincode
+     * Find addresses by zip code
+     * @param zipCode the zip code
      * @return List<Address>
      */
-    @Query("SELECT a FROM Address a WHERE a.pincode = :pincode ORDER BY a.createdAt DESC")
-    List<Address> findByPincode(@Param("pincode") String pincode);
+    @Query("SELECT a FROM Address a WHERE a.zipCode = :zipCode ORDER BY a.createdAt DESC")
+    List<Address> findByZipCode(@Param("zipCode") String zipCode);
     
     /**
      * Count addresses by user ID
      * @param userId the user ID
      * @return long count of addresses
      */
-    @Query("SELECT COUNT(a) FROM Address a WHERE a.user.id = :userId")
+    @Query("SELECT COUNT(a) FROM Address a WHERE a.user.userId = :userId")
     long countByUserId(@Param("userId") Long userId);
     
     /**
@@ -78,6 +78,6 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
      * @param userId the user ID
      * @return boolean
      */
-    @Query("SELECT COUNT(a) > 0 FROM Address a WHERE a.user.id = :userId AND a.isDefault = true")
+    @Query("SELECT COUNT(a) > 0 FROM Address a WHERE a.user.userId = :userId AND a.isDefault = true")
     boolean hasDefaultAddress(@Param("userId") Long userId);
 } 

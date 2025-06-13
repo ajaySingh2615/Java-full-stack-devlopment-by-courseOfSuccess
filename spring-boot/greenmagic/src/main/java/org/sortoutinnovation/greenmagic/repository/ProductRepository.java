@@ -20,33 +20,33 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     boolean existsBySku(String sku);
     boolean existsBySlug(String slug);
     
-    @Query("SELECT p FROM Product p WHERE p.isActive = true ORDER BY p.createdAt DESC")
+    @Query("SELECT p FROM Product p WHERE p.status = 'ACTIVE' ORDER BY p.createdAt DESC")
     Page<Product> findAllActiveProducts(Pageable pageable);
     
-    @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId AND p.isActive = true ORDER BY p.name")
+    @Query("SELECT p FROM Product p WHERE p.category.categoryId = :categoryId AND p.status = 'ACTIVE' ORDER BY p.name")
     Page<Product> findByCategoryId(@Param("categoryId") Long categoryId, Pageable pageable);
     
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%')) ORDER BY p.name")
+    @Query("SELECT p FROM Product p WHERE p.status = 'ACTIVE' AND LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%')) ORDER BY p.name")
     Page<Product> findByNameContaining(@Param("name") String name, Pageable pageable);
     
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.sellingPrice BETWEEN :minPrice AND :maxPrice ORDER BY p.sellingPrice")
+    @Query("SELECT p FROM Product p WHERE p.status = 'ACTIVE' AND p.price BETWEEN :minPrice AND :maxPrice ORDER BY p.price")
     Page<Product> findByPriceRange(@Param("minPrice") BigDecimal minPrice, @Param("maxPrice") BigDecimal maxPrice, Pageable pageable);
     
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.isFeatured = true ORDER BY p.createdAt DESC")
+    @Query("SELECT p FROM Product p WHERE p.status = 'ACTIVE' AND p.isFeatured = true ORDER BY p.createdAt DESC")
     Page<Product> findFeaturedProducts(Pageable pageable);
     
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.isOnSale = true ORDER BY p.discountPercentage DESC")
-    Page<Product> findProductsOnSale(Pageable pageable);
+    @Query("SELECT p FROM Product p WHERE p.status = 'ACTIVE' AND p.isBestSeller = true ORDER BY p.createdAt DESC")
+    Page<Product> findBestSellerProducts(Pageable pageable);
     
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.stockQuantity > 0 ORDER BY p.name")
+    @Query("SELECT p FROM Product p WHERE p.status = 'ACTIVE' AND p.quantity > 0 ORDER BY p.name")
     Page<Product> findProductsInStock(Pageable pageable);
     
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.stockQuantity = 0 ORDER BY p.name")
+    @Query("SELECT p FROM Product p WHERE p.status = 'ACTIVE' AND p.quantity = 0 ORDER BY p.name")
     List<Product> findOutOfStockProducts();
     
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.stockQuantity > 0 AND p.stockQuantity <= :threshold ORDER BY p.stockQuantity")
+    @Query("SELECT p FROM Product p WHERE p.status = 'ACTIVE' AND p.quantity > 0 AND p.quantity <= :threshold ORDER BY p.quantity")
     List<Product> findLowStockProducts(@Param("threshold") Integer threshold);
     
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND LOWER(p.brand) = LOWER(:brand) ORDER BY p.name")
+    @Query("SELECT p FROM Product p WHERE p.status = 'ACTIVE' AND LOWER(p.brand) = LOWER(:brand) ORDER BY p.name")
     Page<Product> findByBrand(@Param("brand") String brand, Pageable pageable);
 } 

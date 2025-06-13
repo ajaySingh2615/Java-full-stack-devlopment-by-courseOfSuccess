@@ -21,19 +21,12 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     
     /**
-     * Find order by order number
-     * @param orderNumber the order number
-     * @return Optional<Order>
-     */
-    Optional<Order> findByOrderNumber(String orderNumber);
-    
-    /**
      * Find orders by user ID
      * @param userId the user ID
      * @param pageable pagination information
      * @return Page<Order>
      */
-    @Query("SELECT o FROM Order o WHERE o.user.id = :userId ORDER BY o.orderDate DESC")
+    @Query("SELECT o FROM Order o WHERE o.user.userId = :userId ORDER BY o.orderDate DESC")
     Page<Order> findByUserId(@Param("userId") Long userId, Pageable pageable);
     
     /**
@@ -43,7 +36,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @param pageable pagination information
      * @return Page<Order>
      */
-    @Query("SELECT o FROM Order o WHERE o.user.id = :userId AND o.status = :status ORDER BY o.orderDate DESC")
+    @Query("SELECT o FROM Order o WHERE o.user.userId = :userId AND o.status = :status ORDER BY o.orderDate DESC")
     Page<Order> findByUserIdAndStatus(@Param("userId") Long userId, @Param("status") String status, Pageable pageable);
     
     /**
@@ -131,7 +124,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @param userId the user ID
      * @return long count of orders
      */
-    @Query("SELECT COUNT(o) FROM Order o WHERE o.user.id = :userId")
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.user.userId = :userId")
     long countByUserId(@Param("userId") Long userId);
     
     /**

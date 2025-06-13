@@ -2,8 +2,7 @@ package org.sortoutinnovation.greenmagic.controller;
 
 import org.sortoutinnovation.greenmagic.dto.ApiResponseDto;
 import org.sortoutinnovation.greenmagic.model.Product;
-import org.sortoutinnovation.greenmagic.repository.ProductRepository;
-import org.sortoutinnovation.greenmagic.repository.CategoryRepository;
+import org.sortoutinnovation.greenmagic.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,13 +12,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * REST Controller for Product management operations
- * Provides endpoints for product CRUD, search, and filtering
+ * Provides endpoints for product CRUD operations and search functionality
  */
 @RestController
 @RequestMapping("/api/products")
@@ -28,40 +26,22 @@ import java.util.Optional;
 public class ProductController {
 
     @Autowired
-    private ProductRepository productRepository;
-    
-    @Autowired
-    private CategoryRepository categoryRepository;
+    private ProductService productService;
 
     /**
      * Create a new product
      * POST /api/products
      */
     @PostMapping
-    public ResponseEntity<ApiResponseDto<Product>> createProduct(@RequestBody Product product) {
+    public ResponseEntity<ApiResponseDto<Product>> createProduct(@Valid @RequestBody Product product) {
         try {
-            // Check if SKU already exists
-            if (product.getSku() != null && productRepository.existsBySku(product.getSku())) {
-                return ResponseEntity.badRequest()
-                    .body(new ApiResponseDto<>(false, "SKU already exists", null));
-            }
-            
-            // Check if slug already exists
-            if (product.getSlug() != null && productRepository.existsBySlug(product.getSlug())) {
-                return ResponseEntity.badRequest()
-                    .body(new ApiResponseDto<>(false, "Slug already exists", null));
-            }
-
-            // Set default status if not provided
-            if (product.getStatus() == null) {
-                product.setStatus(Product.ProductStatus.ACTIVE);
-            }
-
-            Product savedProduct = productRepository.save(product);
-
+            Product savedProduct = productService.createProduct(product);
             return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDto<>(true, "Product created successfully", savedProduct));
                 
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(new ApiResponseDto<>(false, e.getMessage(), null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to create product: " + e.getMessage(), null));
@@ -73,14 +53,13 @@ public class ProductController {
      * GET /api/products
      */
     @GetMapping
-    public ResponseEntity<ApiResponseDto<Page<Product>>> getAllProducts(
+    public ResponseEntity<ApiResponseDto<Page<Product>>> getAllActiveProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<Product> products = productRepository.findAllActiveProducts(pageable);
-
+            Page<Product> products = productService.getAllActiveProducts(pageable);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Products retrieved successfully", products));
             
         } catch (Exception e) {
@@ -96,14 +75,11 @@ public class ProductController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponseDto<Product>> getProductById(@PathVariable Long id) {
         try {
-            Optional<Product> productOpt = productRepository.findById(id);
+            Product product = productService.getProductById(id);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product found", product));
             
-            if (productOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product found", productOpt.get()));
-            
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to retrieve product: " + e.getMessage(), null));
@@ -117,14 +93,11 @@ public class ProductController {
     @GetMapping("/sku/{sku}")
     public ResponseEntity<ApiResponseDto<Product>> getProductBySku(@PathVariable String sku) {
         try {
-            Optional<Product> productOpt = productRepository.findBySku(sku);
+            Product product = productService.getProductBySku(sku);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product found", product));
             
-            if (productOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product found", productOpt.get()));
-            
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to retrieve product: " + e.getMessage(), null));
@@ -143,8 +116,7 @@ public class ProductController {
         
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<Product> products = productRepository.findByNameContaining(name, pageable);
-
+            Page<Product> products = productService.searchProductsByName(name, pageable);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Products found", products));
             
         } catch (Exception e) {
@@ -165,8 +137,7 @@ public class ProductController {
         
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<Product> products = productRepository.findByCategoryId(categoryId, pageable);
-
+            Page<Product> products = productService.getProductsByCategory(categoryId, pageable);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Products retrieved successfully", products));
             
         } catch (Exception e) {
@@ -186,8 +157,7 @@ public class ProductController {
         
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<Product> products = productRepository.findFeaturedProducts(pageable);
-
+            Page<Product> products = productService.getFeaturedProducts(pageable);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Featured products retrieved successfully", products));
             
         } catch (Exception e) {
@@ -207,8 +177,7 @@ public class ProductController {
         
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<Product> products = productRepository.findProductsOnSale(pageable);
-
+            Page<Product> products = productService.getProductsOnSale(pageable);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Sale products retrieved successfully", products));
             
         } catch (Exception e) {
@@ -224,40 +193,15 @@ public class ProductController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponseDto<Product>> updateProduct(
             @PathVariable Long id,
-            @RequestBody Product productRequest) {
+            @Valid @RequestBody Product product) {
         
         try {
-            Optional<Product> productOpt = productRepository.findById(id);
-            
-            if (productOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            Product product = productOpt.get();
-            
-            // Check if SKU is being changed and if new SKU already exists
-            if (productRequest.getSku() != null && 
-                !product.getSku().equals(productRequest.getSku()) && 
-                productRepository.existsBySku(productRequest.getSku())) {
-                return ResponseEntity.badRequest()
-                    .body(new ApiResponseDto<>(false, "SKU already exists", null));
-            }
-
-            // Update product fields
-            if (productRequest.getName() != null) product.setName(productRequest.getName());
-            if (productRequest.getSku() != null) product.setSku(productRequest.getSku());
-            if (productRequest.getSlug() != null) product.setSlug(productRequest.getSlug());
-            if (productRequest.getDescription() != null) product.setDescription(productRequest.getDescription());
-            if (productRequest.getShortDescription() != null) product.setShortDescription(productRequest.getShortDescription());
-            if (productRequest.getPrice() != null) product.setPrice(productRequest.getPrice());
-            if (productRequest.getRegularPrice() != null) product.setRegularPrice(productRequest.getRegularPrice());
-            if (productRequest.getQuantity() != null) product.setQuantity(productRequest.getQuantity());
-            if (productRequest.getBrand() != null) product.setBrand(productRequest.getBrand());
-
-            Product updatedProduct = productRepository.save(product);
-
+            Product updatedProduct = productService.updateProduct(id, product);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Product updated successfully", updatedProduct));
             
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(new ApiResponseDto<>(false, e.getMessage(), null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to update product: " + e.getMessage(), null));
@@ -265,27 +209,63 @@ public class ProductController {
     }
 
     /**
-     * Delete product (soft delete by changing status)
+     * Delete product (soft delete)
      * DELETE /api/products/{id}
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponseDto<Void>> deleteProduct(@PathVariable Long id) {
         try {
-            Optional<Product> productOpt = productRepository.findById(id);
-            
-            if (productOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            Product product = productOpt.get();
-            product.setStatus(Product.ProductStatus.INACTIVE);
-            productRepository.save(product);
-
+            productService.deleteProduct(id);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Product deleted successfully", null));
             
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to delete product: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get products by price range
+     * GET /api/products/price-range
+     */
+    @GetMapping("/price-range")
+    public ResponseEntity<ApiResponseDto<Page<Product>>> getProductsByPriceRange(
+            @RequestParam BigDecimal minPrice,
+            @RequestParam BigDecimal maxPrice,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Product> products = productService.getProductsByPriceRange(minPrice, maxPrice, pageable);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Products retrieved successfully", products));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve products: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get products by brand
+     * GET /api/products/brand/{brand}
+     */
+    @GetMapping("/brand/{brand}")
+    public ResponseEntity<ApiResponseDto<Page<Product>>> getProductsByBrand(
+            @PathVariable String brand,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Product> products = productService.getProductsByBrand(brand, pageable);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Products retrieved successfully", products));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve products: " + e.getMessage(), null));
         }
     }
 } 

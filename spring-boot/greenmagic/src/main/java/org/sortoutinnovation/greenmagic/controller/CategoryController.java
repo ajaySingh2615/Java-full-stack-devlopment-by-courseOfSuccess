@@ -22,7 +22,7 @@ public class CategoryController {
     @GetMapping
     public ResponseEntity<ApiResponseDto<List<Category>>> getAllCategories() {
         try {
-            List<Category> categories = categoryService.getAllActiveCategories();
+            List<Category> categories = categoryService.getAllCategories();
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Categories retrieved successfully", categories));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -46,11 +46,11 @@ public class CategoryController {
     @GetMapping("/top-level")
     public ResponseEntity<ApiResponseDto<List<Category>>> getTopLevelCategories() {
         try {
-            List<Category> categories = categoryService.getTopLevelCategories();
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "Top-level categories retrieved successfully", categories));
+            List<Category> categories = categoryService.getAllCategories();
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Categories retrieved successfully", categories));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiResponseDto<>(false, "Failed to retrieve top-level categories: " + e.getMessage(), null));
+                .body(new ApiResponseDto<>(false, "Failed to retrieve categories: " + e.getMessage(), null));
         }
     }
 
@@ -72,8 +72,8 @@ public class CategoryController {
     @GetMapping("/{id}/subcategories")
     public ResponseEntity<ApiResponseDto<List<Category>>> getSubcategories(@PathVariable Long id) {
         try {
-            List<Category> subcategories = categoryService.getSubcategories(id);
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "Subcategories retrieved successfully", subcategories));
+            List<Category> subcategories = List.of();
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "No subcategories found (hierarchy not supported)", subcategories));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to retrieve subcategories: " + e.getMessage(), null));

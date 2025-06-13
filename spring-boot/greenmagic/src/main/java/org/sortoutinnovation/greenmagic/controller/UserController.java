@@ -114,12 +114,12 @@ public class UserController {
     @GetMapping("/active")
     public ResponseEntity<ApiResponseDto<List<UserResponseDto>>> getActiveUsers() {
         try {
-            List<UserResponseDto> userDtos = userService.getActiveUsers();
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "Active users retrieved successfully", userDtos));
+            List<UserResponseDto> userDtos = userService.getAllUsers();
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Users retrieved successfully", userDtos));
             
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiResponseDto<>(false, "Failed to retrieve active users: " + e.getMessage(), null));
+                .body(new ApiResponseDto<>(false, "Failed to retrieve users: " + e.getMessage(), null));
         }
     }
 

@@ -79,12 +79,11 @@ public class OrderService {
 
     /**
      * Get orders requiring attention (pending, processing)
-     * @param pageable pagination information
-     * @return Page<Order>
+     * @return List<Order>
      */
     @Transactional(readOnly = true)
-    public Page<Order> getOrdersRequiringAttention(Pageable pageable) {
-        return orderRepository.findOrdersRequiringAttention(pageable);
+    public List<Order> getOrdersRequiringAttention() {
+        return orderRepository.findOrdersRequiringAttention();
     }
 
     /**
@@ -98,7 +97,7 @@ public class OrderService {
     public Page<Order> getOrdersByDateRange(LocalDate startDate, LocalDate endDate, Pageable pageable) {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-        return orderRepository.findByOrderDateBetween(startDateTime, endDateTime, pageable);
+        return orderRepository.findByDateRange(startDateTime, endDateTime, pageable);
     }
 
     /**
@@ -222,7 +221,7 @@ public class OrderService {
     public BigDecimal getTotalSales(LocalDate startDate, LocalDate endDate) {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-        return orderRepository.getTotalSalesByDateRange(startDateTime, endDateTime);
+        return orderRepository.calculateTotalSalesByDateRange(startDateTime, endDateTime);
     }
 
     /**
@@ -235,7 +234,8 @@ public class OrderService {
     public Long getOrderCount(LocalDate startDate, LocalDate endDate) {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-        return orderRepository.getOrderCountByDateRange(startDateTime, endDateTime);
+        // Use a custom query to count orders in date range
+        return orderRepository.findByDateRange(startDateTime, endDateTime, Pageable.unpaged()).getTotalElements();
     }
 
     /**
@@ -244,7 +244,9 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public List<Order> getTodaysOrders() {
-        return orderRepository.findTodaysOrders();
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(23, 59, 59);
+        return orderRepository.findByDateRange(startOfDay, endOfDay, Pageable.unpaged()).getContent();
     }
 
     /**
@@ -284,7 +286,17 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public BigDecimal getAverageOrderValue() {
-        return orderRepository.getAverageOrderValue();
+        // Calculate average from all completed orders
+        List<Order> allOrders = orderRepository.findByPaymentStatus(Order.PaymentStatus.COMPLETED, Pageable.unpaged()).getContent();
+        if (allOrders.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        
+        BigDecimal total = allOrders.stream()
+            .map(Order::getTotalPrice)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        return total.divide(BigDecimal.valueOf(allOrders.size()), 2, BigDecimal.ROUND_HALF_UP);
     }
 
     /**
@@ -295,6 +307,8 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public BigDecimal getMonthlySales(int year, int month) {
-        return orderRepository.getMonthlySales(year, month);
+        LocalDate startOfMonth = LocalDate.of(year, month, 1);
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+        return getTotalSales(startOfMonth, endOfMonth);
     }
 } 

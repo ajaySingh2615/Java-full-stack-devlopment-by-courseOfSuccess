@@ -38,7 +38,7 @@ public class WishlistService {
      */
     public Wishlist addToWishlist(Long userId, Long productId) {
         // Check if product already in wishlist
-        if (wishlistRepository.existsByUserIdAndProductId(userId, productId)) {
+        if (wishlistRepository.existsByUserUserIdAndProductProductId(userId, productId)) {
             throw new RuntimeException("Product already in wishlist");
         }
 
@@ -89,7 +89,7 @@ public class WishlistService {
      */
     @Transactional(readOnly = true)
     public boolean isInWishlist(Long userId, Long productId) {
-        return wishlistRepository.existsByUserIdAndProductId(userId, productId);
+        return wishlistRepository.existsByUserUserIdAndProductProductId(userId, productId);
     }
 
     /**

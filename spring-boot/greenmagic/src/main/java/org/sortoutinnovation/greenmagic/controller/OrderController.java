@@ -80,12 +80,9 @@ public class OrderController {
     }
 
     @GetMapping("/requiring-attention")
-    public ResponseEntity<ApiResponseDto<Page<Order>>> getOrdersRequiringAttention(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<ApiResponseDto<List<Order>>> getOrdersRequiringAttention() {
         try {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<Order> orders = orderService.getOrdersRequiringAttention(pageable);
+            List<Order> orders = orderService.getOrdersRequiringAttention();
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Orders requiring attention retrieved successfully", orders));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

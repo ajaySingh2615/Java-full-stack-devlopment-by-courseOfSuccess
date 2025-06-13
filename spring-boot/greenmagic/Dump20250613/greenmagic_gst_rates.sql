@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.42, for Win64 (x86_64)
 --
--- Host: localhost    Database: panchamritam
+-- Host: localhost    Database: greenmagic
 -- ------------------------------------------------------
 -- Server version	8.0.42
 
@@ -16,28 +16,30 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `categories`
+-- Table structure for table `gst_rates`
 --
 
-DROP TABLE IF EXISTS `categories`;
+DROP TABLE IF EXISTS `gst_rates`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `categories` (
-  `category_id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) DEFAULT NULL,
-  PRIMARY KEY (`category_id`),
-  UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `gst_rates` (
+  `rate_id` int NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(6) DEFAULT NULL,
+  `description` text,
+  `percentage` decimal(5,2) NOT NULL,
+  `rate_name` varchar(50) NOT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`rate_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `categories`
+-- Dumping data for table `gst_rates`
 --
 
-LOCK TABLES `categories` WRITE;
-/*!40000 ALTER TABLE `categories` DISABLE KEYS */;
-INSERT INTO `categories` VALUES (4,'Bakery'),(6,'Beverages'),(2,'Dairy & Eggs'),(1,'Fresh Organic Produce'),(10,'Frozen Foods'),(9,'Household'),(3,'Meat & Seafood'),(5,'Pantry Items'),(8,'Personal Care'),(7,'Snacks');
-/*!40000 ALTER TABLE `categories` ENABLE KEYS */;
+LOCK TABLES `gst_rates` WRITE;
+/*!40000 ALTER TABLE `gst_rates` DISABLE KEYS */;
+/*!40000 ALTER TABLE `gst_rates` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -49,4 +51,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-06-12 15:06:41
+-- Dump completed on 2025-06-13 17:13:53

@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.42, for Win64 (x86_64)
 --
--- Host: localhost    Database: panchamritam
+-- Host: localhost    Database: greenmagic
 -- ------------------------------------------------------
 -- Server version	8.0.42
 
@@ -16,29 +16,29 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `blog_post_tags`
+-- Table structure for table `cart`
 --
 
-DROP TABLE IF EXISTS `blog_post_tags`;
+DROP TABLE IF EXISTS `cart`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `blog_post_tags` (
-  `post_id` int NOT NULL,
-  `tag_id` int NOT NULL,
-  PRIMARY KEY (`post_id`,`tag_id`),
-  KEY `tag_id` (`tag_id`),
-  CONSTRAINT `blog_post_tags_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `blogs` (`blog_id`) ON DELETE CASCADE,
-  CONSTRAINT `blog_post_tags_ibfk_2` FOREIGN KEY (`tag_id`) REFERENCES `blog_tags` (`tag_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `cart` (
+  `cart_id` int NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(6) DEFAULT NULL,
+  `user_id` int DEFAULT NULL,
+  PRIMARY KEY (`cart_id`),
+  UNIQUE KEY `UK9emlp6m95v5er2bcqkjsw48he` (`user_id`),
+  CONSTRAINT `FKg5uhi8vpsuy0lgloxk2h4w5o6` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `blog_post_tags`
+-- Dumping data for table `cart`
 --
 
-LOCK TABLES `blog_post_tags` WRITE;
-/*!40000 ALTER TABLE `blog_post_tags` DISABLE KEYS */;
-/*!40000 ALTER TABLE `blog_post_tags` ENABLE KEYS */;
+LOCK TABLES `cart` WRITE;
+/*!40000 ALTER TABLE `cart` DISABLE KEYS */;
+/*!40000 ALTER TABLE `cart` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -50,4 +50,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-06-12 15:06:42
+-- Dump completed on 2025-06-13 17:13:53

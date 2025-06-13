@@ -8,6 +8,7 @@ import org.sortoutinnovation.greenmagic.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 /**
  * Service class for User business logic
  * Handles user registration, authentication, and profile management
+ * Uses BCrypt for secure password hashing
  */
 @Service
 @Transactional
@@ -24,6 +26,9 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     /**
      * Register a new user
@@ -47,7 +52,9 @@ public class UserService {
         user.setName(registrationRequest.getName());
         user.setEmail(registrationRequest.getEmail());
         user.setPhoneNumber(registrationRequest.getPhoneNumber());
-        user.setPassword(hashPassword(registrationRequest.getPassword())); // Hash password
+        
+        // Hash password using BCrypt
+        user.setPassword(hashPassword(registrationRequest.getPassword()));
 
         User savedUser = userRepository.save(user);
         return UserMapper.toResponseDto(savedUser);
@@ -129,6 +136,49 @@ public class UserService {
     }
 
     /**
+     * Hash password using BCrypt
+     * @param password plain text password
+     * @return hashed password
+     */
+    private String hashPassword(String password) {
+        return passwordEncoder.encode(password);
+    }
+
+    /**
+     * Verify password using BCrypt
+     * @param plainPassword plain text password
+     * @param hashedPassword hashed password from database
+     * @return boolean indicating if passwords match
+     */
+    private boolean verifyPassword(String plainPassword, String hashedPassword) {
+        return passwordEncoder.matches(plainPassword, hashedPassword);
+    }
+
+    /**
+     * Update user password
+     * @param id user ID
+     * @param currentPassword current password for verification
+     * @param newPassword new password to set
+     * @return UserResponseDto
+     * @throws RuntimeException if user not found or current password is incorrect
+     */
+    public UserResponseDto updatePassword(Long id, String currentPassword, String newPassword) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+
+        // Verify current password
+        if (!verifyPassword(currentPassword, user.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+        // Update password with new hash
+        user.setPassword(hashPassword(newPassword));
+        User updatedUser = userRepository.save(user);
+        
+        return UserMapper.toResponseDto(updatedUser);
+    }
+
+    /**
      * Delete user
      * @param id user ID
      * @throws RuntimeException if user not found
@@ -152,6 +202,7 @@ public class UserService {
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new RuntimeException("Invalid email or password"));
 
+        // Verify password using BCrypt
         if (!verifyPassword(password, user.getPassword())) {
             throw new RuntimeException("Invalid email or password");
         }
@@ -205,25 +256,20 @@ public class UserService {
     }
 
     /**
-     * Hash password (placeholder implementation)
-     * In production, use BCrypt or similar
-     * @param password plain text password
-     * @return hashed password
+     * Reset user password (admin function)
+     * @param userId user ID
+     * @param newPassword new password
+     * @return UserResponseDto
+     * @throws RuntimeException if user not found
      */
-    private String hashPassword(String password) {
-        // TODO: Implement proper password hashing with BCrypt
-        return password; // Placeholder - DO NOT use in production
-    }
+    public UserResponseDto resetPassword(Long userId, String newPassword) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-    /**
-     * Verify password (placeholder implementation)
-     * In production, use BCrypt or similar
-     * @param plainPassword plain text password
-     * @param hashedPassword hashed password
-     * @return boolean
-     */
-    private boolean verifyPassword(String plainPassword, String hashedPassword) {
-        // TODO: Implement proper password verification with BCrypt
-        return plainPassword.equals(hashedPassword); // Placeholder - DO NOT use in production
+        // Hash and set new password
+        user.setPassword(hashPassword(newPassword));
+        User updatedUser = userRepository.save(user);
+        
+        return UserMapper.toResponseDto(updatedUser);
     }
 } 

@@ -5,6 +5,8 @@ import org.cadt.ecom.model.OrderRequest;
 import org.cadt.ecom.service.OrderService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/orders")
 @CrossOrigin("*")
@@ -19,5 +21,10 @@ public class OrderController {
     @PostMapping("/place/{userId}")
     public OrderDTO placeOrder(@PathVariable Long userId, @RequestBody OrderRequest orderRequest) {
         return orderService.placeOrder(userId, orderRequest.getProductQuantities(), orderRequest.getTotalAmount());
+    }
+
+    @GetMapping("/all-orders")
+    public List<OrderDTO> getAllOrders(){
+        return orderService.getAllOrders();
     }
 }

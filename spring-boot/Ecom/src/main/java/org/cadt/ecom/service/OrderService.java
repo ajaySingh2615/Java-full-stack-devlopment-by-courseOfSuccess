@@ -11,10 +11,7 @@ import org.cadt.ecom.repo.ProductRepository;
 import org.cadt.ecom.repo.UserRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,7 +39,7 @@ public class OrderService {
         List<OrderItem> orderItems = new ArrayList<>();
         List<OrderItemDTO> orderItemDTOS = new ArrayList<>();
 
-        for (Map.Entry<Long, Integer> entry: productQuantities.entrySet()){
+        for (Map.Entry<Long, Integer> entry : productQuantities.entrySet()) {
             Product product = productRepository.findById(entry.getKey())
                     .orElseThrow(() -> new RuntimeException("Product not found"));
 
@@ -82,5 +79,16 @@ public class OrderService {
                 orders.getUser() != null ? orders.getUser().getEmail() : "Unknown",
                 orderItems
         );
+    }
+
+    public List<OrderDTO> getOrderByUser(Long userId) {
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isEmpty()) {
+            throw new RuntimeException("user not found");
+        }
+
+        User user = userOptional.get();
+        List<Orders> ordersList = orderRepository.findByUser(user);
+        return ordersList.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 }

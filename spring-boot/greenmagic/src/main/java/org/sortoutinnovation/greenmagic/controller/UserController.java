@@ -1,0 +1,265 @@
+package org.sortoutinnovation.greenmagic.controller;
+
+import org.sortoutinnovation.greenmagic.dto.ApiResponseDto;
+import org.sortoutinnovation.greenmagic.dto.UserRegistrationRequestDto;
+import org.sortoutinnovation.greenmagic.dto.UserResponseDto;
+import org.sortoutinnovation.greenmagic.model.User;
+import org.sortoutinnovation.greenmagic.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+/**
+ * REST Controller for User management operations
+ * Provides endpoints for user registration, authentication, and profile management
+ */
+@RestController
+@RequestMapping("/api/users")
+@Validated
+@CrossOrigin(origins = "*")
+public class UserController {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    /**
+     * Register a new user
+     * POST /api/users/register
+     */
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponseDto<UserResponseDto>> registerUser(
+            @Valid @RequestBody UserRegistrationRequestDto registrationRequest) {
+        
+        try {
+            // Check if user already exists
+            if (userRepository.existsByEmail(registrationRequest.getEmail())) {
+                return ResponseEntity.badRequest()
+                    .body(new ApiResponseDto<>(false, "Email already registered", null));
+            }
+            
+            if (userRepository.existsByPhoneNumber(registrationRequest.getPhoneNumber())) {
+                return ResponseEntity.badRequest()
+                    .body(new ApiResponseDto<>(false, "Phone number already registered", null));
+            }
+
+            // Create new user
+            User user = new User();
+            user.setName(registrationRequest.getName());
+            user.setEmail(registrationRequest.getEmail());
+            user.setPhoneNumber(registrationRequest.getPhoneNumber());
+            user.setPassword(registrationRequest.getPassword()); // In real app, hash this
+
+            User savedUser = userRepository.save(user);
+            
+            UserResponseDto responseDto = new UserResponseDto(
+                savedUser.getUserId(),
+                savedUser.getName(),
+                savedUser.getEmail(),
+                "USER" // default role name
+            );
+
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponseDto<>(true, "User registered successfully", responseDto));
+                
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Registration failed: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get all users with pagination
+     * GET /api/users
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponseDto<Page<UserResponseDto>>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<User> users = userRepository.findAll(pageable);
+            
+            Page<UserResponseDto> userDtos = users.map(user -> new UserResponseDto(
+                user.getUserId(),
+                user.getName(),
+                user.getEmail(),
+                "USER" // default role name
+            ));
+
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Users retrieved successfully", userDtos));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve users: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get user by ID
+     * GET /api/users/{id}
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponseDto<UserResponseDto>> getUserById(@PathVariable Long id) {
+        try {
+            Optional<User> userOpt = userRepository.findById(id);
+            
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.notFound()
+                    .build();
+            }
+
+            User user = userOpt.get();
+            UserResponseDto responseDto = new UserResponseDto(
+                user.getUserId(),
+                user.getName(),
+                user.getEmail(),
+                "USER" // default role name
+            );
+
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "User found", responseDto));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve user: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get user by email
+     * GET /api/users/email/{email}
+     */
+    @GetMapping("/email/{email}")
+    public ResponseEntity<ApiResponseDto<UserResponseDto>> getUserByEmail(@PathVariable String email) {
+        try {
+            Optional<User> userOpt = userRepository.findByEmail(email);
+            
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.notFound()
+                    .build();
+            }
+
+            User user = userOpt.get();
+            UserResponseDto responseDto = new UserResponseDto(
+                user.getUserId(),
+                user.getName(),
+                user.getEmail(),
+                "USER" // default role name
+            );
+
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "User found", responseDto));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve user: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get active users
+     * GET /api/users/active
+     */
+    @GetMapping("/active")
+    public ResponseEntity<ApiResponseDto<List<UserResponseDto>>> getActiveUsers() {
+        try {
+            List<User> activeUsers = userRepository.findAllActiveUsers();
+            
+            List<UserResponseDto> userDtos = activeUsers.stream()
+                .map(user -> new UserResponseDto(
+                    user.getUserId(),
+                    user.getName(),
+                    user.getEmail(),
+                    "USER" // default role name
+                ))
+                .collect(Collectors.toList());
+
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Active users retrieved successfully", userDtos));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve active users: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Update user profile
+     * PUT /api/users/{id}
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponseDto<UserResponseDto>> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UserRegistrationRequestDto updateRequest) {
+        
+        try {
+            Optional<User> userOpt = userRepository.findById(id);
+            
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.notFound()
+                    .build();
+            }
+
+            User user = userOpt.get();
+            
+            // Check if email is being changed and if new email already exists
+            if (!user.getEmail().equals(updateRequest.getEmail()) && 
+                userRepository.existsByEmail(updateRequest.getEmail())) {
+                return ResponseEntity.badRequest()
+                    .body(new ApiResponseDto<>(false, "Email already registered", null));
+            }
+
+            // Update user fields
+            user.setName(updateRequest.getName());
+            user.setEmail(updateRequest.getEmail());
+            user.setPhoneNumber(updateRequest.getPhoneNumber());
+
+            User updatedUser = userRepository.save(user);
+            
+            UserResponseDto responseDto = new UserResponseDto(
+                updatedUser.getUserId(),
+                updatedUser.getName(),
+                updatedUser.getEmail(),
+                "USER" // default role name
+            );
+
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "User updated successfully", responseDto));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to update user: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Delete user (since no isActive field, we'll use actual deletion)
+     * DELETE /api/users/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponseDto<Void>> deleteUser(@PathVariable Long id) {
+        try {
+            Optional<User> userOpt = userRepository.findById(id);
+            
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.notFound()
+                    .build();
+            }
+
+            userRepository.deleteById(id);
+
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "User deleted successfully", null));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to delete user: " + e.getMessage(), null));
+        }
+    }
+} 

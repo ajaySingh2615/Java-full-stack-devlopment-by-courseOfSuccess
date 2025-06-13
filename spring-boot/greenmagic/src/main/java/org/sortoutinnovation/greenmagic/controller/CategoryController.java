@@ -1,6 +1,7 @@
 package org.sortoutinnovation.greenmagic.controller;
 
 import org.sortoutinnovation.greenmagic.dto.ApiResponseDto;
+import org.sortoutinnovation.greenmagic.dto.CategoryResponseDto;
 import org.sortoutinnovation.greenmagic.model.Category;
 import org.sortoutinnovation.greenmagic.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +21,9 @@ public class CategoryController {
     private CategoryService categoryService;
 
     @GetMapping
-    public ResponseEntity<ApiResponseDto<List<Category>>> getAllCategories() {
+    public ResponseEntity<ApiResponseDto<List<CategoryResponseDto>>> getAllCategories() {
         try {
-            List<Category> categories = categoryService.getAllCategories();
+            List<CategoryResponseDto> categories = categoryService.getAllCategories();
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Categories retrieved successfully", categories));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -31,9 +32,9 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponseDto<Category>> getCategoryById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponseDto<CategoryResponseDto>> getCategoryById(@PathVariable Long id) {
         try {
-            Category category = categoryService.getCategoryById(id);
+            CategoryResponseDto category = categoryService.getCategoryById(id);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Category found", category));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -44,9 +45,9 @@ public class CategoryController {
     }
 
     @GetMapping("/top-level")
-    public ResponseEntity<ApiResponseDto<List<Category>>> getTopLevelCategories() {
+    public ResponseEntity<ApiResponseDto<List<CategoryResponseDto>>> getTopLevelCategories() {
         try {
-            List<Category> categories = categoryService.getAllCategories();
+            List<CategoryResponseDto> categories = categoryService.getAllCategories();
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Categories retrieved successfully", categories));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -55,9 +56,9 @@ public class CategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponseDto<Category>> createCategory(@Valid @RequestBody Category category) {
+    public ResponseEntity<ApiResponseDto<CategoryResponseDto>> createCategory(@Valid @RequestBody Category category) {
         try {
-            Category savedCategory = categoryService.createCategory(category);
+            CategoryResponseDto savedCategory = categoryService.createCategory(category);
             return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDto<>(true, "Category created successfully", savedCategory));
         } catch (RuntimeException e) {
@@ -70,9 +71,9 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}/subcategories")
-    public ResponseEntity<ApiResponseDto<List<Category>>> getSubcategories(@PathVariable Long id) {
+    public ResponseEntity<ApiResponseDto<List<CategoryResponseDto>>> getSubcategories(@PathVariable Long id) {
         try {
-            List<Category> subcategories = List.of();
+            List<CategoryResponseDto> subcategories = List.of();
             return ResponseEntity.ok(new ApiResponseDto<>(true, "No subcategories found (hierarchy not supported)", subcategories));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

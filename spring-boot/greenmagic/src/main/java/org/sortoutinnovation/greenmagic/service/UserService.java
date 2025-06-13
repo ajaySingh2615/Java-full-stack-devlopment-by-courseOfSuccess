@@ -2,6 +2,7 @@ package org.sortoutinnovation.greenmagic.service;
 
 import org.sortoutinnovation.greenmagic.dto.UserRegistrationRequestDto;
 import org.sortoutinnovation.greenmagic.dto.UserResponseDto;
+import org.sortoutinnovation.greenmagic.mapper.UserMapper;
 import org.sortoutinnovation.greenmagic.model.User;
 import org.sortoutinnovation.greenmagic.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -32,13 +32,13 @@ public class UserService {
      * @throws RuntimeException if email or phone already exists
      */
     public UserResponseDto registerUser(UserRegistrationRequestDto registrationRequest) {
-        // Validate unique constraints
+        // Validate unique email
         if (userRepository.existsByEmail(registrationRequest.getEmail())) {
             throw new RuntimeException("Email already registered");
         }
-        
-        if (registrationRequest.getPhoneNumber() != null && 
-            userRepository.existsByPhoneNumber(registrationRequest.getPhoneNumber())) {
+
+        // Validate unique phone number
+        if (userRepository.existsByPhoneNumber(registrationRequest.getPhoneNumber())) {
             throw new RuntimeException("Phone number already registered");
         }
 
@@ -50,7 +50,7 @@ public class UserService {
         user.setPassword(hashPassword(registrationRequest.getPassword())); // Hash password
 
         User savedUser = userRepository.save(user);
-        return convertToResponseDto(savedUser);
+        return UserMapper.toResponseDto(savedUser);
     }
 
     /**
@@ -61,7 +61,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public Page<UserResponseDto> getAllUsers(Pageable pageable) {
         Page<User> users = userRepository.findAll(pageable);
-        return users.map(this::convertToResponseDto);
+        return users.map(UserMapper::toResponseDto);
     }
 
     /**
@@ -74,7 +74,7 @@ public class UserService {
     public UserResponseDto getUserById(Long id) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
-        return convertToResponseDto(user);
+        return UserMapper.toResponseDto(user);
     }
 
     /**
@@ -87,7 +87,7 @@ public class UserService {
     public UserResponseDto getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
-        return convertToResponseDto(user);
+        return UserMapper.toResponseDto(user);
     }
 
     /**
@@ -98,7 +98,7 @@ public class UserService {
     public List<UserResponseDto> getAllUsers() {
         List<User> users = userRepository.findAllUsers();
         return users.stream()
-            .map(this::convertToResponseDto)
+            .map(UserMapper::toResponseDto)
             .collect(Collectors.toList());
     }
 
@@ -125,7 +125,7 @@ public class UserService {
         user.setPhoneNumber(updateRequest.getPhoneNumber());
 
         User updatedUser = userRepository.save(user);
-        return convertToResponseDto(updatedUser);
+        return UserMapper.toResponseDto(updatedUser);
     }
 
     /**
@@ -156,7 +156,7 @@ public class UserService {
             throw new RuntimeException("Invalid email or password");
         }
 
-        return convertToResponseDto(user);
+        return UserMapper.toResponseDto(user);
     }
 
     /**
@@ -188,7 +188,7 @@ public class UserService {
     public List<UserResponseDto> getUsersByRole(String roleName) {
         List<User> users = userRepository.findByRoleName(roleName);
         return users.stream()
-            .map(this::convertToResponseDto)
+            .map(UserMapper::toResponseDto)
             .collect(Collectors.toList());
     }
 
@@ -200,22 +200,8 @@ public class UserService {
     public List<UserResponseDto> getUsersCreatedToday() {
         List<User> users = userRepository.findUsersCreatedToday();
         return users.stream()
-            .map(this::convertToResponseDto)
+            .map(UserMapper::toResponseDto)
             .collect(Collectors.toList());
-    }
-
-    /**
-     * Convert User entity to UserResponseDto
-     * @param user User entity
-     * @return UserResponseDto
-     */
-    private UserResponseDto convertToResponseDto(User user) {
-        return new UserResponseDto(
-            user.getUserId(),
-            user.getName(),
-            user.getEmail(),
-            user.getRole() != null ? user.getRole().getRoleName() : "USER"
-        );
     }
 
     /**

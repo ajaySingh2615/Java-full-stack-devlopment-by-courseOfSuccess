@@ -1,6 +1,8 @@
 package org.sortoutinnovation.greenmagic.controller;
 
 import org.sortoutinnovation.greenmagic.dto.ApiResponseDto;
+import org.sortoutinnovation.greenmagic.dto.OrderResponseDto;
+import org.sortoutinnovation.greenmagic.mapper.OrderMapper;
 import org.sortoutinnovation.greenmagic.model.Order;
 import org.sortoutinnovation.greenmagic.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,13 +25,14 @@ public class OrderController {
     private OrderService orderService;
 
     @GetMapping
-    public ResponseEntity<ApiResponseDto<Page<Order>>> getAllOrders(
+    public ResponseEntity<ApiResponseDto<Page<OrderResponseDto>>> getAllOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
             Pageable pageable = PageRequest.of(page, size);
             Page<Order> orders = orderService.getAllOrders(pageable);
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "Orders retrieved successfully", orders));
+            Page<OrderResponseDto> orderDtos = orders.map(OrderMapper::toSummaryDto);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Orders retrieved successfully", orderDtos));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to retrieve orders: " + e.getMessage(), null));
@@ -37,10 +40,11 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponseDto<Order>> getOrderById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponseDto<OrderResponseDto>> getOrderById(@PathVariable Long id) {
         try {
             Order order = orderService.getOrderById(id);
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "Order found", order));
+            OrderResponseDto orderDto = OrderMapper.toResponseDto(order);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Order found", orderDto));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
@@ -50,14 +54,15 @@ public class OrderController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<ApiResponseDto<Page<Order>>> getOrdersByUserId(
+    public ResponseEntity<ApiResponseDto<Page<OrderResponseDto>>> getOrdersByUserId(
             @PathVariable Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
             Pageable pageable = PageRequest.of(page, size);
             Page<Order> orders = orderService.getOrdersByUser(userId, pageable);
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "User orders retrieved successfully", orders));
+            Page<OrderResponseDto> orderDtos = orders.map(OrderMapper::toSummaryDto);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "User orders retrieved successfully", orderDtos));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to retrieve user orders: " + e.getMessage(), null));
@@ -65,14 +70,15 @@ public class OrderController {
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<ApiResponseDto<Page<Order>>> getOrdersByStatus(
+    public ResponseEntity<ApiResponseDto<Page<OrderResponseDto>>> getOrdersByStatus(
             @PathVariable String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
             Pageable pageable = PageRequest.of(page, size);
             Page<Order> orders = orderService.getOrdersByStatus(status, pageable);
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "Orders by status retrieved successfully", orders));
+            Page<OrderResponseDto> orderDtos = orders.map(OrderMapper::toSummaryDto);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Orders by status retrieved successfully", orderDtos));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to retrieve orders by status: " + e.getMessage(), null));
@@ -80,10 +86,11 @@ public class OrderController {
     }
 
     @GetMapping("/requiring-attention")
-    public ResponseEntity<ApiResponseDto<List<Order>>> getOrdersRequiringAttention() {
+    public ResponseEntity<ApiResponseDto<List<OrderResponseDto>>> getOrdersRequiringAttention() {
         try {
             List<Order> orders = orderService.getOrdersRequiringAttention();
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "Orders requiring attention retrieved successfully", orders));
+            List<OrderResponseDto> orderDtos = OrderMapper.toSummaryDtoList(orders);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Orders requiring attention retrieved successfully", orderDtos));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to retrieve orders requiring attention: " + e.getMessage(), null));
@@ -91,11 +98,12 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponseDto<Order>> createOrder(@Valid @RequestBody Order order) {
+    public ResponseEntity<ApiResponseDto<OrderResponseDto>> createOrder(@Valid @RequestBody Order order) {
         try {
             Order savedOrder = orderService.createOrder(order);
+            OrderResponseDto orderDto = OrderMapper.toResponseDto(savedOrder);
             return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponseDto<>(true, "Order created successfully", savedOrder));
+                .body(new ApiResponseDto<>(true, "Order created successfully", orderDto));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
                 .body(new ApiResponseDto<>(false, e.getMessage(), null));
@@ -106,12 +114,13 @@ public class OrderController {
     }
 
     @PutMapping("/{id}/status")
-    public ResponseEntity<ApiResponseDto<Order>> updateOrderStatus(
+    public ResponseEntity<ApiResponseDto<OrderResponseDto>> updateOrderStatus(
             @PathVariable Long id,
             @RequestParam String status) {
         try {
             Order updatedOrder = orderService.updateOrderStatus(id, status);
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "Order status updated successfully", updatedOrder));
+            OrderResponseDto orderDto = OrderMapper.toSummaryDto(updatedOrder);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Order status updated successfully", orderDto));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {

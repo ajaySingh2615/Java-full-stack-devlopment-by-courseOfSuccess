@@ -1,5 +1,7 @@
 package org.sortoutinnovation.greenmagic.service;
 
+import org.sortoutinnovation.greenmagic.dto.CategoryResponseDto;
+import org.sortoutinnovation.greenmagic.mapper.CategoryMapper;
 import org.sortoutinnovation.greenmagic.model.Category;
 import org.sortoutinnovation.greenmagic.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,21 +23,35 @@ public class CategoryService {
 
     /**
      * Get all categories
-     * @return List<Category>
+     * @return List<CategoryResponseDto>
      */
     @Transactional(readOnly = true)
-    public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
+    public List<CategoryResponseDto> getAllCategories() {
+        List<Category> categories = categoryRepository.findAll();
+        return CategoryMapper.toResponseDtoList(categories);
     }
 
     /**
      * Get category by ID
      * @param id category ID
+     * @return CategoryResponseDto
+     * @throws RuntimeException if category not found
+     */
+    @Transactional(readOnly = true)
+    public CategoryResponseDto getCategoryById(Long id) {
+        Category category = categoryRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
+        return CategoryMapper.toResponseDto(category);
+    }
+
+    /**
+     * Get category entity by ID (for internal use)
+     * @param id category ID
      * @return Category
      * @throws RuntimeException if category not found
      */
     @Transactional(readOnly = true)
-    public Category getCategoryById(Long id) {
+    public Category getCategoryEntityById(Long id) {
         return categoryRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
     }
@@ -43,38 +59,40 @@ public class CategoryService {
     /**
      * Get category by name
      * @param name category name
-     * @return Category
+     * @return CategoryResponseDto
      * @throws RuntimeException if category not found
      */
     @Transactional(readOnly = true)
-    public Category getCategoryByName(String name) {
-        return categoryRepository.findByName(name)
+    public CategoryResponseDto getCategoryByName(String name) {
+        Category category = categoryRepository.findByName(name)
             .orElseThrow(() -> new RuntimeException("Category not found with name: " + name));
+        return CategoryMapper.toResponseDto(category);
     }
 
     /**
      * Create a new category
      * @param category category data
-     * @return Category
+     * @return CategoryResponseDto
      * @throws RuntimeException if name already exists
      */
-    public Category createCategory(Category category) {
+    public CategoryResponseDto createCategory(Category category) {
         // Validate unique name
         if (category.getName() != null && categoryRepository.existsByName(category.getName())) {
             throw new RuntimeException("Category with name already exists: " + category.getName());
         }
 
-        return categoryRepository.save(category);
+        Category savedCategory = categoryRepository.save(category);
+        return CategoryMapper.toResponseDto(savedCategory);
     }
 
     /**
      * Update category
      * @param id category ID
      * @param updatedCategory updated category data
-     * @return Category
+     * @return CategoryResponseDto
      * @throws RuntimeException if category not found or name conflict
      */
-    public Category updateCategory(Long id, Category updatedCategory) {
+    public CategoryResponseDto updateCategory(Long id, Category updatedCategory) {
         Category existingCategory = categoryRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
 
@@ -90,7 +108,8 @@ public class CategoryService {
             existingCategory.setName(updatedCategory.getName());
         }
 
-        return categoryRepository.save(existingCategory);
+        Category savedCategory = categoryRepository.save(existingCategory);
+        return CategoryMapper.toResponseDto(savedCategory);
     }
 
     /**

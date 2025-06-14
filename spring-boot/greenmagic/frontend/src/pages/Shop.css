@@ -1,0 +1,25 @@
+/* Shop.css - Shop page-specific styles */
+
+.shop {
+  /* Shop page specific styles */
+}
+
+/* Filter sidebar sticky positioning */
+.shop .filter-sidebar {
+  @apply sticky top-24;
+}
+
+/* Product grid hover effects */
+.shop .product-grid-item:hover {
+  @apply transform scale-105 transition-all duration-300;
+  box-shadow: 0 20px 40px rgba(34, 197, 94, 0.15);
+}
+
+/* Category filter buttons */
+.shop .category-filter.active {
+  @apply bg-primary-600 text-white;
+}
+
+.shop .category-filter:not(.active):hover {
+  @apply bg-primary-50 text-primary-600;
+} 

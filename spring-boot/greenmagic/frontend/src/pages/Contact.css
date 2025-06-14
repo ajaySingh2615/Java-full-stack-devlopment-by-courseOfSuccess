@@ -1,0 +1,19 @@
+/* Contact.css - Contact page-specific styles */
+
+.contact {
+  /* Contact page specific styles */
+}
+
+/* Contact form animations */
+.contact .contact-form {
+  @apply transition-all duration-300;
+}
+
+.contact .contact-form:hover {
+  @apply shadow-lg;
+}
+
+/* Contact info icons */
+.contact .contact-icon {
+  @apply transition-all duration-300 hover:scale-110;
+} 

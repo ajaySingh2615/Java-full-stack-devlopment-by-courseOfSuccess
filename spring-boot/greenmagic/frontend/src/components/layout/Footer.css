@@ -1,0 +1,73 @@
+/* Footer.css - Footer-specific styles */
+
+.footer {
+  /* Custom styles for footer component */
+}
+
+/* Newsletter section animation */
+.footer .newsletter-section {
+  background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+}
+
+/* Hover effects for footer links */
+.footer a:hover {
+  @apply transform transition-transform duration-200;
+}
+
+.footer a:hover:not(.logo-link) {
+  transform: translateX(4px);
+}
+
+/* Social media icons hover effects */
+.footer .social-links a {
+  @apply transition-all duration-300 hover:scale-110;
+}
+
+.footer .social-links a:hover {
+  transform: translateY(-2px) scale(1.1);
+}
+
+/* Feature icons animation */
+.footer .feature-icon {
+  @apply transition-all duration-300;
+}
+
+.footer .feature-item:hover .feature-icon {
+  @apply transform scale-110 rotate-12;
+}
+
+/* Newsletter input focus effect */
+.footer .newsletter-input:focus {
+  @apply ring-4 ring-primary-200 border-primary-300;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .footer .feature-item {
+    @apply flex-col text-center;
+  }
+  
+  .footer .newsletter-form {
+    @apply flex-col space-y-2;
+  }
+  
+  .footer .newsletter-form input {
+    @apply rounded-lg;
+  }
+  
+  .footer .newsletter-form button {
+    @apply rounded-lg;
+  }
+}
+
+/* Footer background pattern */
+.footer .main-footer {
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(34, 197, 94, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.1) 0%, transparent 50%);
+}
+
+/* Smooth scroll behavior for footer links */
+.footer a[href^="#"] {
+  scroll-behavior: smooth;
+} 

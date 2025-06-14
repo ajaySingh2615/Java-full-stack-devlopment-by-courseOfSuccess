@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, User, Mail, Phone, Lock, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, EyeOff, User, Mail, Phone, Lock, CheckCircle, XCircle, UserCheck } from 'lucide-react';
 import authService from '../services/authService';
 import './Register.css';
 
@@ -11,13 +11,32 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    phoneNumber: ''
+    phoneNumber: '',
+    role: ''
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordValidation, setPasswordValidation] = useState(null);
+  const [availableRoles, setAvailableRoles] = useState([]);
+
+  // Fetch available roles on component mount
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/api/users/roles');
+        const data = await response.json();
+        if (data.success) {
+          setAvailableRoles(data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch roles:', error);
+      }
+    };
+
+    fetchRoles();
+  }, []);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -82,6 +101,11 @@ const Register = () => {
       newErrors.phoneNumber = 'Phone number is required';
     } else if (!authService.validatePhoneNumber(formData.phoneNumber)) {
       newErrors.phoneNumber = 'Please enter a valid phone number';
+    }
+
+    // Role validation
+    if (!formData.role) {
+      newErrors.role = 'Please select a role';
     }
 
     setErrors(newErrors);
@@ -210,6 +234,36 @@ const Register = () => {
                 />
               </div>
               {errors.phoneNumber && <span className="error-message">{errors.phoneNumber}</span>}
+            </div>
+
+            {/* Role Selection Field */}
+            <div className="form-group">
+              <label htmlFor="role">Account Type</label>
+              <div className="input-wrapper">
+                <UserCheck className="input-icon" size={20} />
+                <select
+                  id="role"
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  className={errors.role ? 'input-error' : ''}
+                  disabled={loading}
+                >
+                  <option value="">Select your account type</option>
+                  {availableRoles.map(role => (
+                    <option key={role.roleId} value={role.roleName}>
+                      {role.roleName === 'USER' ? 'Customer' : 'Vendor'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {errors.role && <span className="error-message">{errors.role}</span>}
+              <div className="role-description">
+                <p className="role-help-text">
+                  <strong>Customer:</strong> Browse and purchase eco-friendly products<br/>
+                  <strong>Vendor:</strong> Sell your sustainable products on our platform
+                </p>
+              </div>
             </div>
 
             {/* Password Field */}

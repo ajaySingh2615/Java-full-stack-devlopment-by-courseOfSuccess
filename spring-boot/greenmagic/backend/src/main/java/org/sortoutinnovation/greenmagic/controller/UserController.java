@@ -3,7 +3,9 @@ package org.sortoutinnovation.greenmagic.controller;
 import org.sortoutinnovation.greenmagic.dto.ApiResponseDto;
 import org.sortoutinnovation.greenmagic.dto.UserRegistrationRequestDto;
 import org.sortoutinnovation.greenmagic.dto.UserResponseDto;
+import org.sortoutinnovation.greenmagic.model.Role;
 import org.sortoutinnovation.greenmagic.service.UserService;
+import org.sortoutinnovation.greenmagic.service.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +30,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private RoleService roleService;
 
     /**
      * Register a new user
@@ -160,6 +165,26 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to delete user: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get available roles for registration
+     * GET /api/users/roles
+     */
+    @GetMapping("/roles")
+    public ResponseEntity<ApiResponseDto<List<Role>>> getAvailableRoles() {
+        try {
+            List<Role> roles = roleService.getAllRoles();
+            // Filter out ADMIN role from public registration
+            List<Role> publicRoles = roles.stream()
+                .filter(role -> !role.getRoleName().equals("ADMIN"))
+                .toList();
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Roles retrieved successfully", publicRoles));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve roles: " + e.getMessage(), null));
         }
     }
 } 

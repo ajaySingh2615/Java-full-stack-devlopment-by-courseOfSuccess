@@ -33,4 +33,8 @@ public class UserRegistrationRequestDto {
 
     @Pattern(regexp = "^[+]?[1-9]\\d{1,14}$", message = "Please provide a valid phone number")
     private String phoneNumber;
+
+    @NotBlank(message = "Role is required")
+    @Pattern(regexp = "^(USER|VENDOR)$", message = "Role must be either USER or VENDOR")
+    private String role;
 } 

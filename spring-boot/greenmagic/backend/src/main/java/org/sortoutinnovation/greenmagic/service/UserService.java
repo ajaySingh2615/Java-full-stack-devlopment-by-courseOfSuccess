@@ -4,6 +4,7 @@ import org.sortoutinnovation.greenmagic.dto.UserRegistrationRequestDto;
 import org.sortoutinnovation.greenmagic.dto.UserResponseDto;
 import org.sortoutinnovation.greenmagic.mapper.UserMapper;
 import org.sortoutinnovation.greenmagic.model.User;
+import org.sortoutinnovation.greenmagic.model.Role;
 import org.sortoutinnovation.greenmagic.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,9 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private RoleService roleService;
+
     /**
      * Register a new user
      * @param registrationRequest user registration data
@@ -47,11 +51,11 @@ public class UserService {
             throw new RuntimeException("Phone number already registered");
         }
 
-        // Create new user
-        User user = new User();
-        user.setName(registrationRequest.getName());
-        user.setEmail(registrationRequest.getEmail());
-        user.setPhoneNumber(registrationRequest.getPhoneNumber());
+        // Get role based on registration request
+        Role role = roleService.getRoleByName(registrationRequest.getRole());
+
+        // Create new user using UserMapper
+        User user = UserMapper.toEntity(registrationRequest, role);
         
         // Hash password using BCrypt
         user.setPassword(hashPassword(registrationRequest.getPassword()));

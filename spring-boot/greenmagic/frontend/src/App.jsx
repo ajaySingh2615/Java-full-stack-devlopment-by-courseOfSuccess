@@ -10,6 +10,7 @@ import Contact from './pages/Contact';
 import Blog from './pages/Blog';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import UserManagement from './pages/UserManagement';
 import './App.css';
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
               <Route path="/blog" element={<Blog />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/admin/users" element={<UserManagement />} />
             </Routes>
           </main>
           <Footer />

@@ -5,6 +5,7 @@ import {
   X, 
   ShoppingCart, 
   User, 
+  Users,
   Search,
   Leaf,
   Heart,
@@ -22,7 +23,7 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const location = useLocation();
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isAdmin } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -86,6 +87,12 @@ const Navbar = () => {
           <Package size={16} />
           <span>Orders</span>
         </Link>
+        {isAdmin() && (
+          <Link to="/admin/users" className="user-menu-link">
+            <Users size={16} />
+            <span>User Management</span>
+          </Link>
+        )}
         <button onClick={handleLogout} className="user-menu-link logout-btn">
           <LogOut size={16} />
           <span>Logout</span>
@@ -266,6 +273,15 @@ const Navbar = () => {
                   >
                     Orders
                   </Link>
+                  {isAdmin() && (
+                    <Link
+                      to="/admin/users"
+                      className="mobile-nav-link"
+                      onClick={closeMenu}
+                    >
+                      User Management
+                    </Link>
+                  )}
                   <button
                     onClick={() => {
                       handleLogout();

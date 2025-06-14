@@ -72,8 +72,10 @@ public class SecurityConfig {
                 // Public endpoints (no authentication required)
                 .requestMatchers(
                     "/users/register",               // User registration
+                    "/users/roles",                  // Get available roles for registration
                     "/users/login",                  // User login (if implemented)
                     "/auth/login",                   // Auth controller login endpoint
+                    "/users/**",                     // User management endpoints (temporary for development)
                     "/categories/**",                // Category browsing
                     "/products/**",                  // Product browsing
                     "/actuator/health",              // Health check
@@ -127,7 +129,8 @@ public class SecurityConfig {
         
         // Allow specific origins (update for production)
         configuration.setAllowedOriginPatterns(Arrays.asList(
-            "http://localhost:5173",     // React development server
+            "http://localhost:3000",     // React development server (Create React App)
+            "http://localhost:5173",     // React development server (Vite)
             "http://localhost:4200",     // Angular development server
             "http://localhost:8080",     // Local development
             "https://yourdomain.com"     // Production domain

@@ -14,7 +14,7 @@ import java.util.Map;
  * Handles user login and authentication endpoints
  */
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @CrossOrigin(origins = "*")
 public class AuthController {
 

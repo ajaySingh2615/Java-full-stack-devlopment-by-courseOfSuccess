@@ -17,7 +17,7 @@ import java.util.List;
  * Provides endpoints for shopping cart functionality
  */
 @RestController
-@RequestMapping("/api/cart")
+@RequestMapping("/cart")
 @CrossOrigin(origins = "*")
 public class CartController {
 

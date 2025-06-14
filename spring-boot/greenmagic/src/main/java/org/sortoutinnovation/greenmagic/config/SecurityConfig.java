@@ -71,36 +71,36 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints (no authentication required)
                 .requestMatchers(
-                    "/api/users/register",           // User registration
-                    "/api/users/login",              // User login (if implemented)
-                    "/api/categories/**",            // Category browsing
-                    "/api/products/**",              // Product browsing
+                    "/users/register",               // User registration
+                    "/users/login",                  // User login (if implemented)
+                    "/categories/**",                // Category browsing
+                    "/products/**",                  // Product browsing
                     "/actuator/health",              // Health check
                     "/error"                         // Error handling
                 ).permitAll()
                 
                 // Admin-only endpoints
                 .requestMatchers(
-                    "/api/admin/**",                 // Admin panel
-                    "/api/users/*/delete",           // User deletion
+                    "/admin/**",                     // Admin panel
+                    "/users/*/delete",               // User deletion
                     "/actuator/**"                   // Actuator endpoints
                 ).hasRole("ADMIN")
                 
                 // User-specific endpoints (require authentication)
                 .requestMatchers(
-                    "/api/users/profile",            // User profile
-                    "/api/orders/**",                // Order management
-                    "/api/cart/**",                  // Cart operations
-                    "/api/wishlist/**",              // Wishlist operations
-                    "/api/addresses/**"              // Address management
+                    "/users/profile",                // User profile
+                    "/orders/**",                    // Order management
+                    "/cart/**",                      // Cart operations
+                    "/wishlist/**",                  // Wishlist operations
+                    "/addresses/**"                  // Address management
                 ).authenticated()
                 
                 // All other requests require authentication
                 .anyRequest().authenticated()
             )
             
-            // Configure HTTP Basic Authentication (for development/testing)
-            .httpBasic(basic -> basic.realmName("GreenMagic API"))
+            // Disable HTTP Basic Authentication (was causing issues with public endpoints)
+            // .httpBasic(basic -> basic.realmName("GreenMagic API"))
             
             // Disable form login (not needed for REST API)
             .formLogin(AbstractHttpConfigurer::disable)

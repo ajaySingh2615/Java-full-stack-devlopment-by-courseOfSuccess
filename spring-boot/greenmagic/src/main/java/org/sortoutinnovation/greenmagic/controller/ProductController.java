@@ -20,7 +20,7 @@ import java.math.BigDecimal;
  * Provides endpoints for product CRUD operations and search functionality
  */
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping("/products")
 @Validated
 @CrossOrigin(origins = "*")
 public class ProductController {

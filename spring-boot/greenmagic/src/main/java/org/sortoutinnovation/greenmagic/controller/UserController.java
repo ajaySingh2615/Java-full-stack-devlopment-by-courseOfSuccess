@@ -21,7 +21,7 @@ import java.util.List;
  * Provides endpoints for user registration, authentication, and profile management
  */
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
 @Validated
 @CrossOrigin(origins = "*")
 public class UserController {
@@ -31,7 +31,7 @@ public class UserController {
 
     /**
      * Register a new user
-     * POST /api/users/register
+     * POST /users/register (accessible at /api/users/register due to context path)
      */
     @PostMapping("/register")
     public ResponseEntity<ApiResponseDto<UserResponseDto>> registerUser(

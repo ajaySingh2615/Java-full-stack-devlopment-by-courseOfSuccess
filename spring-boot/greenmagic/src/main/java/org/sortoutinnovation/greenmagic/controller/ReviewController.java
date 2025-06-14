@@ -15,7 +15,7 @@ import jakarta.validation.Valid;
 import java.math.BigDecimal;
 
 @RestController
-@RequestMapping("/api/reviews")
+@RequestMapping("/reviews")
 @CrossOrigin(origins = "*")
 public class ReviewController {
 

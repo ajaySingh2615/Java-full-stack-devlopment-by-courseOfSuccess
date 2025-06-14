@@ -6,19 +6,21 @@
 
 /* Team member cards hover effects */
 .about .team-card:hover {
-  @apply transform scale-105 transition-all duration-300;
+  transform: scale(1.05);
+  transition: all 300ms;
   box-shadow: 0 20px 40px rgba(34, 197, 94, 0.15);
 }
 
 /* Value cards animation */
 .about .value-card:hover {
-  @apply bg-primary-50;
+  background-color: #f0fdf4;
 }
 
 .about .value-icon {
-  @apply transition-all duration-300;
+  transition: all 300ms;
 }
 
 .about .value-card:hover .value-icon {
-  @apply scale-110 text-primary-700;
+  transform: scale(1.1);
+  color: #15803d;
 } 

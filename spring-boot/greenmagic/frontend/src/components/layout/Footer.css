@@ -11,7 +11,8 @@
 
 /* Hover effects for footer links */
 .footer a:hover {
-  @apply transform transition-transform duration-200;
+  transform: translateX(4px);
+  transition: transform 200ms;
 }
 
 .footer a:hover:not(.logo-link) {
@@ -20,7 +21,7 @@
 
 /* Social media icons hover effects */
 .footer .social-links a {
-  @apply transition-all duration-300 hover:scale-110;
+  transition: all 300ms;
 }
 
 .footer .social-links a:hover {
@@ -29,11 +30,11 @@
 
 /* Feature icons animation */
 .footer .feature-icon {
-  @apply transition-all duration-300;
+  transition: all 300ms;
 }
 
 .footer .feature-item:hover .feature-icon {
-  @apply transform scale-110 rotate-12;
+  transform: scale(1.1) rotate(12deg);
 }
 
 /* Newsletter input focus effect */

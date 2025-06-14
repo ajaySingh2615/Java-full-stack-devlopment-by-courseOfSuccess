@@ -6,16 +6,18 @@
 
 /* Blog post cards hover effects */
 .blog .blog-card:hover {
-  @apply transform scale-105 transition-all duration-300;
+  transform: scale(1.05);
+  transition: all 300ms;
   box-shadow: 0 20px 40px rgba(34, 197, 94, 0.15);
 }
 
 /* Featured badge animation */
 .blog .featured-badge {
-  @apply animate-pulse;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Category filters */
 .blog .category-filter:hover {
-  @apply bg-primary-50 text-primary-600;
+  background-color: #f0fdf4;
+  color: #16a34a;
 } 

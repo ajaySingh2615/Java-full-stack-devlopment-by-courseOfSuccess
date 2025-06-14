@@ -6,20 +6,24 @@
 
 /* Filter sidebar sticky positioning */
 .shop .filter-sidebar {
-  @apply sticky top-24;
+  position: sticky;
+  top: 6rem;
 }
 
 /* Product grid hover effects */
 .shop .product-grid-item:hover {
-  @apply transform scale-105 transition-all duration-300;
+  transform: scale(1.05);
+  transition: all 300ms;
   box-shadow: 0 20px 40px rgba(34, 197, 94, 0.15);
 }
 
 /* Category filter buttons */
 .shop .category-filter.active {
-  @apply bg-primary-600 text-white;
+  background-color: #16a34a;
+  color: white;
 }
 
 .shop .category-filter:not(.active):hover {
-  @apply bg-primary-50 text-primary-600;
+  background-color: #f0fdf4;
+  color: #16a34a;
 } 

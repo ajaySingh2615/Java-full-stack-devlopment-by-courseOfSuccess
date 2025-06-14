@@ -6,14 +6,18 @@
 
 /* Contact form animations */
 .contact .contact-form {
-  @apply transition-all duration-300;
+  transition: all 300ms;
 }
 
 .contact .contact-form:hover {
-  @apply shadow-lg;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Contact info icons */
 .contact .contact-icon {
-  @apply transition-all duration-300 hover:scale-110;
+  transition: all 300ms;
+}
+
+.contact .contact-icon:hover {
+  transform: scale(1.1);
 } 

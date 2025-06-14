@@ -73,6 +73,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/users/register",               // User registration
                     "/users/login",                  // User login (if implemented)
+                    "/auth/login",                   // Auth controller login endpoint
                     "/categories/**",                // Category browsing
                     "/products/**",                  // Product browsing
                     "/actuator/health",              // Health check

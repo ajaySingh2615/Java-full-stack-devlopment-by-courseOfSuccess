@@ -1,7 +1,7 @@
 import React from 'react';
 import './Blog.css';
 
-export const Blog = () => {
+const Blog = () => {
   return (
     <div className="blog">
       <section className="bg-gradient-to-br from-primary-50 to-accent-50 py-20 lg:py-32">
@@ -32,4 +32,6 @@ export const Blog = () => {
       </section>
     </div>
   );
-}; 
+};
+
+export default Blog; 

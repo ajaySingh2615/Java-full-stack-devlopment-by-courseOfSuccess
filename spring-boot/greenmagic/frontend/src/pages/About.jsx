@@ -2,7 +2,7 @@ import React from 'react';
 import { Leaf, Users, Award, Heart, Target, Globe } from 'lucide-react';
 import './About.css';
 
-export const About = () => {
+const About = () => {
   const values = [
     {
       icon: Leaf,
@@ -218,4 +218,6 @@ export const About = () => {
       </section>
     </div>
   );
-}; 
+};
+
+export default About; 

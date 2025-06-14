@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import './Home.css';
 
-export const Home = () => {
+const Home = () => {
   const featuredProducts = [
     {
       id: 1,
@@ -319,4 +319,6 @@ export const Home = () => {
       </section>
     </div>
   );
-}; 
+};
+
+export default Home; 

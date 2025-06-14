@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, Filter, Grid, List, Star, Heart, ShoppingCart } from 'lucide-react';
 import './Shop.css';
 
-export const Shop = () => {
+const Shop = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -278,4 +278,6 @@ export const Shop = () => {
       </section>
     </div>
   );
-}; 
+};
+
+export default Shop; 

@@ -9,14 +9,20 @@ import {
   Leaf,
   Heart,
   Phone,
-  Mail
+  Mail,
+  LogOut,
+  Settings,
+  Package
 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import './Navbar.css';
 
-export const Navbar = () => {
+const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const location = useLocation();
+  const { user, logout, isAuthenticated } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,12 +33,29 @@ export const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    // Close mobile menu when route changes
+    setIsOpen(false);
+    setShowUserMenu(false);
+  }, [location]);
+
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
 
   const closeMenu = () => {
     setIsOpen(false);
+  };
+
+  const toggleUserMenu = () => {
+    setShowUserMenu(!showUserMenu);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setShowUserMenu(false);
+    // Optional: redirect to home page
+    // navigate('/');
   };
 
   const navigationLinks = [
@@ -46,6 +69,30 @@ export const Navbar = () => {
   const isActiveLink = (path) => {
     return location.pathname === path;
   };
+
+  // User menu for authenticated users
+  const UserMenu = () => (
+    <div className="user-menu">
+      <div className="user-info">
+        <p className="user-name">{user?.name}</p>
+        <p className="user-email">{user?.email}</p>
+      </div>
+      <div className="user-menu-links">
+        <Link to="/profile" className="user-menu-link">
+          <Settings size={16} />
+          <span>Profile</span>
+        </Link>
+        <Link to="/orders" className="user-menu-link">
+          <Package size={16} />
+          <span>Orders</span>
+        </Link>
+        <button onClick={handleLogout} className="user-menu-link logout-btn">
+          <LogOut size={16} />
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -122,10 +169,36 @@ export const Navbar = () => {
                 </span>
               </button>
 
-              {/* User Account */}
-              <button className="p-2 text-gray-600 hover:text-primary-600 transition-colors">
-                <User className="w-5 h-5" />
-              </button>
+              {/* User Authentication */}
+              {isAuthenticated() ? (
+                <div className="user-menu-container relative">
+                  <button 
+                    onClick={toggleUserMenu}
+                    className="p-2 text-gray-600 hover:text-primary-600 transition-colors flex items-center space-x-2"
+                  >
+                    <User className="w-5 h-5" />
+                    <span className="hidden xl:block text-sm font-medium">
+                      {user?.name?.split(' ')[0]}
+                    </span>
+                  </button>
+                  {showUserMenu && <UserMenu />}
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Link
+                    to="/login"
+                    className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-primary-600 transition-colors"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="btn-primary btn-sm"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -166,6 +239,65 @@ export const Navbar = () => {
               ))}
             </div>
 
+            {/* Mobile Authentication */}
+            {isAuthenticated() ? (
+              <div className="px-4 py-3 border-t border-gray-200">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                    <p className="text-xs text-gray-500">{user?.email}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Link
+                    to="/profile"
+                    className="mobile-nav-link"
+                    onClick={closeMenu}
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    to="/orders"
+                    className="mobile-nav-link"
+                    onClick={closeMenu}
+                  >
+                    Orders
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      closeMenu();
+                    }}
+                    className="mobile-nav-link text-red-600 w-full text-left"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="px-4 py-3 border-t border-gray-200">
+                <div className="space-y-2">
+                  <Link
+                    to="/login"
+                    className="mobile-nav-link"
+                    onClick={closeMenu}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="mobile-nav-link"
+                    onClick={closeMenu}
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              </div>
+            )}
+
             {/* Mobile Actions */}
             <div className="px-4 py-3 border-t border-gray-200">
               <div className="flex items-center justify-around">
@@ -180,10 +312,6 @@ export const Navbar = () => {
                     0
                   </span>
                 </button>
-                <button className="flex flex-col items-center space-y-1 text-gray-600 hover:text-primary-600 transition-colors">
-                  <User className="w-5 h-5" />
-                  <span className="text-xs">Account</span>
-                </button>
               </div>
             </div>
           </div>
@@ -191,4 +319,6 @@ export const Navbar = () => {
       </nav>
     </>
   );
-}; 
+};
+
+export default Navbar; 

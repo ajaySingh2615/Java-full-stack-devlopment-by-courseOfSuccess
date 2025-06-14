@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import './Footer.css';
 
-export const Footer = () => {
+const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   const quickLinks = [
@@ -266,4 +266,6 @@ export const Footer = () => {
       </div>
     </footer>
   );
-}; 
+};
+
+export default Footer; 

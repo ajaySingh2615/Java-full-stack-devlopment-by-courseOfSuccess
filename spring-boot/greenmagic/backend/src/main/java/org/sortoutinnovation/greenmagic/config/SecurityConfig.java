@@ -127,7 +127,7 @@ public class SecurityConfig {
         
         // Allow specific origins (update for production)
         configuration.setAllowedOriginPatterns(Arrays.asList(
-            "http://localhost:3000",     // React development server
+            "http://localhost:5173",     // React development server
             "http://localhost:4200",     // Angular development server
             "http://localhost:8080",     // Local development
             "https://yourdomain.com"     // Production domain

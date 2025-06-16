@@ -225,13 +225,14 @@ const CategoriesSection = () => {
                         </div>
                         
                         {/* Title - Bottom Position */}
-                        <h3 className="text-3xl font-bold text-white mb-0 transform transition-all duration-500 ease-out group-hover:-translate-y-4 text-left">
+                        <h3 className="text-2xl font-bold text-white mb-0 transform transition-all duration-500 ease-out group-hover:-translate-y-4 text-left">
                           {project.title}
                         </h3>
                         
                         {/* Description - Hidden by Default, Shown on Hover */}
                         <div className="max-h-0 overflow-hidden opacity-0 transition-all duration-500 ease-out group-hover:max-h-[80px] group-hover:opacity-100 text-left">
-                          <div className="border-t-2 border-dotted border-yellow-400 mt-3 pt-3">
+                          <div className="relative mt-3 pt-3">
+                            <div className="absolute top-0 left-0 w-0 h-0.5 border-t-2 border-dotted border-yellow-400 group-hover:w-full transition-all duration-1500 ease-out"></div>
                             <p className="text-white/90 text-sm leading-relaxed text-left">
                               {project.description}
                             </p>

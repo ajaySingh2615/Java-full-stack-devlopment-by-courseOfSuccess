@@ -15,6 +15,7 @@ class UserService {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include cookies for session-based auth
       });
 
       const data = await response.json();
@@ -42,6 +43,7 @@ class UserService {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
 
       const data = await response.json();
@@ -69,6 +71,7 @@ class UserService {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
 
       const data = await response.json();
@@ -95,6 +98,7 @@ class UserService {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
 
       const data = await response.json();
@@ -123,6 +127,7 @@ class UserService {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(userData),
       });
 
@@ -151,6 +156,7 @@ class UserService {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -178,6 +184,7 @@ class UserService {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(passwordData),
       });
 
@@ -207,6 +214,7 @@ class UserService {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(passwordData),
       });
 

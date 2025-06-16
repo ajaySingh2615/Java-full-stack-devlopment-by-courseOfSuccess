@@ -1,5 +1,6 @@
 package org.sortoutinnovation.greenmagic.repository;
 
+import org.sortoutinnovation.greenmagic.model.Role;
 import org.sortoutinnovation.greenmagic.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -59,6 +60,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return boolean
      */
     boolean existsByGoogleId(String googleId);
+    
+    /**
+     * Check if user exists by role
+     * @param role the role
+     * @return boolean
+     */
+    boolean existsByRole(Role role);
     
     /**
      * Find all users ordered by name

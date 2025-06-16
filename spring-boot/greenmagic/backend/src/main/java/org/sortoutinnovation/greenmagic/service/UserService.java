@@ -276,4 +276,22 @@ public class UserService {
         
         return UserMapper.toResponseDto(updatedUser);
     }
+
+    /**
+     * Update user role (for admin creation purposes)
+     * @param userId user ID
+     * @param roleName new role name
+     * @return UserResponseDto
+     * @throws RuntimeException if user or role not found
+     */
+    public UserResponseDto updateUserRole(Long userId, String roleName) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        Role role = roleService.getRoleByName(roleName);
+        user.setRole(role);
+        
+        User updatedUser = userRepository.save(user);
+        return UserMapper.toResponseDto(updatedUser);
+    }
 } 

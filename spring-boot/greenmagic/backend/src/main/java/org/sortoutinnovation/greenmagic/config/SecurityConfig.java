@@ -9,9 +9,12 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -52,6 +55,15 @@ public class SecurityConfig {
     }
 
     /**
+     * Security Context Repository Bean
+     * Configures how security context is stored in sessions
+     */
+    @Bean
+    public SecurityContextRepository securityContextRepository() {
+        return new HttpSessionSecurityContextRepository();
+    }
+
+    /**
      * Security Filter Chain Configuration
      * Defines which endpoints are protected and authentication requirements
      */
@@ -64,8 +76,13 @@ public class SecurityConfig {
             // Configure CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
-            // Configure session management (stateless for REST API)
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Configure session management (stateful for authentication)
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+            
+            // Configure security context repository
+            .securityContext(securityContext -> 
+                securityContext.securityContextRepository(securityContextRepository())
+            )
             
             // Configure authorization rules
             .authorizeHttpRequests(authz -> authz
@@ -75,17 +92,20 @@ public class SecurityConfig {
                     "/users/roles",                  // Get available roles for registration
                     "/users/login",                  // User login (if implemented)
                     "/auth/login",                   // Auth controller login endpoint
-                    "/users/**",                     // User management endpoints (temporary for development)
+                    "/auth/debug/**",                // Debug endpoints (remove in production)
                     "/categories/**",                // Category browsing
                     "/products/**",                  // Product browsing
                     "/actuator/health",              // Health check
                     "/error"                         // Error handling
                 ).permitAll()
                 
-                // Admin-only endpoints
+                // Admin-only endpoints (excluding public user endpoints)
                 .requestMatchers(
                     "/admin/**",                     // Admin panel
-                    "/users/*/delete",               // User deletion
+                    "/users",                        // Get all users endpoint (admin only)
+                    "/users/{id:[0-9]+}",            // User by ID endpoints (admin only)
+                    "/users/email/**",               // User by email endpoints (admin only)
+                    "/users/active",                 // Active users endpoint (admin only)
                     "/actuator/**"                   // Actuator endpoints
                 ).hasRole("ADMIN")
                 
@@ -110,8 +130,8 @@ public class SecurityConfig {
             
             // Configure logout
             .logout(logout -> logout
-                .logoutUrl("/api/logout")
-                .logoutSuccessUrl("/api/login")
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/")
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
             );

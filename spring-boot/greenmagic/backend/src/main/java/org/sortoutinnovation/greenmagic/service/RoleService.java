@@ -1,8 +1,11 @@
 package org.sortoutinnovation.greenmagic.service;
 
 import org.sortoutinnovation.greenmagic.model.Role;
+import org.sortoutinnovation.greenmagic.model.User;
 import org.sortoutinnovation.greenmagic.repository.RoleRepository;
+import org.sortoutinnovation.greenmagic.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,15 +23,55 @@ public class RoleService {
 
     @Autowired
     private RoleRepository roleRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     /**
-     * Initialize default roles on application startup
+     * Initialize default roles and admin user on application startup
      */
     @PostConstruct
     public void initializeDefaultRoles() {
         createRoleIfNotExists("USER");
         createRoleIfNotExists("VENDOR");
         createRoleIfNotExists("ADMIN");
+        
+        // Create default admin user if none exists
+        createDefaultAdminUser();
+    }
+
+    /**
+     * Create default admin user if none exists
+     */
+    private void createDefaultAdminUser() {
+        try {
+            // Check if any admin user exists
+            Role adminRole = getRoleByName("ADMIN");
+            boolean adminExists = userRepository.existsByRole(adminRole);
+            
+            if (!adminExists) {
+                User adminUser = new User();
+                adminUser.setName("Admin User");
+                adminUser.setEmail("admin@greenmagic.com");
+                adminUser.setPassword(passwordEncoder.encode("admin123"));
+                adminUser.setRole(adminRole);
+                
+                userRepository.save(adminUser);
+                System.out.println("=== DEFAULT ADMIN USER CREATED ===");
+                System.out.println("Email: admin@greenmagic.com");
+                System.out.println("Password: admin123");
+                System.out.println("Please change the password after first login!");
+                System.out.println("===================================");
+            } else {
+                System.out.println("Admin user already exists, skipping creation.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error creating default admin user: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**

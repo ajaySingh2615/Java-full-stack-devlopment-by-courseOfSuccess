@@ -64,7 +64,7 @@ const FeaturedProductsSection = () => {
 
   return (
     <AnimatedSection 
-      className="section bg-white py-16 lg:py-24"
+      className="section bg-white pt-8 pb-16 lg:pt-12 lg:pb-24"
       variants={staggerContainer}
       stagger={true}
     >

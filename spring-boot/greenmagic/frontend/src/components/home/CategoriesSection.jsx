@@ -91,7 +91,7 @@ const CategoriesSection = () => {
 
   return (
     <AnimatedSection 
-      className="py-16 lg:py-24 bg-white relative overflow-hidden"
+      className="pt-16 pb-8 lg:pt-24 lg:pb-12 bg-white relative overflow-hidden"
       variants={staggerContainer}
       stagger={true}
     >

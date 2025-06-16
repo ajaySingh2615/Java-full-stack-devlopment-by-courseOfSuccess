@@ -4,6 +4,7 @@ import ScrollProgressBar from '../components/animations/ScrollProgressBar';
 import HeroSection from '../components/home/HeroSection';
 import FeaturesSection from '../components/home/FeaturesSection';
 import CategoriesSection from '../components/home/CategoriesSection';
+import ScrollingStripe from '../components/home/ScrollingStripe';
 import FeaturedProductsSection from '../components/home/FeaturedProductsSection';
 import CallToActionSection from '../components/home/CallToActionSection';
 import { pageTransition } from '../utils/animationVariants';
@@ -28,6 +29,9 @@ const Home = () => {
       
       {/* Categories Section */}
       <CategoriesSection />
+      
+      {/* Scrolling Stripe */}
+      <ScrollingStripe />
       
       {/* Featured Products Section */}
       <FeaturedProductsSection />

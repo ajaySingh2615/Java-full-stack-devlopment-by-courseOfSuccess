@@ -245,20 +245,7 @@ const CategoriesSection = () => {
             </motion.div>
           </div>
           
-          {/* Navigation Dots */}
-          <div className="flex justify-center mt-10 gap-3 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-            {farmingProjects.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => goToSlide(index)}
-                className={`h-3 rounded-full transition-all duration-300 ${
-                  index === currentIndex 
-                    ? 'bg-green-600 w-10' 
-                    : 'bg-gray-300 hover:bg-gray-400 w-3'
-                }`}
-              />
-            ))}
-          </div>
+
         </div>
 
         {/* Navigation Dots are now at the bottom */}

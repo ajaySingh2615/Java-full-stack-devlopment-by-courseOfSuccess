@@ -23,6 +23,8 @@ import {
 // Import local images
 import featuredImage1 from '../../assets/images/home-page/featured-section/harvesting-featured-section-1.webp';
 import featuredImage2 from '../../assets/images/home-page/featured-section/harvesting-featured-section-2.webp';
+import grilIsPickingTomato from '../../assets/images/home-page/featured-section/7213177.jpg';
+import markusSpiske from '../../assets/images/home-page/featured-section/markus-spiske-EK8QN9O0wRk-unsplash.webp';
 
 const FeaturesSection = () => {
   const ref = useRef(null);
@@ -74,7 +76,7 @@ const FeaturesSection = () => {
               whileHover={{ scale: 1.02 }}
             >
               <img 
-                src={featuredImage1}
+                src={grilIsPickingTomato}
                 alt="Experienced farmer in organic field"
                 className="w-full h-[350px] sm:h-[400px] lg:h-[500px] xl:h-[550px] object-cover"
               />
@@ -89,7 +91,7 @@ const FeaturesSection = () => {
               transition={{ delay: 0.8, duration: 0.8 }}
             >
               <img 
-                src={featuredImage2}
+                src={markusSpiske}
                 alt="Modern agricultural machinery"
                 className="w-full h-full object-cover"
               />

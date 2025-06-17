@@ -11,6 +11,18 @@ import {
   scaleIn
 } from '../../utils/animationVariants';
 
+// Import local images
+import ecohouseFarming from '../../assets/images/home-page/Farming-Projects/sustainable-farming.jpg';
+import agroxForestry from '../../assets/images/home-page/Farming-Projects/organic-farming.jpg';
+import farmSustainability from '../../assets/images/home-page/Farming-Projects/eco-farming.jpg';
+import organicFarming from '../../assets/images/home-page/Farming-Projects/gabriel-jimenez-jin4W1HqgL4-unsplash.webp';
+import greenFarming from '../../assets/images/home-page/Farming-Projects/markus-spiske-4yK8iDaWnm8-unsplash.webp';
+import smartAgriculture from '../../assets/images/home-page/Farming-Projects/andrew-benjack-_4ugH7TiGjA-unsplash.webp';
+import precisionFarming from '../../assets/images/home-page/Farming-Projects/markus-spiske-EK8QN9O0wRk-unsplash.webp';
+import biodynamicFarming from '../../assets/images/home-page/Farming-Projects/fernanda-martinez-AZYWS6p7cX0-unsplash.webp';
+import verticalFarming from '../../assets/images/home-page/Farming-Projects/being-organic-in-eu-t_vZtiUraqI-unsplash.webp';
+import hydroponicFarming from '../../assets/images/home-page/Farming-Projects/mor-shani-wFlOM6Dxuc8-unsplash.webp';
+
 const CategoriesSection = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
@@ -20,43 +32,71 @@ const CategoriesSection = () => {
       id: 1,
       title: 'Ecohouse Farming',
       category: 'Farming',
-      image: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800&h=1000&fit=crop',
+      image: ecohouseFarming,
       description: 'Reliable Solutions for Agricultural Farming. Agriculture is the backbone of our economy.',
     },
     {
       id: 2,
       title: 'Agrox Forestry',
       category: 'Agriculture',
-      image: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800&h=1000&fit=crop',
+      image: agroxForestry,
       description: 'Reliable Solutions for Agricultural Farming. Agriculture is the backbone of our economy.',
     },
     {
       id: 3,
       title: 'Farm Sustainability',
       category: 'Farming',
-      image: 'https://images.unsplash.com/photo-1595838187563-0e8ad7abd0f1?w=800&h=1000&fit=crop',
+      image: farmSustainability,
       description: 'Reliable Solutions for Agricultural Farming. Agriculture is the backbone of our economy.',
     },
     {
       id: 4,
       title: 'Organic Farming',
       category: 'Fertilizers',
-      image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&h=1000&fit=crop',
+      image: organicFarming,
       description: 'Reliable Solutions for Agricultural Farming. Agriculture is the backbone of our economy.',
     },
     {
       id: 5,
       title: 'Green Farming',
       category: 'Farming',
-      image: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=800&h=1000&fit=crop',
+      image: greenFarming,
       description: 'Reliable Solutions for Agricultural Farming. Agriculture is the backbone of our economy.',
     },
     {
       id: 6,
       title: 'Smart Agriculture',
       category: 'Technology',
-      image: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800&h=1000&fit=crop',
+      image: smartAgriculture,
       description: 'Reliable Solutions for Agricultural Farming. Agriculture is the backbone of our economy.',
+    },
+    {
+      id: 7,
+      title: 'Precision Farming',
+      category: 'Technology',
+      image: precisionFarming,
+      description: 'Advanced agricultural practices using GPS and sensor technology for optimal crop management.',
+    },
+    {
+      id: 8,
+      title: 'Biodynamic Farming',
+      category: 'Organic',
+      image: biodynamicFarming,
+      description: 'Holistic farming approach that treats the farm as a living ecosystem with natural rhythms.',
+    },
+    {
+      id: 9,
+      title: 'Vertical Farming',
+      category: 'Innovation',
+      image: verticalFarming,
+      description: 'Modern indoor farming techniques maximizing space efficiency and resource conservation.',
+    },
+    {
+      id: 10,
+      title: 'Hydroponic Systems',
+      category: 'Technology',
+      image: hydroponicFarming,
+      description: 'Soilless cultivation methods providing optimal nutrition and growth conditions for crops.',
     }
   ];
 

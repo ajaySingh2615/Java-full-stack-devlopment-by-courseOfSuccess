@@ -23,8 +23,9 @@ import {
 // Import local images
 import featuredImage1 from '../../assets/images/home-page/featured-section/harvesting-featured-section-1.webp';
 import featuredImage2 from '../../assets/images/home-page/featured-section/harvesting-featured-section-2.webp';
-import grilIsPickingTomato from '../../assets/images/home-page/featured-section/7213177.jpg';
+import grilIsPickingTomato from '../../assets/images/home-page/featured-section/7213177.webp';
 import markusSpiske from '../../assets/images/home-page/featured-section/markus-spiske-EK8QN9O0wRk-unsplash.webp';
+import illustrativeFarmingImg from '../../assets/images/home-page/illustrative-farming-img.webp';
 
 const FeaturesSection = () => {
   const ref = useRef(null);
@@ -57,11 +58,25 @@ const FeaturesSection = () => {
 
   return (
     <AnimatedSection 
-      className="py-16 sm:py-20 lg:py-32 bg-gray-50"
+      className="py-16 sm:py-20 lg:py-32 bg-gray-50 relative overflow-hidden"
       variants={staggerContainer}
       stagger={true}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" ref={ref}>
+      {/* Background Image - Positioned from Center to Bottom Right */}
+      <div
+        className="absolute right-0 bottom-0 w-[600px] h-[600px] opacity-5 pointer-events-none"
+        style={{
+          transform: "translate(30%, 30%)"
+        }}
+      >
+        <img
+          src={illustrativeFarmingImg}
+          alt="Illustrative farming background"
+          className="w-full h-full object-cover rounded-3xl"
+        />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10" ref={ref}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 xl:gap-24 items-center">
           
           {/* Left Side - Images */}

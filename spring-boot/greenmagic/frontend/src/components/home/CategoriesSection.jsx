@@ -131,7 +131,7 @@ const CategoriesSection = () => {
 
   return (
     <AnimatedSection 
-      className="pt-16 pb-8 lg:pt-24 lg:pb-12 bg-white relative overflow-hidden"
+      className="pt-16 pb-8 lg:pt-24 lg:pb-12 bg-green-900 relative overflow-hidden"
       variants={staggerContainer}
       stagger={true}
     >
@@ -154,7 +154,7 @@ const CategoriesSection = () => {
             </motion.div>
             
             <motion.h2 
-              className="text-2xl md:text-3xl font-bold text-gray-900 leading-relaxed text-left mb-4"
+              className="text-2xl md:text-3xl font-bold text-white leading-relaxed text-left mb-4"
               variants={staggerFadeInUp}
             >
               <span className="block mb-1">Sustainable Farming For</span>
@@ -173,7 +173,7 @@ const CategoriesSection = () => {
             </motion.h2>
             
             <motion.p 
-              className="text-sm md:text-base text-gray-500 max-w-xl leading-relaxed text-left"
+              className="text-sm md:text-base text-gray-300 max-w-xl leading-relaxed text-left"
               variants={staggerFadeInUp}
             >
               Agriculture is the backbone of our society, providing food,

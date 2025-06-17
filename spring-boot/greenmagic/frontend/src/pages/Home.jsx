@@ -6,6 +6,7 @@ import FeaturesSection from '../components/home/FeaturesSection';
 import CategoriesSection from '../components/home/CategoriesSection';
 import ScrollingStripe from '../components/home/ScrollingStripe';
 import FeaturedProductsSection from '../components/home/FeaturedProductsSection';
+import VideoSection from '../components/home/VideoSection';
 import CallToActionSection from '../components/home/CallToActionSection';
 import { pageTransition } from '../utils/animationVariants';
 
@@ -35,6 +36,9 @@ const Home = () => {
       
       {/* Featured Products Section */}
       <FeaturedProductsSection />
+      
+      {/* Video Section */}
+      <VideoSection />
       
       {/* Call to Action Section */}
       <CallToActionSection />

@@ -213,7 +213,7 @@ const FeaturedProductsSection = () => {
                 key={category.id}
                 className={`inline-flex items-center px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 border ${
                   activeTab === category.id
-                    ? 'bg-green-600 text-white border-green-600 shadow-lg shadow-green-200'
+                    ? 'bg-green-600 text-white border-green-600'
                     : 'bg-white text-gray-700 border-gray-200 hover:border-green-300 hover:bg-green-50'
                 }`}
                 onClick={() => setActiveTab(category.id)}
@@ -251,7 +251,7 @@ const FeaturedProductsSection = () => {
               exit={{ opacity: 0, y: -20 }}
             >
               <motion.div 
-                className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 relative"
+                className="bg-white rounded-3xl overflow-hidden transition-all duration-500 border border-gray-100 relative"
                 variants={hoverLift}
               >
                 {/* Top colored stripe */}
@@ -276,7 +276,7 @@ const FeaturedProductsSection = () => {
                   
                   {/* Badge */}
                   <motion.div 
-                    className={`absolute top-8 left-8 ${product.badgeColor} text-white px-3 py-1.5 rounded-full text-xs font-medium shadow-lg`}
+                    className={`absolute top-8 left-8 ${product.badgeColor} text-white px-3 py-1.5 rounded-full text-xs font-medium`}
                     initial={{ opacity: 0, scale: 0, rotate: -20 }}
                     animate={{ opacity: 1, scale: 1, rotate: 0 }}
                     transition={{ delay: index * 0.1 + 0.3, type: "spring" }}
@@ -287,7 +287,7 @@ const FeaturedProductsSection = () => {
                   
                   {/* Discount Badge */}
                   <motion.div 
-                    className="absolute top-8 right-8 bg-red-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg"
+                    className="absolute top-8 right-8 bg-red-500 text-white px-3 py-1.5 rounded-full text-xs font-bold"
                     initial={{ opacity: 0, scale: 0, x: 20 }}
                     animate={{ opacity: 1, scale: 1, x: 0 }}
                     transition={{ delay: index * 0.1 + 0.5, type: "spring" }}
@@ -303,8 +303,8 @@ const FeaturedProductsSection = () => {
                     whileHover={{ opacity: 1 }}
                   >
                     <motion.button 
-                      className="p-3 bg-white rounded-full shadow-lg hover:bg-primary-50 transition-colors duration-200"
-                      whileHover={{ scale: 1.1, y: -2, boxShadow: "0 15px 30px rgba(0, 0, 0, 0.1)" }}
+                      className="p-3 bg-white rounded-full hover:bg-primary-50 transition-colors duration-200"
+                      whileHover={{ scale: 1.1, y: -2 }}
                       whileTap={{ scale: 0.9 }}
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
@@ -314,8 +314,8 @@ const FeaturedProductsSection = () => {
                     </motion.button>
                     
                     <motion.button 
-                      className="p-3 bg-green-600 rounded-full shadow-lg hover:bg-green-700 transition-colors duration-200"
-                      whileHover={{ scale: 1.1, y: -2, boxShadow: "0 15px 30px rgba(0, 0, 0, 0.15)" }}
+                      className="p-3 bg-green-600 rounded-full hover:bg-green-700 transition-colors duration-200"
+                      whileHover={{ scale: 1.1, y: -2 }}
                       whileTap={{ scale: 0.9 }}
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}

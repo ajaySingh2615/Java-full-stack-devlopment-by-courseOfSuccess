@@ -3,9 +3,74 @@ const API_BASE_URL = 'http://localhost:8080/api';
 
 class AuthService {
   /**
-   * Register a new user
+   * Register a new customer user
    * @param {Object} userData - User registration data
    * @returns {Promise} API response
+   */
+  async registerCustomer(userData) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+      return {
+        success: true,
+        message: data.message || 'Registration successful',
+        data: data.user
+      };
+    } catch (error) {
+      console.error('Customer registration error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Register a new vendor (step 1)
+   * @param {Object} userData - Vendor registration data
+   * @returns {Promise} API response
+   */
+  async registerVendor(userData) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/vendor-register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Vendor registration failed');
+      }
+
+      return {
+        success: true,
+        message: data.message || 'Vendor registration successful',
+        data: data.user
+      };
+    } catch (error) {
+      console.error('Vendor registration error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Register a new user (deprecated)
+   * @param {Object} userData - User registration data
+   * @returns {Promise} API response
+   * @deprecated Use registerCustomer or registerVendor instead
    */
   async register(userData) {
     try {

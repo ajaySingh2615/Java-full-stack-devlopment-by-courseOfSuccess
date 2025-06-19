@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, XCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import authService from '../services/authService';
@@ -7,6 +7,7 @@ import './Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -15,6 +16,9 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Get redirect path from location state or default to dashboard
+  const from = location.state?.from || '/dashboard';
 
   // Handle input changes
   const handleChange = (e) => {
@@ -67,9 +71,26 @@ const Login = () => {
       const response = await authService.login(formData);
       
       if (response.message === 'Login successful' && response.user) {
-        // Login successful
-        login(response.user);
-        navigate('/shop'); // Redirect to shop page as requested
+        // For vendor users, check profile completion status
+        if (response.user.roleName === 'VENDOR') {
+          const profileComplete = response.profileComplete || false;
+          const vendorStatus = response.vendorStatus || null;
+          
+          // Login with vendor status info
+          login(response.user, vendorStatus, profileComplete);
+          
+          // Redirect based on profile completion status
+          if (!profileComplete) {
+            navigate('/vendor-registration');
+            return;
+          }
+        } else {
+          // Regular login for non-vendor users
+          login(response.user);
+        }
+        
+        // Redirect to intended destination or dashboard
+        navigate(from);
       } else {
         setErrors({ submit: response.message || 'Login failed' });
       }
@@ -164,12 +185,20 @@ const Login = () => {
           </div>
 
           <div className="login-footer">
-            <p>
-              Don't have an account?{' '}
-              <Link to="/register" className="register-link">
-                Create one here
-              </Link>
-            </p>
+            <div className="register-options">
+              <p>
+                Don't have an account?{' '}
+                <Link to="/register" className="register-link">
+                  Register as Customer
+                </Link>
+              </p>
+              <p>
+                Want to sell on GreenMagic?{' '}
+                <Link to="/vendor-register" className="register-link">
+                  Register as Vendor
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
 

@@ -2,9 +2,11 @@ package org.sortoutinnovation.greenmagic.service;
 
 import org.sortoutinnovation.greenmagic.dto.UserRegistrationRequestDto;
 import org.sortoutinnovation.greenmagic.dto.UserResponseDto;
+import org.sortoutinnovation.greenmagic.dto.VendorRegistrationRequestDto;
 import org.sortoutinnovation.greenmagic.mapper.UserMapper;
 import org.sortoutinnovation.greenmagic.model.User;
 import org.sortoutinnovation.greenmagic.model.Role;
+import org.sortoutinnovation.greenmagic.model.User.RegistrationStatus;
 import org.sortoutinnovation.greenmagic.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -35,11 +37,85 @@ public class UserService {
     private RoleService roleService;
 
     /**
-     * Register a new user
+     * Register a new customer user
      * @param registrationRequest user registration data
      * @return UserResponseDto
      * @throws RuntimeException if email or phone already exists
      */
+    public UserResponseDto registerCustomer(UserRegistrationRequestDto registrationRequest) {
+        // Validate unique email
+        if (userRepository.existsByEmail(registrationRequest.getEmail())) {
+            throw new RuntimeException("Email already registered");
+        }
+
+        // Validate unique phone number
+        if (registrationRequest.getPhoneNumber() != null && 
+            userRepository.existsByPhoneNumber(registrationRequest.getPhoneNumber())) {
+            throw new RuntimeException("Phone number already registered");
+        }
+
+        // Get USER role
+        Role role = roleService.getRoleByName("USER");
+
+        // Create new user using UserMapper
+        User user = new User(
+            registrationRequest.getName(),
+            registrationRequest.getEmail(),
+            hashPassword(registrationRequest.getPassword()),
+            role
+        );
+        
+        user.setPhoneNumber(registrationRequest.getPhoneNumber());
+        user.setRegistrationStatus(RegistrationStatus.COMPLETE);
+
+        User savedUser = userRepository.save(user);
+        return UserMapper.toResponseDto(savedUser);
+    }
+    
+    /**
+     * Register a new vendor user (step 1)
+     * @param registrationRequest vendor registration data
+     * @return UserResponseDto
+     * @throws RuntimeException if email or phone already exists
+     */
+    public UserResponseDto registerVendor(VendorRegistrationRequestDto registrationRequest) {
+        // Validate unique email
+        if (userRepository.existsByEmail(registrationRequest.getEmail())) {
+            throw new RuntimeException("Email already registered");
+        }
+
+        // Validate unique phone number
+        if (registrationRequest.getPhoneNumber() != null && 
+            userRepository.existsByPhoneNumber(registrationRequest.getPhoneNumber())) {
+            throw new RuntimeException("Phone number already registered");
+        }
+
+        // Get VENDOR role
+        Role role = roleService.getRoleByName("VENDOR");
+
+        // Create new user using UserMapper
+        User user = new User(
+            registrationRequest.getName(),
+            registrationRequest.getEmail(),
+            hashPassword(registrationRequest.getPassword()),
+            role,
+            RegistrationStatus.INCOMPLETE
+        );
+        
+        user.setPhoneNumber(registrationRequest.getPhoneNumber());
+
+        User savedUser = userRepository.save(user);
+        return UserMapper.toResponseDto(savedUser);
+    }
+
+    /**
+     * Register a new user (deprecated)
+     * @param registrationRequest user registration data
+     * @return UserResponseDto
+     * @throws RuntimeException if email or phone already exists
+     * @deprecated Use registerCustomer or registerVendor instead
+     */
+    @Deprecated
     public UserResponseDto registerUser(UserRegistrationRequestDto registrationRequest) {
         // Validate unique email
         if (userRepository.existsByEmail(registrationRequest.getEmail())) {
@@ -51,8 +127,8 @@ public class UserService {
             throw new RuntimeException("Phone number already registered");
         }
 
-        // Get role based on registration request
-        Role role = roleService.getRoleByName(registrationRequest.getRole());
+        // Default to USER role
+        Role role = roleService.getRoleByName("USER");
 
         // Create new user using UserMapper
         User user = UserMapper.toEntity(registrationRequest, role);
@@ -292,6 +368,23 @@ public class UserService {
         user.setRole(role);
         
         User updatedUser = userRepository.save(user);
+        return UserMapper.toResponseDto(updatedUser);
+    }
+
+    /**
+     * Update user's registration status
+     * @param userId user ID
+     * @param status new registration status
+     * @return UserResponseDto
+     * @throws RuntimeException if user not found
+     */
+    public UserResponseDto updateRegistrationStatus(Long userId, RegistrationStatus status) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        user.setRegistrationStatus(status);
+        User updatedUser = userRepository.save(user);
+        
         return UserMapper.toResponseDto(updatedUser);
     }
 } 

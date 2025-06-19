@@ -92,6 +92,8 @@ public class SecurityConfig {
                     "/users/roles",                  // Get available roles for registration
                     "/users/login",                  // User login (if implemented)
                     "/auth/login",                   // Auth controller login endpoint
+                    "/auth/register",                // Customer registration endpoint
+                    "/auth/vendor-register",         // Vendor registration endpoint (step 1)
                     "/auth/debug/**",                // Debug endpoints (remove in production)
                     "/categories/**",                // Category browsing
                     "/products/**",                  // Product browsing
@@ -106,7 +108,12 @@ public class SecurityConfig {
                     "/users/{id:[0-9]+}",            // User by ID endpoints (admin only)
                     "/users/email/**",               // User by email endpoints (admin only)
                     "/users/active",                 // Active users endpoint (admin only)
-                    "/actuator/**"                   // Actuator endpoints
+                    "/actuator/**",                  // Actuator endpoints
+                    "/vendors",                      // Get all vendors (admin only)
+                    "/vendors/stats/**",             // Vendor statistics (admin only)
+                    "/vendors/status/**",            // Vendor profiles by status (admin only)
+                    "/vendors/pending",              // Pending vendor profiles (admin only)
+                    "/vendors/{vendorId:[0-9]+}/status/**" // Approve/reject vendors (admin only)
                 ).hasRole("ADMIN")
                 
                 // User-specific endpoints (require authentication)
@@ -115,7 +122,10 @@ public class SecurityConfig {
                     "/orders/**",                    // Order management
                     "/cart/**",                      // Cart operations
                     "/wishlist/**",                  // Wishlist operations
-                    "/addresses/**"                  // Address management
+                    "/addresses/**",                 // Address management
+                    "/vendors/users/{userId:[0-9]+}", // Get vendor profile by user ID
+                    "/vendors/{vendorId:[0-9]+}",    // Get/update specific vendor profile
+                    "/vendors/users/{userId:[0-9]+}/exists" // Check if vendor profile exists 
                 ).authenticated()
                 
                 // All other requests require authentication

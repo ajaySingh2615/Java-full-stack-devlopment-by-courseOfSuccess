@@ -45,6 +45,10 @@ public class User {
     @JoinColumn(name = "role_id", referencedColumnName = "role_id")
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "registration_status", nullable = false)
+    private RegistrationStatus registrationStatus = RegistrationStatus.COMPLETE;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -84,6 +88,15 @@ public class User {
 
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
     private Set<Product> createdProducts;
+    
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private VendorProfile vendorProfile;
+
+    // Enum for registration status
+    public enum RegistrationStatus {
+        COMPLETE,    // For regular users or vendors with completed profiles
+        INCOMPLETE   // For vendors who need to complete their profile
+    }
 
     // Constructors for common use cases
     public User(String name, String email, String password, Role role) {
@@ -91,6 +104,15 @@ public class User {
         this.email = email;
         this.password = password;
         this.role = role;
+        this.registrationStatus = RegistrationStatus.COMPLETE;
+    }
+
+    public User(String name, String email, String password, Role role, RegistrationStatus registrationStatus) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.registrationStatus = registrationStatus;
     }
 
     public User(String name, String email, String googleId, String googleEmail, String profilePicture, Role role) {
@@ -100,5 +122,6 @@ public class User {
         this.googleEmail = googleEmail;
         this.profilePicture = profilePicture;
         this.role = role;
+        this.registrationStatus = RegistrationStatus.COMPLETE;
     }
 } 

@@ -13,7 +13,8 @@ import {
   Mail,
   LogOut,
   Settings,
-  Package
+  Package,
+  Store
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import './Navbar.css';
@@ -23,7 +24,7 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const location = useLocation();
-  const { user, logout, isAuthenticated, isAdmin } = useAuth();
+  const { currentUser, logout, isAuthenticated, isAdmin, isVendor } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -75,10 +76,14 @@ const Navbar = () => {
   const UserMenu = () => (
     <div className="user-menu">
       <div className="user-info">
-        <p className="user-name">{user?.name}</p>
-        <p className="user-email">{user?.email}</p>
+        <p className="user-name">{currentUser?.name}</p>
+        <p className="user-email">{currentUser?.email}</p>
       </div>
       <div className="user-menu-links">
+        <Link to="/dashboard" className="user-menu-link">
+          <Package size={16} />
+          <span>Dashboard</span>
+        </Link>
         <Link to="/profile" className="user-menu-link">
           <Settings size={16} />
           <span>Profile</span>
@@ -117,8 +122,14 @@ const Navbar = () => {
                 <span>hello@greenmagic.com</span>
               </div>
             </div>
-            <div className="hidden md:block">
-              <span>🌱 Free shipping on orders above ₹999</span>
+            <div className="hidden md:flex items-center">
+              <span className="mr-4">🌱 Free shipping on orders above ₹999</span>
+              {!isAuthenticated() && (
+                <Link to="/vendor-register" className="flex items-center text-white hover:text-yellow-200 transition-colors">
+                  <Store className="w-4 h-4 mr-1" />
+                  <span>Become a Vendor</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -185,7 +196,7 @@ const Navbar = () => {
                   >
                     <User className="w-5 h-5" />
                     <span className="hidden xl:block text-sm font-medium">
-                      {user?.name?.split(' ')[0]}
+                      {currentUser?.name?.split(' ')[0]}
                     </span>
                   </button>
                   {showUserMenu && <UserMenu />}
@@ -205,6 +216,17 @@ const Navbar = () => {
                     Sign Up
                   </Link>
                 </div>
+              )}
+              
+              {/* Become a Vendor button (desktop) */}
+              {!isAuthenticated() && (
+                <Link
+                  to="/vendor-register"
+                  className="hidden xl:flex items-center px-4 py-2 text-sm font-medium bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors"
+                >
+                  <Store className="w-4 h-4 mr-2" />
+                  Become a Vendor
+                </Link>
               )}
             </div>
 
@@ -244,68 +266,33 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
+              
+              {/* Become a Vendor button (mobile) */}
+              {!isAuthenticated() && (
+                <Link
+                  to="/vendor-register"
+                  className="mobile-nav-link flex items-center"
+                  onClick={closeMenu}
+                >
+                  <Store className="w-5 h-5 mr-2" />
+                  Become a Vendor
+                </Link>
+              )}
             </div>
 
-            {/* Mobile Authentication */}
-            {isAuthenticated() ? (
+            {!isAuthenticated() && (
               <div className="px-4 py-3 border-t border-gray-200">
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Link
-                    to="/profile"
-                    className="mobile-nav-link"
-                    onClick={closeMenu}
-                  >
-                    Profile
-                  </Link>
-                  <Link
-                    to="/orders"
-                    className="mobile-nav-link"
-                    onClick={closeMenu}
-                  >
-                    Orders
-                  </Link>
-                  {isAdmin() && (
-                    <Link
-                      to="/admin/users"
-                      className="mobile-nav-link"
-                      onClick={closeMenu}
-                    >
-                      User Management
-                    </Link>
-                  )}
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      closeMenu();
-                    }}
-                    className="mobile-nav-link text-red-600 w-full text-left"
-                  >
-                    Logout
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="px-4 py-3 border-t border-gray-200">
-                <div className="space-y-2">
+                <div className="flex flex-col space-y-3">
                   <Link
                     to="/login"
-                    className="mobile-nav-link"
+                    className="w-full py-2 text-center border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50"
                     onClick={closeMenu}
                   >
                     Login
                   </Link>
                   <Link
                     to="/register"
-                    className="mobile-nav-link"
+                    className="w-full py-2 text-center bg-primary-600 rounded-md text-white font-medium hover:bg-primary-700"
                     onClick={closeMenu}
                   >
                     Sign Up
@@ -314,22 +301,59 @@ const Navbar = () => {
               </div>
             )}
 
-            {/* Mobile Actions */}
-            <div className="px-4 py-3 border-t border-gray-200">
-              <div className="flex items-center justify-around">
-                <button className="flex flex-col items-center space-y-1 text-gray-600 hover:text-primary-600 transition-colors">
-                  <Search className="w-5 h-5" />
-                  <span className="text-xs">Search</span>
-                </button>
-                <button className="flex flex-col items-center space-y-1 text-gray-600 hover:text-primary-600 transition-colors relative">
-                  <Heart className="w-5 h-5" />
-                  <span className="text-xs">Wishlist</span>
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center">
-                    0
-                  </span>
-                </button>
+            {isAuthenticated() && (
+              <div className="px-4 py-3 border-t border-gray-200">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-semibold">
+                      {currentUser?.name?.charAt(0)}
+                    </div>
+                  </div>
+                  <div className="ml-3">
+                    <div className="text-base font-medium text-gray-800">{currentUser?.name}</div>
+                    <div className="text-sm font-medium text-gray-500">{currentUser?.email}</div>
+                  </div>
+                </div>
+                <div className="mt-3 space-y-1">
+                  <Link
+                    to="/dashboard"
+                    className="mobile-menu-user-link"
+                    onClick={closeMenu}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/profile"
+                    className="mobile-menu-user-link"
+                    onClick={closeMenu}
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    to="/orders"
+                    className="mobile-menu-user-link"
+                    onClick={closeMenu}
+                  >
+                    Orders
+                  </Link>
+                  {isAdmin() && (
+                    <Link
+                      to="/admin/users"
+                      className="mobile-menu-user-link"
+                      onClick={closeMenu}
+                    >
+                      User Management
+                    </Link>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="mobile-menu-user-link text-left w-full"
+                  >
+                    Logout
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </nav>

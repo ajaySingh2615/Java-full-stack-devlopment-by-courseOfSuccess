@@ -1,9 +1,9 @@
 package org.sortoutinnovation.greenmagic.controller;
 
-import org.sortoutinnovation.greenmagic.dto.UserRegistrationRequestDto;
-import org.sortoutinnovation.greenmagic.dto.UserResponseDto;
+import org.sortoutinnovation.greenmagic.dto.*;
 import org.sortoutinnovation.greenmagic.model.User;
 import org.sortoutinnovation.greenmagic.service.UserService;
+import org.sortoutinnovation.greenmagic.service.VendorProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,6 +31,9 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private VendorProfileService vendorProfileService;
 
     @Autowired
     private SecurityContextRepository securityContextRepository;
@@ -52,6 +55,56 @@ public class AuthController {
             return ResponseEntity.ok(Map.of(
                 "message", "Admin user not found",
                 "error", e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * Register a new customer user
+     * @param requestDto registration data
+     * @return newly created user
+     */
+    @PostMapping("/register")
+    public ResponseEntity<?> registerCustomer(@Valid @RequestBody UserRegistrationRequestDto requestDto) {
+        try {
+            UserResponseDto user = userService.registerCustomer(requestDto);
+            return ResponseEntity.ok(Map.of(
+                "message", "User registered successfully",
+                "user", user
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Registration failed",
+                "message", e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * Register a new vendor (step 1)
+     * @param requestDto vendor registration data
+     * @return newly created vendor user
+     */
+    @PostMapping("/vendor-register")
+    public ResponseEntity<?> registerVendor(@Valid @RequestBody VendorRegistrationRequestDto requestDto) {
+        try {
+            // Validate terms acceptance
+            if (!requestDto.getTermsAccepted()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Registration failed",
+                    "message", "You must accept the terms and conditions"
+                ));
+            }
+            
+            UserResponseDto user = userService.registerVendor(requestDto);
+            return ResponseEntity.ok(Map.of(
+                "message", "Vendor user registered successfully. Please complete your profile.",
+                "user", user
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Registration failed",
+                "message", e.getMessage()
             ));
         }
     }
@@ -93,6 +146,29 @@ public class AuthController {
             
             // Save authentication to session
             securityContextRepository.saveContext(context, request, response);
+            
+            // Add vendor profile status to response if user is a vendor
+            if (user.getRoleName().equals("VENDOR")) {
+                Map<String, Object> responseData;
+                VendorProfileResponseDto vendorProfile = vendorProfileService.getVendorProfileByUserId(user.getUserId());
+                
+                if (vendorProfile != null) {
+                    responseData = Map.of(
+                        "message", "Login successful",
+                        "user", user,
+                        "profileComplete", true,
+                        "vendorStatus", vendorProfile.getStatus()
+                    );
+                } else {
+                    responseData = Map.of(
+                        "message", "Login successful",
+                        "user", user,
+                        "profileComplete", false
+                    );
+                }
+                
+                return ResponseEntity.ok(responseData);
+            }
             
             return ResponseEntity.ok(Map.of(
                 "message", "Login successful",
@@ -187,10 +263,9 @@ public class AuthController {
             adminRequest.setEmail("admin@greenmagic.com");
             adminRequest.setPassword("Admin123!"); // Meets password requirements
             adminRequest.setPhoneNumber("+1234567890"); // Required field
-            adminRequest.setRole("USER"); // We'll change this to ADMIN after creation
             
             // Register user first as USER, then we'll need to update role to ADMIN
-            UserResponseDto createdAdmin = userService.registerUser(adminRequest);
+            UserResponseDto createdAdmin = userService.registerCustomer(adminRequest);
             
             return ResponseEntity.ok(Map.of(
                 "message", "Admin user created successfully (Note: Role needs to be updated to ADMIN manually)",
@@ -248,52 +323,40 @@ public class AuthController {
                 "message", "Authentication found",
                 "authenticated", true,
                 "principal", authentication.getPrincipal(),
-                "authorities", authentication.getAuthorities().toString(),
-                "name", authentication.getName()
+                "authorities", authentication.getAuthorities()
             ));
+            
         } catch (Exception e) {
-            return ResponseEntity.ok(Map.of(
-                "message", "Error checking authentication",
-                "error", e.getMessage()
+            return ResponseEntity.status(500).body(Map.of(
+                "error", e.getMessage(),
+                "message", "Error checking authentication"
             ));
         }
     }
 
-    /**
-     * Login request DTO
-     */
     public static class LoginRequest {
         private String email;
         private String password;
-
-        // Getters and setters
+        
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
         public String getPassword() { return password; }
         public void setPassword(String password) { this.password = password; }
     }
 
-    /**
-     * Password change request DTO
-     */
     public static class PasswordChangeRequest {
         private String currentPassword;
         private String newPassword;
-
-        // Getters and setters
+        
         public String getCurrentPassword() { return currentPassword; }
         public void setCurrentPassword(String currentPassword) { this.currentPassword = currentPassword; }
         public String getNewPassword() { return newPassword; }
         public void setNewPassword(String newPassword) { this.newPassword = newPassword; }
     }
 
-    /**
-     * Password reset request DTO
-     */
     public static class PasswordResetRequest {
         private String newPassword;
-
-        // Getters and setters
+        
         public String getNewPassword() { return newPassword; }
         public void setNewPassword(String newPassword) { this.newPassword = newPassword; }
     }

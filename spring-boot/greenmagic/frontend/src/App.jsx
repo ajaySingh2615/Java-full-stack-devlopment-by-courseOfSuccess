@@ -11,6 +11,9 @@ import Contact from './pages/Contact';
 import Blog from './pages/Blog';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import VendorRegister from './pages/VendorRegister';
+import VendorRegistration from './pages/VendorRegistration';
+import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
 import './App.css';
 
@@ -29,6 +32,17 @@ function App() {
               <Route path="/blog" element={<Blog />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/vendor-register" element={<VendorRegister />} />
+              <Route path="/vendor-registration" element={
+                <ProtectedRoute requireVendor={true}>
+                  <VendorRegistration />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
               <Route path="/admin/users" element={
                 <ProtectedRoute requireAdmin={true}>
                   <UserManagement />

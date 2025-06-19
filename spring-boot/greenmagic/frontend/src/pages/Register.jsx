@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, User, Mail, Phone, Lock, CheckCircle, XCircle, UserCheck } from 'lucide-react';
+import { Eye, EyeOff, User, Mail, Phone, Lock, CheckCircle, XCircle } from 'lucide-react';
 import authService from '../services/authService';
 import './Register.css';
 
@@ -11,32 +11,13 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    phoneNumber: '',
-    role: ''
+    phoneNumber: ''
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordValidation, setPasswordValidation] = useState(null);
-  const [availableRoles, setAvailableRoles] = useState([]);
-
-  // Fetch available roles on component mount
-  useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const response = await fetch('http://localhost:8080/api/users/roles');
-        const data = await response.json();
-        if (data.success) {
-          setAvailableRoles(data.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch roles:', error);
-      }
-    };
-
-    fetchRoles();
-  }, []);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -103,11 +84,6 @@ const Register = () => {
       newErrors.phoneNumber = 'Please enter a valid phone number';
     }
 
-    // Role validation
-    if (!formData.role) {
-      newErrors.role = 'Please select a role';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -126,10 +102,10 @@ const Register = () => {
       // Remove confirmPassword from the data sent to backend
       const { confirmPassword, ...registrationData } = formData;
       
-      const response = await authService.register(registrationData);
+      const response = await authService.registerCustomer(registrationData);
       
       if (response.success) {
-        // Registration successful
+        // Registration successful - direct to login
         alert('Registration successful! Please login with your credentials.');
         navigate('/login');
       } else {
@@ -236,43 +212,13 @@ const Register = () => {
               {errors.phoneNumber && <span className="error-message">{errors.phoneNumber}</span>}
             </div>
 
-            {/* Role Selection Field */}
-            <div className="form-group">
-              <label htmlFor="role">Account Type</label>
-              <div className="input-wrapper">
-                <UserCheck className="input-icon" size={20} />
-                <select
-                  id="role"
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className={errors.role ? 'input-error' : ''}
-                  disabled={loading}
-                >
-                  <option value="">Select your account type</option>
-                  {availableRoles.map(role => (
-                    <option key={role.roleId} value={role.roleName}>
-                      {role.roleName === 'USER' ? 'Customer' : 'Vendor'}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {errors.role && <span className="error-message">{errors.role}</span>}
-              <div className="role-description">
-                <p className="role-help-text">
-                  <strong>Customer:</strong> Browse and purchase eco-friendly products<br/>
-                  <strong>Vendor:</strong> Sell your sustainable products on our platform
-                </p>
-              </div>
-            </div>
-
             {/* Password Field */}
             <div className="form-group">
               <label htmlFor="password">Password</label>
               <div className="input-wrapper">
                 <Lock className="input-icon" size={20} />
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   id="password"
                   name="password"
                   value={formData.password}
@@ -300,7 +246,7 @@ const Register = () => {
               <div className="input-wrapper">
                 <Lock className="input-icon" size={20} />
                 <input
-                  type={showConfirmPassword ? 'text' : 'password'}
+                  type={showConfirmPassword ? "text" : "password"}
                   id="confirmPassword"
                   name="confirmPassword"
                   value={formData.confirmPassword}
@@ -321,31 +267,22 @@ const Register = () => {
               {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
             </div>
 
-            {/* Submit Error */}
-            {errors.submit && (
-              <div className="submit-error">
-                <XCircle size={20} />
-                <span>{errors.submit}</span>
-              </div>
-            )}
-
-            {/* Submit Button */}
-            <button 
-              type="submit" 
-              className="btn-primary register-btn"
+            {/* Register Button */}
+            <button
+              type="submit"
+              className="register-button"
               disabled={loading}
             >
               {loading ? 'Creating Account...' : 'Create Account'}
             </button>
+
+            {/* Form Level Error */}
+            {errors.submit && <div className="form-error">{errors.submit}</div>}
           </form>
 
           <div className="register-footer">
-            <p>
-              Already have an account?{' '}
-              <Link to="/login" className="login-link">
-                Sign in here
-              </Link>
-            </p>
+            <p>Already have an account? <Link to="/login" className="login-link">Login here</Link></p>
+            <p>Want to sell on GreenMagic? <Link to="/vendor-register" className="vendor-link">Apply as a Vendor</Link></p>
           </div>
         </div>
       </div>

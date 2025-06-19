@@ -7,14 +7,15 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.sortoutinnovation.greenmagic.model.VendorProfile.BusinessType;
 
 /**
- * DTO for user registration requests
+ * DTO for vendor registration requests (step 1)
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserRegistrationRequestDto {
+public class VendorRegistrationRequestDto {
 
     @NotBlank(message = "Name is required")
     @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
@@ -31,6 +32,12 @@ public class UserRegistrationRequestDto {
             message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character")
     private String password;
 
+    @NotBlank(message = "Phone number is required")
     @Pattern(regexp = "^[+]?[1-9]\\d{1,14}$", message = "Please provide a valid phone number")
     private String phoneNumber;
+    
+    @NotBlank(message = "Business type is required")
+    private String businessType;
+    
+    private Boolean termsAccepted = false;
 } 

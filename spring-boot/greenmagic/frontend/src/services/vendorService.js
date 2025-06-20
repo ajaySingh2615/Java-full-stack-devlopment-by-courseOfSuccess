@@ -24,31 +24,7 @@ class VendorService {
         throw new Error(data.message || 'Failed to register vendor');
       }
 
-      // If vendor registration was successful, create an initial vendor profile
-      if (data.user && data.user.userId) {
-        try {
-          // Create a minimal vendor profile with all required fields
-          const defaultAddress = "Address to be provided later";
-          await this.createVendorProfile(data.user.userId, {
-            businessName: vendorData.name + "'s Business", // Use name as temporary business name
-            businessType: vendorData.businessType, // BusinessType enum value from registration form
-            businessPhone: vendorData.phoneNumber,
-            businessEmail: vendorData.email,
-            gstNumber: "22AAAAA0000A1Z5", // Temporary GST number (will be updated in step 2)
-            address: defaultAddress, // Required field - explicitly set
-            addressLine1: defaultAddress,
-            city: "City pending",
-            state: "State pending",
-            pincode: "000000",
-            country: "India"
-          });
-        } catch (profileError) {
-          console.error('Failed to create initial vendor profile:', profileError);
-          // Don't throw here, we want the registration to succeed even if profile creation fails
-          // The user can complete their profile later
-        }
-      }
-
+      // Return the user data without creating an initial vendor profile
       return data;
     } catch (error) {
       console.error('Vendor registration error:', error);
@@ -224,7 +200,8 @@ class VendorService {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
+        // Don't include credentials for this public endpoint
+        credentials: 'omit',
       });
 
       const data = await response.json();

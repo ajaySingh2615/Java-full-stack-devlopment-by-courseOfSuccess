@@ -95,6 +95,7 @@ public class SecurityConfig {
                     "/auth/register",                // Customer registration endpoint
                     "/auth/vendor-register",         // Vendor registration endpoint (step 1)
                     "/vendors/users/{userId:[0-9]+}", // Create vendor profile during registration
+                    "/vendors/users/{userId:[0-9]+}/exists", // Check if vendor profile exists
                     "/auth/debug/**",                // Debug endpoints (remove in production)
                     "/categories/**",                // Category browsing
                     "/products/**",                  // Product browsing
@@ -124,7 +125,6 @@ public class SecurityConfig {
                     "/cart/**",                      // Cart operations
                     "/wishlist/**",                  // Wishlist operations
                     "/addresses/**",                 // Address management
-                    "/vendors/users/{userId:[0-9]+}/exists", // Check if vendor profile exists
                     "/vendors/{vendorId:[0-9]+}"     // Get/update specific vendor profile
                 ).authenticated()
                 

@@ -6,9 +6,16 @@ const ProtectedRoute = ({
   children, 
   requireAdmin = false, 
   requireVendor = false,
+  requireCompleteVendorProfile = false,
   redirectTo = '/login' 
 }) => {
-  const { isAuthenticated, isAdmin, isVendor, loading } = useAuth();
+  const { 
+    isAuthenticated, 
+    isAdmin, 
+    isVendor, 
+    isVendorProfileComplete, 
+    loading 
+  } = useAuth();
 
   // Show loading while checking authentication
   if (loading) {
@@ -55,6 +62,11 @@ const ProtectedRoute = ({
   // Redirect if vendor access required but user is not vendor
   if (requireVendor && !isVendor()) {
     return <AccessDenied message="This area is restricted to vendors only." />;
+  }
+  
+  // Redirect vendor to profile completion if profile is not complete
+  if (requireCompleteVendorProfile && isVendor() && !isVendorProfileComplete()) {
+    return <Navigate to="/vendor-registration" replace />;
   }
 
   // Render children if all checks pass

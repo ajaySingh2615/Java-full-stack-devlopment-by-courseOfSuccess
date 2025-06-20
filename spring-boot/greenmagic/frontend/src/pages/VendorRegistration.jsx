@@ -9,6 +9,7 @@ const VendorRegistration = () => {
   const navigate = useNavigate();
   const { currentUser, setVendorProfileCompleted } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const [checkingProfile, setCheckingProfile] = useState(true);
   const [formData, setFormData] = useState({
     // Business Details
     businessName: '',
@@ -73,7 +74,60 @@ const VendorRegistration = () => {
       navigate('/');
       return;
     }
-  }, [currentUser, navigate]);
+    
+    // Check if vendor profile exists
+    const checkVendorProfile = async () => {
+      try {
+        setCheckingProfile(true);
+        // First check if profile exists
+        const profileExists = await vendorService.checkVendorProfileExists(currentUser.userId);
+        
+        if (profileExists.success && profileExists.data) {
+          // Profile already exists, get the details
+          const profileResponse = await vendorService.getVendorProfileByUserId(currentUser.userId);
+          
+          if (profileResponse.success && profileResponse.data) {
+            // Pre-fill form with existing data
+            const profile = profileResponse.data;
+            setFormData(prevData => ({
+              ...prevData,
+              businessName: profile.businessName || '',
+              legalBusinessName: profile.legalBusinessName || '',
+              gstNumber: profile.gstNumber || '',
+              panNumber: profile.panNumber || '',
+              businessType: profile.businessType || 'PROPRIETORSHIP',
+              businessPhone: profile.businessPhone || '',
+              businessEmail: profile.businessEmail || '',
+              supportEmail: profile.supportEmail || '',
+              websiteUrl: profile.websiteUrl || '',
+              addressLine1: profile.addressLine1 || '',
+              addressLine2: profile.addressLine2 || '',
+              city: profile.city || '',
+              state: profile.state || '',
+              pincode: profile.pincode || '',
+              country: profile.country || 'India',
+              storeDisplayName: profile.storeDisplayName || '',
+              storeDescription: profile.storeDescription || ''
+            }));
+            
+            // If profile is already complete, redirect to dashboard
+            if (profile.status !== 'INCOMPLETE') {
+              setVendorProfileCompleted();
+              navigate('/dashboard');
+            }
+          }
+        }
+      } catch (error) {
+        // Just log the error but don't block the user experience
+        // This allows the form to be shown even if the check fails
+        console.error('Error checking vendor profile:', error);
+      } finally {
+        setCheckingProfile(false);
+      }
+    };
+    
+    checkVendorProfile();
+  }, [currentUser, navigate, setVendorProfileCompleted]);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -275,20 +329,35 @@ const VendorRegistration = () => {
         return;
       }
       
-      // Submit profile data
-      const response = await vendorService.completeVendorProfile(
-        currentUser.userId, 
-        formData
-      );
+      // Check if profile exists first
+      const profileExists = await vendorService.checkVendorProfileExists(currentUser.userId);
       
-      if (response.success) {
+      let response;
+      if (profileExists.success && profileExists.data) {
+        // Update existing profile
+        const existingProfile = await vendorService.getVendorProfileByUserId(currentUser.userId);
+        if (existingProfile.success && existingProfile.data) {
+          response = await vendorService.updateVendorProfile(
+            existingProfile.data.vendorId,
+            formData
+          );
+        }
+      } else {
+        // Create new profile
+        response = await vendorService.createVendorProfile(
+          currentUser.userId,
+          formData
+        );
+      }
+      
+      if (response && response.success) {
         setVendorProfileCompleted();
         setSuccess(true);
         setTimeout(() => {
           navigate('/dashboard');
         }, 3000);
       } else {
-        setErrors({ submit: response.message || 'Registration failed' });
+        setErrors({ submit: (response && response.message) || 'Registration failed' });
       }
     } catch (error) {
       setErrors({ submit: error.message || 'Registration failed. Please try again.' });
@@ -305,6 +374,20 @@ const VendorRegistration = () => {
             <CheckCircle size={50} />
             <h2>Vendor Profile Created Successfully!</h2>
             <p>Your profile has been created and is pending approval. You will be redirected to dashboard shortly.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (checkingProfile) {
+    return (
+      <div className="vendor-registration-page">
+        <div className="vendor-registration-container">
+          <div className="loading-message">
+            <div className="spinner"></div>
+            <h2>Checking Profile Status...</h2>
+            <p>Please wait while we check your vendor profile status.</p>
           </div>
         </div>
       </div>

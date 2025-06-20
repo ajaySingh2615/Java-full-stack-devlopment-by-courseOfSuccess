@@ -1,5 +1,7 @@
 package org.sortoutinnovation.greenmagic.mapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sortoutinnovation.greenmagic.dto.VendorProfileCreateRequestDto;
 import org.sortoutinnovation.greenmagic.dto.VendorProfileResponseDto;
 import org.sortoutinnovation.greenmagic.model.User;
@@ -10,6 +12,7 @@ import org.sortoutinnovation.greenmagic.model.VendorProfile.VendorStatus;
  * Mapper utility for VendorProfile entity and DTOs
  */
 public class VendorProfileMapper {
+    private static final Logger logger = LoggerFactory.getLogger(VendorProfileMapper.class);
 
     /**
      * Convert VendorProfile entity to ResponseDto
@@ -57,11 +60,59 @@ public class VendorProfileMapper {
 
         VendorProfile vendorProfile = new VendorProfile();
         vendorProfile.setUser(user);
+        
+        // Set required fields with dto values or defaults
         vendorProfile.setBusinessName(dto.getBusinessName());
-        vendorProfile.setGstNumber(dto.getGstNumber());
+        
+        // For GST number, check if it's a placeholder and handle accordingly
+        if (dto.getGstNumber() != null && dto.getGstNumber().equals("22AAAAA0000A1Z5")) {
+            // This is a placeholder for initial vendor profile creation
+            // Create a shorter temporary GST number that fits within the 20 character limit
+            String tempGst = "TEMP" + user.getUserId();
+            logger.info("Generated temporary GST number: {}", tempGst);
+            vendorProfile.setGstNumber(tempGst); 
+        } else {
+            vendorProfile.setGstNumber(dto.getGstNumber());
+            logger.info("Using provided GST number: {}", dto.getGstNumber());
+        }
+        
+        // Set business type if provided
+        if (dto.getBusinessType() != null) {
+            vendorProfile.setBusinessType(dto.getBusinessType());
+            logger.info("Setting business type: {}", dto.getBusinessType());
+        }
+        
         vendorProfile.setBusinessPhone(dto.getBusinessPhone());
         vendorProfile.setBusinessEmail(dto.getBusinessEmail());
-        vendorProfile.setAddress(dto.getAddress());
+        
+        // Handle address - set address field for backward compatibility
+        // New code should use the structured address fields instead
+        if (dto.getAddress() != null) {
+            vendorProfile.setAddressLine1(dto.getAddressLine1() != null ? 
+                dto.getAddressLine1() : dto.getAddress());
+            
+            // Set default values for required address fields if not provided
+            vendorProfile.setCity(dto.getCity() != null ? dto.getCity() : "To be provided");
+            vendorProfile.setState(dto.getState() != null ? dto.getState() : "To be provided");
+            vendorProfile.setPincode(dto.getPincode() != null ? dto.getPincode() : "000000");
+            vendorProfile.setCountry(dto.getCountry() != null ? dto.getCountry() : "India");
+            
+            // Set the database 'address' column with a default value
+            vendorProfile.setAddress(dto.getAddressLine1() != null ? 
+                dto.getAddressLine1() : dto.getAddress());
+            logger.info("Setting address field: {}", vendorProfile.getAddress());
+        } else {
+            // Set a default value for address to avoid NOT NULL constraint violation
+            String defaultAddress = "Address to be provided later";
+            vendorProfile.setAddress(defaultAddress);
+            vendorProfile.setAddressLine1(defaultAddress);
+            vendorProfile.setCity("To be provided");
+            vendorProfile.setState("To be provided");
+            vendorProfile.setPincode("000000");
+            vendorProfile.setCountry("India");
+            logger.info("Setting default address field: {}", defaultAddress);
+        }
+        
         vendorProfile.setStoreDescription(dto.getStoreDescription());
         vendorProfile.setLogoUrl(dto.getLogoUrl());
         vendorProfile.setStatus(VendorStatus.PENDING); // Default status for new vendors
@@ -87,7 +138,13 @@ public class VendorProfileMapper {
         }
         vendorProfile.setBusinessPhone(dto.getBusinessPhone());
         vendorProfile.setBusinessEmail(dto.getBusinessEmail());
-        vendorProfile.setAddress(dto.getAddress());
+        
+        // Handle address 
+        if (dto.getAddress() != null && !dto.getAddress().isEmpty()) {
+            vendorProfile.setAddressLine1(dto.getAddress());
+            vendorProfile.setAddress(dto.getAddress());
+        }
+        
         vendorProfile.setStoreDescription(dto.getStoreDescription());
         
         // Only update logo URL if provided

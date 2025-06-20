@@ -210,9 +210,17 @@ public class VendorProfileService {
             throw new RuntimeException("Vendor profile already exists for this user");
         }
 
-        // Check if GST number is unique
-        if (vendorProfileRepository.existsByGstNumber(requestDto.getGstNumber())) {
+        // Check if GST number is unique (only for non-temporary GST numbers)
+        if (!requestDto.isTemporaryGst() && vendorProfileRepository.existsByGstNumber(requestDto.getGstNumber())) {
             throw new RuntimeException("GST number already registered");
+        }
+        
+        // Validate GST number format if it's not a temporary one
+        if (!requestDto.isTemporaryGst()) {
+            String gstRegex = "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$";
+            if (!requestDto.getGstNumber().matches(gstRegex)) {
+                throw new RuntimeException("Invalid GST number format. Please enter a valid 15-character GST number.");
+            }
         }
 
         // Create new vendor profile
@@ -241,15 +249,22 @@ public class VendorProfileService {
     /**
      * Get vendor profile by user ID
      * @param userId user ID
-     * @return VendorProfileResponseDto
-     * @throws RuntimeException if vendor profile not found
+     * @return VendorProfileResponseDto or null if not found
      */
     @Transactional(readOnly = true)
     public VendorProfileResponseDto getVendorProfileByUserId(Integer userId) {
-        VendorProfile vendorProfile = vendorProfileRepository.findByUserId(userId)
-            .orElseThrow(() -> new RuntimeException("Vendor profile not found for user with id: " + userId));
-        
-        return VendorProfileMapper.toResponseDto(vendorProfile);
+        try {
+            VendorProfile vendorProfile = vendorProfileRepository.findByUserId(userId)
+                .orElse(null);
+                
+            if (vendorProfile == null) {
+                return null; // Return null instead of throwing exception
+            }
+            
+            return VendorProfileMapper.toResponseDto(vendorProfile);
+        } catch (Exception e) {
+            return null; // Return null for any other errors
+        }
     }
 
     /**

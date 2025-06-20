@@ -104,6 +104,10 @@ public class UserService {
         
         user.setPhoneNumber(registrationRequest.getPhoneNumber());
 
+        // Log businessType value coming from request
+        System.out.println("BusinessType from request: " + registrationRequest.getBusinessType());
+        System.out.println("Terms accepted: " + registrationRequest.getTermsAccepted());
+
         User savedUser = userRepository.save(user);
         return UserMapper.toResponseDto(savedUser);
     }
@@ -372,9 +376,9 @@ public class UserService {
     }
 
     /**
-     * Update user's registration status
+     * Update user registration status
      * @param userId user ID
-     * @param status new registration status
+     * @param status registration status
      * @return UserResponseDto
      * @throws RuntimeException if user not found
      */

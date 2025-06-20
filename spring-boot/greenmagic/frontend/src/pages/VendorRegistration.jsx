@@ -127,19 +127,19 @@ const VendorRegistration = () => {
   // Validate current step
   const validateStep = () => {
     const newErrors = {};
-    
+
     if (currentStep === 1) {
       // Business Details validation
-      if (!formData.businessName.trim()) {
-        newErrors.businessName = 'Business name is required';
-      }
-      
-      if (!formData.gstNumber.trim()) {
-        newErrors.gstNumber = 'GST number is required';
+    if (!formData.businessName.trim()) {
+      newErrors.businessName = 'Business name is required';
+    }
+
+    if (!formData.gstNumber.trim()) {
+      newErrors.gstNumber = 'GST number is required';
       } else if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(formData.gstNumber)) {
-        newErrors.gstNumber = 'Please enter a valid GST number';
-      }
-      
+      newErrors.gstNumber = 'Please enter a valid GST number';
+    }
+
       if (formData.panNumber && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panNumber)) {
         newErrors.panNumber = 'Please enter a valid PAN number';
       }
@@ -147,16 +147,16 @@ const VendorRegistration = () => {
     
     else if (currentStep === 2) {
       // Business Contact validation
-      if (!formData.businessPhone.trim()) {
-        newErrors.businessPhone = 'Business phone is required';
-      }
-      
-      if (!formData.businessEmail.trim()) {
-        newErrors.businessEmail = 'Business email is required';
+    if (!formData.businessPhone.trim()) {
+      newErrors.businessPhone = 'Business phone is required';
+    }
+
+    if (!formData.businessEmail.trim()) {
+      newErrors.businessEmail = 'Business email is required';
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.businessEmail)) {
-        newErrors.businessEmail = 'Please enter a valid email address';
-      }
-      
+      newErrors.businessEmail = 'Please enter a valid email address';
+    }
+
       if (formData.supportEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.supportEmail)) {
         newErrors.supportEmail = 'Please enter a valid email address';
       }
@@ -193,7 +193,7 @@ const VendorRegistration = () => {
         newErrors.storeDisplayName = 'Store display name is required';
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -314,8 +314,8 @@ const VendorRegistration = () => {
   // Render progress bar
   const renderProgressBar = () => {
     const steps = ['Business Details', 'Business Contact', 'Address', 'Store Info', 'Documents'];
-    
-    return (
+
+  return (
       <div className="progress-bar">
         {steps.map((step, index) => (
           <div 
@@ -327,7 +327,7 @@ const VendorRegistration = () => {
             <div className="step-label">{step}</div>
           </div>
         ))}
-      </div>
+            </div>
     );
   };
 
@@ -444,7 +444,7 @@ const VendorRegistration = () => {
         return (
           <>
             <h2 className="step-title">Business Contact Information</h2>
-            
+
             {/* Business Phone Field */}
             <div className="form-group">
               <label htmlFor="businessPhone">Business Phone *</label>
@@ -482,7 +482,7 @@ const VendorRegistration = () => {
               </div>
               {errors.businessEmail && <span className="error-message">{errors.businessEmail}</span>}
             </div>
-            
+
             {/* Support Email Field */}
             <div className="form-group">
               <label htmlFor="supportEmail">Support Email</label>
@@ -664,7 +664,7 @@ const VendorRegistration = () => {
               </div>
               {errors.storeDisplayName && <span className="error-message">{errors.storeDisplayName}</span>}
             </div>
-            
+
             {/* Store Description Field */}
             <div className="form-group">
               <label htmlFor="storeDescription">Store Description</label>
@@ -680,7 +680,7 @@ const VendorRegistration = () => {
                 />
               </div>
             </div>
-            
+
             {/* Product Categories Field */}
             <div className="form-group">
               <label htmlFor="productCategories">Product Categories</label>
@@ -717,7 +717,7 @@ const VendorRegistration = () => {
                 />
               </div>
             </div>
-            
+
             {/* Account Number Field */}
             <div className="form-group">
               <label htmlFor="accountNumber">Account Number</label>
@@ -734,7 +734,7 @@ const VendorRegistration = () => {
                 />
               </div>
             </div>
-            
+
             {/* IFSC Code Field */}
             <div className="form-group">
               <label htmlFor="ifscCode">IFSC Code</label>
@@ -1000,13 +1000,13 @@ const VendorRegistration = () => {
             <ArrowRight size={18} />
           </button>
         ) : (
-          <button
-            type="submit"
+            <button 
+              type="submit" 
             className="btn-primary"
-            disabled={loading}
-          >
+              disabled={loading}
+            >
             {loading ? 'Submitting...' : 'Complete Registration'}
-          </button>
+            </button>
         )}
       </div>
     );

@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -160,11 +161,13 @@ public class AuthController {
                         "vendorStatus", vendorProfile.getStatus()
                     );
                 } else {
-                    responseData = Map.of(
-                        "message", "Login successful",
-                        "user", user,
-                        "profileComplete", false
-                    );
+                    // Create a proper response when profile doesn't exist
+                    Map<String, Object> responseMap = new HashMap<>();
+                    responseMap.put("message", "Login successful");
+                    responseMap.put("user", user);
+                    responseMap.put("profileComplete", false);
+                    
+                    return ResponseEntity.ok(responseMap);
                 }
                 
                 return ResponseEntity.ok(responseData);

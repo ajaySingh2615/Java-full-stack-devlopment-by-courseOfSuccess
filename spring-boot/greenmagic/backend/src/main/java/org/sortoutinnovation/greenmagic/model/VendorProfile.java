@@ -104,8 +104,8 @@ public class VendorProfile {
      * Combined address field for backward compatibility with mapper
      * This is a transient field that gets populated from address components
      */
-    @Transient
-    private String address;
+    @Column(name = "address", nullable = false, columnDefinition = "TEXT")
+    private String address = "Address to be provided later";
     
     /**
      * Get a formatted address string from the components
@@ -209,7 +209,7 @@ public class VendorProfile {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private VendorStatus status;
+    private VendorStatus status = VendorStatus.PENDING;
     
     @Column(name = "rejection_reason", columnDefinition = "TEXT")
     private String rejectionReason;

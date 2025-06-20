@@ -36,8 +36,7 @@ public class VendorRegistrationRequestDto {
     @Pattern(regexp = "^[+]?[1-9]\\d{1,14}$", message = "Please provide a valid phone number")
     private String phoneNumber;
     
-    @NotBlank(message = "Business type is required")
-    private String businessType;
+    private BusinessType businessType;
     
     private Boolean termsAccepted = false;
 } 

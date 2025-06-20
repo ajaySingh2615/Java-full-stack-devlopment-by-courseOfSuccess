@@ -24,6 +24,31 @@ class VendorService {
         throw new Error(data.message || 'Failed to register vendor');
       }
 
+      // If vendor registration was successful, create an initial vendor profile
+      if (data.user && data.user.userId) {
+        try {
+          // Create a minimal vendor profile with all required fields
+          const defaultAddress = "Address to be provided later";
+          await this.createVendorProfile(data.user.userId, {
+            businessName: vendorData.name + "'s Business", // Use name as temporary business name
+            businessType: vendorData.businessType, // BusinessType enum value from registration form
+            businessPhone: vendorData.phoneNumber,
+            businessEmail: vendorData.email,
+            gstNumber: "22AAAAA0000A1Z5", // Temporary GST number (will be updated in step 2)
+            address: defaultAddress, // Required field - explicitly set
+            addressLine1: defaultAddress,
+            city: "City pending",
+            state: "State pending",
+            pincode: "000000",
+            country: "India"
+          });
+        } catch (profileError) {
+          console.error('Failed to create initial vendor profile:', profileError);
+          // Don't throw here, we want the registration to succeed even if profile creation fails
+          // The user can complete their profile later
+        }
+      }
+
       return data;
     } catch (error) {
       console.error('Vendor registration error:', error);
@@ -39,7 +64,7 @@ class VendorService {
    */
   async completeVendorProfile(userId, profileData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/vendor-profiles/users/${userId}/complete-profile`, {
+      const response = await fetch(`${API_BASE_URL}/vendors/users/${userId}/complete-profile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -110,7 +135,7 @@ class VendorService {
           reject(new Error('Network error during upload'));
         };
         
-        xhr.open('POST', `${API_BASE_URL}/vendor-profiles/users/${userId}/documents/${documentType}`);
+        xhr.open('POST', `${API_BASE_URL}/vendors/users/${userId}/documents/${documentType}`);
         xhr.withCredentials = true;
         xhr.send(formData);
       });
@@ -129,12 +154,20 @@ class VendorService {
    */
   async createVendorProfile(userId, vendorData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/vendor-profiles/users/${userId}`, {
+      // For initial profile creation during registration, don't include credentials
+      // since the user is not logged in yet
+      const isInitialCreation = vendorData.gstNumber === "22AAAAA0000A1Z5";
+      
+      console.log("Creating vendor profile with data:", vendorData);
+      console.log("Business type:", vendorData.businessType);
+      
+      const response = await fetch(`${API_BASE_URL}/vendors/users/${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
+        // Only include credentials for authenticated requests (not during initial registration)
+        credentials: isInitialCreation ? 'omit' : 'include',
         body: JSON.stringify(vendorData),
       });
 
@@ -158,7 +191,7 @@ class VendorService {
    */
   async getVendorProfileByUserId(userId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/vendor-profiles/users/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/vendors/users/${userId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -186,7 +219,7 @@ class VendorService {
    */
   async checkVendorProfileExists(userId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/vendor-profiles/users/${userId}/exists`, {
+      const response = await fetch(`${API_BASE_URL}/vendors/users/${userId}/exists`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -215,7 +248,7 @@ class VendorService {
    */
   async updateVendorProfile(vendorId, vendorData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/vendor-profiles/${vendorId}`, {
+      const response = await fetch(`${API_BASE_URL}/vendors/${vendorId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

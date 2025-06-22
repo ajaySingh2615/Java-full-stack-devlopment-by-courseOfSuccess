@@ -117,7 +117,11 @@ class AuthService {
         throw new Error(data.message || 'Login failed');
       }
 
-      return data;
+      return {
+        success: true,
+        message: data.message || 'Login successful',
+        data: data.user
+      };
     } catch (error) {
       console.error('Login error:', error);
       throw error;

@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface BlogRepository extends JpaRepository<Long, Blog> {
+public interface BlogRepository extends JpaRepository<Blog, Long> {
     // You can add custom query methods later if needed
 }

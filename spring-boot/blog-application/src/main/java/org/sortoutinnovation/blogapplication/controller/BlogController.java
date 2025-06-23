@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import org.sortoutinnovation.blogapplication.exception.ResourceNotFoundException;
 import org.sortoutinnovation.blogapplication.model.Blog;
 import org.sortoutinnovation.blogapplication.service.BlogService;
-import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

@@ -119,13 +119,42 @@ class AuthService {
         throw new Error(data.message || 'Login failed');
       }
 
+      // For vendor users, extract vendor status and profile completion
+      let vendorProfileComplete = false;
+      let vendorStatus = null;
+      
+      // Extract vendor information
+      if (data.user && data.user.roleName === 'VENDOR') {
+        console.log("Extracted login data for vendor user:", data.user);
+        
+        // Check if profile data exists in response
+        if (data.profileComplete !== undefined) {
+          vendorProfileComplete = data.profileComplete;
+          console.log("Vendor profile complete status from server:", vendorProfileComplete);
+        }
+        
+        if (data.vendorStatus) {
+          vendorStatus = data.vendorStatus;
+          console.log("Vendor status from server:", vendorStatus);
+        }
+        
+        // If vendor info is available in the user object directly
+        if (data.user.vendorProfile) {
+          console.log("Vendor profile found in user object:", data.user.vendorProfile);
+          vendorStatus = data.user.vendorProfile.status || vendorStatus;
+          vendorProfileComplete = true; // If we have a profile, it's complete
+        }
+      }
+
       // Check if the response contains the expected data structure
       if (!data.user && data.message === 'Login successful') {
         // If the backend returns a different structure than expected
         return {
           success: true,
           message: data.message || 'Login successful',
-          data: data // The entire response might contain the user object
+          data: data, // The entire response might contain the user object
+          profileComplete: vendorProfileComplete,
+          vendorStatus: vendorStatus
         };
       }
 
@@ -133,8 +162,8 @@ class AuthService {
         success: true,
         message: data.message || 'Login successful',
         data: data.user || data,
-        profileComplete: data.profileComplete,
-        vendorStatus: data.vendorStatus
+        profileComplete: vendorProfileComplete,
+        vendorStatus: vendorStatus
       };
     } catch (error) {
       console.error('Login error:', error);

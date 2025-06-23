@@ -80,20 +80,34 @@ const Login = () => {
         // For vendor users, check profile completion status
         if (response.data.roleName === 'VENDOR') {
           console.log("Vendor login detected");
+          
+          // Get profile status from response
           const profileComplete = response.profileComplete || false;
           const vendorStatus = response.vendorStatus || null;
           
           console.log("Profile complete:", profileComplete);
           console.log("Vendor status:", vendorStatus);
           
+          // Force values for debugging if needed - comment out in production
+          // const forcedProfileComplete = true;
+          // const forcedVendorStatus = 'APPROVED';
+          // console.log("FORCING profile complete to:", forcedProfileComplete);
+          // console.log("FORCING vendor status to:", forcedVendorStatus);
+          
           // Login with vendor status info
           login(response.data, vendorStatus, profileComplete);
+          
+          // Store vendor status directly for more reliable access
+          localStorage.setItem('greenmagic_vendor_status', vendorStatus || 'PENDING');
+          localStorage.setItem('greenmagic_vendor_profile_complete', String(profileComplete));
           
           // Redirect based on profile completion status
           if (!profileComplete) {
             console.log("Redirecting to vendor registration");
             navigate('/vendor-registration');
             return;
+          } else {
+            console.log("Vendor profile is complete, redirecting to dashboard");
           }
         } else {
           // Regular login for non-vendor users

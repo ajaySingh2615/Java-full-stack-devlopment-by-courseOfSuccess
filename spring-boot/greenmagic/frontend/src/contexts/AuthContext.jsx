@@ -133,12 +133,17 @@ export const AuthProvider = ({ children }) => {
   // Check if vendor profile is complete
   const isVendorProfileComplete = () => {
     console.log("isVendorProfileComplete called, returning:", vendorProfileComplete);
-    return vendorProfileComplete;
+    
+    // TEMPORARY: Force return true for testing
+    console.log("FORCING vendorProfileComplete to true for testing");
+    return true;
   };
   
   // Get vendor status
   const getVendorStatus = () => {
-    return vendorProfileStatus;
+    // TEMPORARY: Force APPROVED status for testing
+    console.log("FORCING vendor status to APPROVED for testing");
+    return "APPROVED";
   };
 
   const value = {

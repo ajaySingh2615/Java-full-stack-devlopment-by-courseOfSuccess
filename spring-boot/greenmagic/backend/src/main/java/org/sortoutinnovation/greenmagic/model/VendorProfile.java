@@ -45,8 +45,9 @@ public class VendorProfile {
     @Column(name = "gst_number", unique = true, nullable = false, length = 20)
     private String gstNumber;
     
+    @NotBlank(message = "PAN number is required")
     @Size(max = 20, message = "PAN number must not exceed 20 characters")
-    @Column(name = "pan_number", length = 20)
+    @Column(name = "pan_number", unique = true, nullable = false, length = 20)
     private String panNumber;
     
     @Enumerated(EnumType.STRING)
@@ -69,8 +70,9 @@ public class VendorProfile {
     @Column(name = "support_email", length = 100)
     private String supportEmail;
     
+    @NotBlank(message = "Website URL is required")
     @Size(max = 255, message = "Website URL must not exceed 255 characters")
-    @Column(name = "website_url", length = 255)
+    @Column(name = "website_url", nullable = false, length = 255)
     private String websiteUrl;
 
     @NotBlank(message = "Address is required")
@@ -157,24 +159,29 @@ public class VendorProfile {
     }
     
     // Bank details
+    @NotBlank(message = "Account holder name is required")
     @Size(max = 100, message = "Account holder name must not exceed 100 characters")
-    @Column(name = "account_holder_name", length = 100)
+    @Column(name = "account_holder_name", nullable = false, length = 100)
     private String accountHolderName;
     
+    @NotBlank(message = "Account number is required")
     @Size(max = 30, message = "Account number must not exceed 30 characters")
-    @Column(name = "account_number", length = 30)
+    @Column(name = "account_number", nullable = false, length = 30)
     private String accountNumber;
     
+    @NotBlank(message = "IFSC code is required")
     @Size(max = 20, message = "IFSC code must not exceed 20 characters")
-    @Column(name = "ifsc_code", length = 20)
+    @Column(name = "ifsc_code", nullable = false, length = 20)
     private String ifscCode;
     
+    @NotBlank(message = "Bank name is required")
     @Size(max = 50, message = "Bank name must not exceed 50 characters")
-    @Column(name = "bank_name", length = 50)
+    @Column(name = "bank_name", nullable = false, length = 50)
     private String bankName;
     
+    @NotBlank(message = "Bank branch is required")
     @Size(max = 50, message = "Bank branch must not exceed 50 characters")
-    @Column(name = "bank_branch", length = 50)
+    @Column(name = "bank_branch", nullable = false, length = 50)
     private String bankBranch;
 
     @Column(name = "store_description", columnDefinition = "TEXT")
@@ -187,24 +194,29 @@ public class VendorProfile {
     @Column(name = "product_categories")
     private String productCategories;
 
+    @NotBlank(message = "Logo URL is required")
     @Size(max = 255, message = "Logo URL must not exceed 255 characters")
-    @Column(name = "logo_url", length = 255)
+    @Column(name = "logo_url", nullable = false, length = 255)
     private String logoUrl;
     
+    @NotBlank(message = "GST certificate URL is required")
     @Size(max = 255, message = "GST certificate URL must not exceed 255 characters")
-    @Column(name = "gst_certificate_url", length = 255)
+    @Column(name = "gst_certificate_url", nullable = false, length = 255)
     private String gstCertificateUrl;
     
+    @NotBlank(message = "Cancelled cheque URL is required")
     @Size(max = 255, message = "Cancelled cheque URL must not exceed 255 characters")
-    @Column(name = "cancelled_cheque_url", length = 255)
+    @Column(name = "cancelled_cheque_url", nullable = false, length = 255)
     private String cancelledChequeUrl;
     
+    @NotBlank(message = "PAN card URL is required")
     @Size(max = 255, message = "PAN card URL must not exceed 255 characters")
-    @Column(name = "pan_card_url", length = 255)
+    @Column(name = "pan_card_url", nullable = false, length = 255)
     private String panCardUrl;
     
+    @NotBlank(message = "Identity proof URL is required")
     @Size(max = 255, message = "Identity proof URL must not exceed 255 characters")
-    @Column(name = "identity_proof_url", length = 255)
+    @Column(name = "identity_proof_url", nullable = false, length = 255)
     private String identityProofUrl;
 
     @Enumerated(EnumType.STRING)

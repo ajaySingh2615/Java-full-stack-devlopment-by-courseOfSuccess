@@ -71,15 +71,33 @@ const VendorRegistration = () => {
   
   const [formData, setFormData] = useState({
     businessName: '',
+    legalBusinessName: '',
     businessType: 'INDIVIDUAL',
     gstNumber: '',
-    contactPhone: '',
-    contactEmail: '',
-    address: '',
+    panNumber: '',
+    businessPhone: '',
+    businessEmail: '',
+    supportEmail: '',
+    websiteUrl: '',
+    addressLine1: '',
+    addressLine2: '',
     city: '',
     state: '',
     pincode: '',
-    description: '',
+    country: 'India', // Default to India
+    accountHolderName: '',
+    accountNumber: '',
+    ifscCode: '',
+    bankName: '',
+    bankBranch: '',
+    storeDescription: '',
+    storeDisplayName: '',
+    productCategories: '',
+    logoUrl: '',
+    gstCertificateUrl: '',
+    cancelledChequeUrl: '',
+    panCardUrl: '',
+    identityProofUrl: '',
     acceptTerms: false
   });
   
@@ -131,30 +149,48 @@ const VendorRegistration = () => {
     
     if (step === 1) {
       if (!formData.businessName.trim()) newErrors.businessName = 'Business name is required';
-      if (!formData.businessType) newErrors.businessType = 'Business type is required';
       if (!formData.gstNumber.trim()) newErrors.gstNumber = 'GST number is required';
       if (formData.gstNumber.trim() && !formData.gstNumber.startsWith('TEMP') && formData.gstNumber.length !== 15) {
         newErrors.gstNumber = 'GST number must be 15 characters';
       }
+      if (!formData.panNumber.trim()) newErrors.panNumber = 'PAN number is required';
+      if (!formData.websiteUrl.trim()) newErrors.websiteUrl = 'Website URL is required';
     } else if (step === 2) {
-      if (!formData.contactPhone.trim()) newErrors.contactPhone = 'Contact phone is required';
-      if (formData.contactPhone.trim() && !/^\d{10}$/.test(formData.contactPhone)) {
-        newErrors.contactPhone = 'Phone number must be 10 digits';
+      if (!formData.businessPhone.trim()) newErrors.businessPhone = 'Business phone is required';
+      if (formData.businessPhone.trim() && !/^\d{10}$/.test(formData.businessPhone)) {
+        newErrors.businessPhone = 'Phone number must be 10 digits';
       }
-      if (!formData.contactEmail.trim()) newErrors.contactEmail = 'Contact email is required';
-      if (formData.contactEmail.trim() && !/^\S+@\S+\.\S+$/.test(formData.contactEmail)) {
-        newErrors.contactEmail = 'Invalid email format';
+      if (!formData.businessEmail.trim()) newErrors.businessEmail = 'Business email is required';
+      if (formData.businessEmail.trim() && !/^\S+@\S+\.\S+$/.test(formData.businessEmail)) {
+        newErrors.businessEmail = 'Invalid email format';
+      }
+      if (formData.supportEmail.trim() && !/^\S+@\S+\.\S+$/.test(formData.supportEmail)) {
+        newErrors.supportEmail = 'Invalid email format';
       }
     } else if (step === 3) {
-      if (!formData.address.trim()) newErrors.address = 'Address is required';
+      if (!formData.addressLine1.trim()) newErrors.addressLine1 = 'Address is required';
       if (!formData.city.trim()) newErrors.city = 'City is required';
       if (!formData.state.trim()) newErrors.state = 'State is required';
       if (!formData.pincode.trim()) newErrors.pincode = 'Pincode is required';
       if (formData.pincode.trim() && !/^\d{6}$/.test(formData.pincode)) {
         newErrors.pincode = 'Pincode must be 6 digits';
       }
+      if (!formData.country.trim()) newErrors.country = 'Country is required';
     } else if (step === 4) {
-      if (!formData.description.trim()) newErrors.description = 'Description is required';
+      if (!formData.accountHolderName.trim()) newErrors.accountHolderName = 'Account holder name is required';
+      if (!formData.accountNumber.trim()) newErrors.accountNumber = 'Account number is required';
+      if (!formData.ifscCode.trim()) newErrors.ifscCode = 'IFSC code is required';
+      if (!formData.bankName.trim()) newErrors.bankName = 'Bank name is required';
+      if (!formData.bankBranch.trim()) newErrors.bankBranch = 'Bank branch is required';
+    } else if (step === 5) {
+      if (!formData.logoUrl.trim()) newErrors.logoUrl = 'Logo URL is required';
+      if (!formData.gstCertificateUrl.trim()) newErrors.gstCertificateUrl = 'GST certificate URL is required';
+      if (!formData.cancelledChequeUrl.trim()) newErrors.cancelledChequeUrl = 'Cancelled cheque URL is required';
+      if (!formData.panCardUrl.trim()) newErrors.panCardUrl = 'PAN card URL is required';
+      if (!formData.identityProofUrl.trim()) newErrors.identityProofUrl = 'Identity proof URL is required';
+    } else if (step === 6) {
+      // Store display name and product categories are optional
+      if (!formData.storeDescription.trim()) newErrors.storeDescription = 'Store description is required';
       if (!formData.acceptTerms) newErrors.acceptTerms = 'You must accept the terms and conditions';
     }
     
@@ -209,18 +245,39 @@ const VendorRegistration = () => {
       // Map frontend field names to backend expected field names
       const vendorData = {
         businessName: formData.businessName,
+        legalBusinessName: formData.legalBusinessName,
         businessType: formData.businessType,
         gstNumber: formData.gstNumber,
-        // Map contactPhone to businessPhone (expected by backend)
-        businessPhone: formData.contactPhone,
-        // Map contactEmail to businessEmail (expected by backend)
-        businessEmail: formData.contactEmail,
-        address: formData.address,
+        panNumber: formData.panNumber,
+        businessPhone: formData.businessPhone,
+        businessEmail: formData.businessEmail,
+        supportEmail: formData.supportEmail,
+        websiteUrl: formData.websiteUrl,
+        // Address fields
+        addressLine1: formData.addressLine1,
+        addressLine2: formData.addressLine2 || '',
         city: formData.city,
         state: formData.state,
         pincode: formData.pincode,
-        // Map description to storeDescription (expected by backend)
-        storeDescription: formData.description
+        country: formData.country,
+        // For backward compatibility
+        address: formData.addressLine1,
+        // Bank details
+        accountHolderName: formData.accountHolderName,
+        accountNumber: formData.accountNumber,
+        ifscCode: formData.ifscCode,
+        bankName: formData.bankName,
+        bankBranch: formData.bankBranch,
+        // Store details
+        storeDescription: formData.storeDescription,
+        storeDisplayName: formData.storeDisplayName,
+        productCategories: formData.productCategories,
+        // Document URLs
+        logoUrl: formData.logoUrl,
+        gstCertificateUrl: formData.gstCertificateUrl,
+        cancelledChequeUrl: formData.cancelledChequeUrl,
+        panCardUrl: formData.panCardUrl,
+        identityProofUrl: formData.identityProofUrl
       };
       
       console.log("Sending vendor profile data to backend:", vendorData);
@@ -314,9 +371,17 @@ const VendorRegistration = () => {
               <div className="step-indicator">{currentStep > 3 ? <CheckIcon /> : 3}</div>
               <div className="step-label">Address</div>
             </div>
-            <div className={`progress-step ${currentStep >= 4 ? 'active' : ''}`}>
-              <div className="step-indicator">4</div>
-              <div className="step-label">Description & Terms</div>
+            <div className={`progress-step ${currentStep >= 4 ? 'active' : ''} ${currentStep > 4 ? 'completed' : ''}`}>
+              <div className="step-indicator">{currentStep > 4 ? <CheckIcon /> : 4}</div>
+              <div className="step-label">Bank Details</div>
+            </div>
+            <div className={`progress-step ${currentStep >= 5 ? 'active' : ''} ${currentStep > 5 ? 'completed' : ''}`}>
+              <div className="step-indicator">{currentStep > 5 ? <CheckIcon /> : 5}</div>
+              <div className="step-label">Documents</div>
+            </div>
+            <div className={`progress-step ${currentStep >= 6 ? 'active' : ''}`}>
+              <div className="step-indicator">6</div>
+              <div className="step-label">Store Info</div>
             </div>
           </div>
           
@@ -352,6 +417,23 @@ const VendorRegistration = () => {
                 </div>
                 
                 <div className="form-group">
+                  <label htmlFor="legalBusinessName">Legal Business Name (Optional)</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><BusinessIcon /></span>
+                    <input
+                      type="text"
+                      id="legalBusinessName"
+                      name="legalBusinessName"
+                      value={formData.legalBusinessName}
+                      onChange={handleChange}
+                      placeholder="Enter your legal business name"
+                      className={errors.legalBusinessName ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.legalBusinessName && <span className="error-message">{errors.legalBusinessName}</span>}
+                </div>
+                
+                <div className="form-group">
                   <label htmlFor="businessType">Business Type</label>
                   <div className="input-wrapper">
                     <span className="input-icon"><BusinessIcon /></span>
@@ -363,9 +445,13 @@ const VendorRegistration = () => {
                       className={errors.businessType ? 'input-error' : ''}
                     >
                       <option value="INDIVIDUAL">Individual</option>
+                      <option value="PROPRIETORSHIP">Proprietorship</option>
                       <option value="PARTNERSHIP">Partnership</option>
-                      <option value="CORPORATION">Corporation</option>
-                      <option value="LLC">LLC</option>
+                      <option value="PRIVATE_LIMITED">Private Limited</option>
+                      <option value="LIMITED_COMPANY">Limited Company</option>
+                      <option value="LLP">LLP</option>
+                      <option value="DISTRIBUTOR">Distributor</option>
+                      <option value="MANUFACTURER">Manufacturer</option>
                       <option value="OTHER">Other</option>
                     </select>
                   </div>
@@ -388,6 +474,40 @@ const VendorRegistration = () => {
                   </div>
                   {errors.gstNumber && <span className="error-message">{errors.gstNumber}</span>}
                 </div>
+
+                <div className="form-group">
+                  <label htmlFor="panNumber">PAN Number</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><IdIcon /></span>
+                    <input
+                      type="text"
+                      id="panNumber"
+                      name="panNumber"
+                      value={formData.panNumber}
+                      onChange={handleChange}
+                      placeholder="Enter your PAN number"
+                      className={errors.panNumber ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.panNumber && <span className="error-message">{errors.panNumber}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="websiteUrl">Website URL</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><BusinessIcon /></span>
+                    <input
+                      type="text"
+                      id="websiteUrl"
+                      name="websiteUrl"
+                      value={formData.websiteUrl}
+                      onChange={handleChange}
+                      placeholder="Enter your website URL"
+                      className={errors.websiteUrl ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.websiteUrl && <span className="error-message">{errors.websiteUrl}</span>}
+                </div>
               </>
             )}
             
@@ -396,37 +516,54 @@ const VendorRegistration = () => {
               <>
                 <h2 className="step-title">Contact Information</h2>
                 <div className="form-group">
-                  <label htmlFor="contactPhone">Contact Phone</label>
+                  <label htmlFor="businessPhone">Business Phone</label>
                   <div className="input-wrapper">
                     <span className="input-icon"><PhoneIcon /></span>
                     <input
                       type="tel"
-                      id="contactPhone"
-                      name="contactPhone"
-                      value={formData.contactPhone}
+                      id="businessPhone"
+                      name="businessPhone"
+                      value={formData.businessPhone}
                       onChange={handleChange}
-                      placeholder="Enter your contact phone"
-                      className={errors.contactPhone ? 'input-error' : ''}
+                      placeholder="Enter your business phone"
+                      className={errors.businessPhone ? 'input-error' : ''}
                     />
                   </div>
-                  {errors.contactPhone && <span className="error-message">{errors.contactPhone}</span>}
+                  {errors.businessPhone && <span className="error-message">{errors.businessPhone}</span>}
                 </div>
                 
                 <div className="form-group">
-                  <label htmlFor="contactEmail">Contact Email</label>
+                  <label htmlFor="businessEmail">Business Email</label>
                   <div className="input-wrapper">
                     <span className="input-icon"><EmailIcon /></span>
                     <input
                       type="email"
-                      id="contactEmail"
-                      name="contactEmail"
-                      value={formData.contactEmail}
+                      id="businessEmail"
+                      name="businessEmail"
+                      value={formData.businessEmail}
                       onChange={handleChange}
-                      placeholder="Enter your contact email"
-                      className={errors.contactEmail ? 'input-error' : ''}
+                      placeholder="Enter your business email"
+                      className={errors.businessEmail ? 'input-error' : ''}
                     />
                   </div>
-                  {errors.contactEmail && <span className="error-message">{errors.contactEmail}</span>}
+                  {errors.businessEmail && <span className="error-message">{errors.businessEmail}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="supportEmail">Support Email (Optional)</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><EmailIcon /></span>
+                    <input
+                      type="email"
+                      id="supportEmail"
+                      name="supportEmail"
+                      value={formData.supportEmail}
+                      onChange={handleChange}
+                      placeholder="Enter your support email"
+                      className={errors.supportEmail ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.supportEmail && <span className="error-message">{errors.supportEmail}</span>}
                 </div>
               </>
             )}
@@ -436,18 +573,33 @@ const VendorRegistration = () => {
               <>
                 <h2 className="step-title">Address Information</h2>
                 <div className="form-group full-width">
-                  <label htmlFor="address">Address</label>
+                  <label htmlFor="addressLine1">Address Line 1</label>
                   <div className="textarea-wrapper">
                     <textarea
-                      id="address"
-                      name="address"
-                      value={formData.address}
+                      id="addressLine1"
+                      name="addressLine1"
+                      value={formData.addressLine1}
                       onChange={handleChange}
                       placeholder="Enter your business address"
-                      className={errors.address ? 'textarea-error' : ''}
+                      className={errors.addressLine1 ? 'textarea-error' : ''}
                     />
                   </div>
-                  {errors.address && <span className="error-message">{errors.address}</span>}
+                  {errors.addressLine1 && <span className="error-message">{errors.addressLine1}</span>}
+                </div>
+                
+                <div className="form-group full-width">
+                  <label htmlFor="addressLine2">Address Line 2 (Optional)</label>
+                  <div className="textarea-wrapper">
+                    <textarea
+                      id="addressLine2"
+                      name="addressLine2"
+                      value={formData.addressLine2}
+                      onChange={handleChange}
+                      placeholder="Apartment, suite, unit, building, floor, etc."
+                      className={errors.addressLine2 ? 'textarea-error' : ''}
+                    />
+                  </div>
+                  {errors.addressLine2 && <span className="error-message">{errors.addressLine2}</span>}
                 </div>
                 
                 <div className="form-group">
@@ -500,26 +652,259 @@ const VendorRegistration = () => {
                   </div>
                   {errors.pincode && <span className="error-message">{errors.pincode}</span>}
                 </div>
+                
+                <div className="form-group">
+                  <label htmlFor="country">Country</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><LocationIcon /></span>
+                    <input
+                      type="text"
+                      id="country"
+                      name="country"
+                      value={formData.country}
+                      onChange={handleChange}
+                      placeholder="Enter your country"
+                      className={errors.country ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.country && <span className="error-message">{errors.country}</span>}
+                </div>
               </>
             )}
             
-            {/* Step 4: Description and Terms */}
+            {/* Step 4: Bank Details */}
             {currentStep === 4 && (
               <>
-                <h2 className="step-title">Description & Terms</h2>
-                <div className="form-group full-width">
-                  <label htmlFor="description">Business Description</label>
-                  <div className="textarea-wrapper">
-                    <textarea
-                      id="description"
-                      name="description"
-                      value={formData.description}
+                <h2 className="step-title">Bank Details</h2>
+                <div className="form-group">
+                  <label htmlFor="accountHolderName">Account Holder Name</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><IdIcon /></span>
+                    <input
+                      type="text"
+                      id="accountHolderName"
+                      name="accountHolderName"
+                      value={formData.accountHolderName}
                       onChange={handleChange}
-                      placeholder="Describe your business"
-                      className={errors.description ? 'textarea-error' : ''}
+                      placeholder="Enter your account holder name"
+                      className={errors.accountHolderName ? 'input-error' : ''}
                     />
                   </div>
-                  {errors.description && <span className="error-message">{errors.description}</span>}
+                  {errors.accountHolderName && <span className="error-message">{errors.accountHolderName}</span>}
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="accountNumber">Account Number</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><IdIcon /></span>
+                    <input
+                      type="text"
+                      id="accountNumber"
+                      name="accountNumber"
+                      value={formData.accountNumber}
+                      onChange={handleChange}
+                      placeholder="Enter your account number"
+                      className={errors.accountNumber ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.accountNumber && <span className="error-message">{errors.accountNumber}</span>}
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="ifscCode">IFSC Code</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><IdIcon /></span>
+                    <input
+                      type="text"
+                      id="ifscCode"
+                      name="ifscCode"
+                      value={formData.ifscCode}
+                      onChange={handleChange}
+                      placeholder="Enter your IFSC code"
+                      className={errors.ifscCode ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.ifscCode && <span className="error-message">{errors.ifscCode}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="bankName">Bank Name</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><IdIcon /></span>
+                    <input
+                      type="text"
+                      id="bankName"
+                      name="bankName"
+                      value={formData.bankName}
+                      onChange={handleChange}
+                      placeholder="Enter your bank name"
+                      className={errors.bankName ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.bankName && <span className="error-message">{errors.bankName}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="bankBranch">Bank Branch</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><IdIcon /></span>
+                    <input
+                      type="text"
+                      id="bankBranch"
+                      name="bankBranch"
+                      value={formData.bankBranch}
+                      onChange={handleChange}
+                      placeholder="Enter your bank branch"
+                      className={errors.bankBranch ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.bankBranch && <span className="error-message">{errors.bankBranch}</span>}
+                </div>
+              </>
+            )}
+            
+            {/* Step 5: Document URLs */}
+            {currentStep === 5 && (
+              <>
+                <h2 className="step-title">Document URLs</h2>
+                <div className="form-group">
+                  <label htmlFor="logoUrl">Logo URL</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><IdIcon /></span>
+                    <input
+                      type="text"
+                      id="logoUrl"
+                      name="logoUrl"
+                      value={formData.logoUrl}
+                      onChange={handleChange}
+                      placeholder="Enter your logo URL"
+                      className={errors.logoUrl ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.logoUrl && <span className="error-message">{errors.logoUrl}</span>}
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="gstCertificateUrl">GST Certificate URL</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><IdIcon /></span>
+                    <input
+                      type="text"
+                      id="gstCertificateUrl"
+                      name="gstCertificateUrl"
+                      value={formData.gstCertificateUrl}
+                      onChange={handleChange}
+                      placeholder="Enter your GST certificate URL"
+                      className={errors.gstCertificateUrl ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.gstCertificateUrl && <span className="error-message">{errors.gstCertificateUrl}</span>}
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="cancelledChequeUrl">Cancelled Cheque URL</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><IdIcon /></span>
+                    <input
+                      type="text"
+                      id="cancelledChequeUrl"
+                      name="cancelledChequeUrl"
+                      value={formData.cancelledChequeUrl}
+                      onChange={handleChange}
+                      placeholder="Enter your cancelled cheque URL"
+                      className={errors.cancelledChequeUrl ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.cancelledChequeUrl && <span className="error-message">{errors.cancelledChequeUrl}</span>}
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="panCardUrl">PAN Card URL</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><IdIcon /></span>
+                    <input
+                      type="text"
+                      id="panCardUrl"
+                      name="panCardUrl"
+                      value={formData.panCardUrl}
+                      onChange={handleChange}
+                      placeholder="Enter your PAN card URL"
+                      className={errors.panCardUrl ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.panCardUrl && <span className="error-message">{errors.panCardUrl}</span>}
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="identityProofUrl">Identity Proof URL</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><IdIcon /></span>
+                    <input
+                      type="text"
+                      id="identityProofUrl"
+                      name="identityProofUrl"
+                      value={formData.identityProofUrl}
+                      onChange={handleChange}
+                      placeholder="Enter your identity proof URL"
+                      className={errors.identityProofUrl ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.identityProofUrl && <span className="error-message">{errors.identityProofUrl}</span>}
+                </div>
+              </>
+            )}
+            
+            {/* Step 6: Description and Terms */}
+            {currentStep === 6 && (
+              <>
+                <h2 className="step-title">Store Information</h2>
+                <div className="form-group">
+                  <label htmlFor="storeDisplayName">Store Display Name (Optional)</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><DescriptionIcon /></span>
+                    <input
+                      type="text"
+                      id="storeDisplayName"
+                      name="storeDisplayName"
+                      value={formData.storeDisplayName}
+                      onChange={handleChange}
+                      placeholder="Enter your store display name"
+                      className={errors.storeDisplayName ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.storeDisplayName && <span className="error-message">{errors.storeDisplayName}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="productCategories">Product Categories (Optional)</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><DescriptionIcon /></span>
+                    <input
+                      type="text"
+                      id="productCategories"
+                      name="productCategories"
+                      value={formData.productCategories}
+                      onChange={handleChange}
+                      placeholder="Enter your product categories"
+                      className={errors.productCategories ? 'input-error' : ''}
+                    />
+                  </div>
+                  {errors.productCategories && <span className="error-message">{errors.productCategories}</span>}
+                </div>
+
+                <div className="form-group full-width">
+                  <label htmlFor="storeDescription">Store Description</label>
+                  <div className="textarea-wrapper">
+                    <textarea
+                      id="storeDescription"
+                      name="storeDescription"
+                      value={formData.storeDescription}
+                      onChange={handleChange}
+                      placeholder="Describe your store"
+                      className={errors.storeDescription ? 'textarea-error' : ''}
+                    />
+                  </div>
+                  {errors.storeDescription && <span className="error-message">{errors.storeDescription}</span>}
                 </div>
                 
                 <div className="form-group full-width">
@@ -553,7 +938,7 @@ const VendorRegistration = () => {
                 </button>
               )}
               
-              {currentStep < 4 ? (
+              {currentStep < 6 ? (
                 <button 
                   type="button" 
                   onClick={handleNext}

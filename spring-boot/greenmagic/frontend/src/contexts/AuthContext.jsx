@@ -32,11 +32,14 @@ export const AuthProvider = ({ children }) => {
         setUser(parsedUser);
         
         if (storedVendorStatus) {
+          console.log("Loaded vendor status from localStorage:", storedVendorStatus);
           setVendorProfileStatus(storedVendorStatus);
         }
         
         if (storedProfileComplete) {
-          setVendorProfileComplete(storedProfileComplete === 'true');
+          const isComplete = storedProfileComplete === 'true';
+          console.log("Loaded profile complete from localStorage:", isComplete);
+          setVendorProfileComplete(isComplete);
         }
       } catch (error) {
         console.error('Error parsing stored user:', error);
@@ -84,18 +87,21 @@ export const AuthProvider = ({ children }) => {
 
   // Update vendor profile status
   const updateVendorStatus = (status) => {
+    console.log("Updating vendor status to:", status);
     setVendorProfileStatus(status);
     localStorage.setItem('greenmagic_vendor_status', status);
   };
   
   // Set vendor profile as complete
   const setVendorProfileCompleted = () => {
+    console.log("Setting vendor profile as completed");
     setVendorProfileComplete(true);
     localStorage.setItem('greenmagic_vendor_profile_complete', 'true');
   };
 
   // Logout function
   const logout = () => {
+    console.log("Logging out user");
     setUser(null);
     setVendorProfileStatus(null);
     setVendorProfileComplete(false);
@@ -126,6 +132,7 @@ export const AuthProvider = ({ children }) => {
   
   // Check if vendor profile is complete
   const isVendorProfileComplete = () => {
+    console.log("isVendorProfileComplete called, returning:", vendorProfileComplete);
     return vendorProfileComplete;
   };
   

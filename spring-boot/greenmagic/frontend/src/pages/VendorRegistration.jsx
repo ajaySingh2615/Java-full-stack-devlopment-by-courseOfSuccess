@@ -61,7 +61,7 @@ const ArrowRightIcon = () => (
 );
 
 const VendorRegistration = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, setVendorProfileCompleted } = useAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -206,18 +206,24 @@ const VendorRegistration = () => {
         throw new Error("User ID not found. Please log out and log in again.");
       }
       
+      // Map frontend field names to backend expected field names
       const vendorData = {
         businessName: formData.businessName,
         businessType: formData.businessType,
         gstNumber: formData.gstNumber,
-        contactPhone: formData.contactPhone,
-        contactEmail: formData.contactEmail,
+        // Map contactPhone to businessPhone (expected by backend)
+        businessPhone: formData.contactPhone,
+        // Map contactEmail to businessEmail (expected by backend)
+        businessEmail: formData.contactEmail,
         address: formData.address,
         city: formData.city,
         state: formData.state,
         pincode: formData.pincode,
-        description: formData.description
+        // Map description to storeDescription (expected by backend)
+        storeDescription: formData.description
       };
+      
+      console.log("Sending vendor profile data to backend:", vendorData);
       
       if (profileExists) {
         // First get the vendor profile to get the vendorId
@@ -230,6 +236,10 @@ const VendorRegistration = () => {
       } else {
         await vendorService.createVendorProfile(userId, vendorData);
       }
+      
+      // Update the vendor profile completion status in the auth context
+      setVendorProfileCompleted();
+      console.log("Vendor profile marked as completed in auth context");
       
       setSuccess(true);
       // Redirect after a short delay

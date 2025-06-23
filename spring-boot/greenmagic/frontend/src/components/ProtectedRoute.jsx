@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -10,12 +10,24 @@ const ProtectedRoute = ({
   redirectTo = '/login' 
 }) => {
   const { 
+    currentUser,
     isAuthenticated, 
     isAdmin, 
     isVendor, 
     isVendorProfileComplete, 
+    vendorProfileComplete,
     loading 
   } = useAuth();
+
+  // Debug logging
+  useEffect(() => {
+    if (requireCompleteVendorProfile) {
+      console.log("ProtectedRoute - requireCompleteVendorProfile:", requireCompleteVendorProfile);
+      console.log("ProtectedRoute - isVendor:", isVendor());
+      console.log("ProtectedRoute - vendorProfileComplete:", vendorProfileComplete);
+      console.log("ProtectedRoute - isVendorProfileComplete:", isVendorProfileComplete());
+    }
+  }, [requireCompleteVendorProfile, isVendor, vendorProfileComplete, isVendorProfileComplete]);
 
   // Show loading while checking authentication
   if (loading) {
@@ -66,6 +78,7 @@ const ProtectedRoute = ({
   
   // Redirect vendor to profile completion if profile is not complete
   if (requireCompleteVendorProfile && isVendor() && !isVendorProfileComplete()) {
+    console.log("Redirecting to vendor registration because profile is not complete");
     return <Navigate to="/vendor-registration" replace />;
   }
 

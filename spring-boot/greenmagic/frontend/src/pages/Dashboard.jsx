@@ -19,28 +19,45 @@ import vendorService from '../services/vendorService';
 import './Dashboard.css';
 
 const Dashboard = () => {
-  const { currentUser, isVendor, getVendorStatus, isVendorProfileComplete } = useAuth();
+  const { currentUser, isVendor, getVendorStatus, isVendorProfileComplete, vendorProfileComplete } = useAuth();
   const [vendorProfile, setVendorProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Debug logging
+    console.log("Dashboard - currentUser:", currentUser);
+    console.log("Dashboard - isVendor:", isVendor());
+    console.log("Dashboard - vendorProfileComplete:", vendorProfileComplete);
+    console.log("Dashboard - isVendorProfileComplete:", isVendorProfileComplete());
+
     // Only fetch vendor profile if user is a vendor with completed profile
     if (currentUser && isVendor() && isVendorProfileComplete()) {
+      console.log("Fetching vendor profile...");
       fetchVendorProfile();
     }
-  }, [currentUser, isVendor, isVendorProfileComplete]);
+  }, [currentUser, isVendor, isVendorProfileComplete, vendorProfileComplete]);
 
   const fetchVendorProfile = async () => {
     try {
       setLoading(true);
-      const response = await vendorService.getVendorProfileByUserId(currentUser.userId);
-      if (response.success) {
+      const userId = currentUser.userId || currentUser.id || currentUser._id;
+      console.log("Fetching vendor profile for user ID:", userId);
+      
+      if (!userId) {
+        throw new Error("User ID not found");
+      }
+      
+      const response = await vendorService.getVendorProfileByUserId(userId);
+      console.log("Vendor profile response:", response);
+      
+      if (response.success && response.data) {
         setVendorProfile(response.data);
       } else {
         setError('Failed to fetch vendor profile');
       }
     } catch (err) {
+      console.error("Error fetching vendor profile:", err);
       setError(err.message || 'An error occurred while fetching vendor profile');
     } finally {
       setLoading(false);

@@ -1,5 +1,6 @@
 package org.sortoutinnovation.blogapplication.controller;
 
+import jakarta.validation.Valid;
 import org.sortoutinnovation.blogapplication.exception.ResourceNotFoundException;
 import org.sortoutinnovation.blogapplication.model.Blog;
 import org.sortoutinnovation.blogapplication.service.BlogService;
@@ -20,7 +21,7 @@ public class BlogController {
 
     // create a new bog
     @PostMapping
-    public ResponseEntity<Blog> createBlog(@RequestBody Blog blog) {
+    public ResponseEntity<Blog> createBlog(@RequestBody @Valid Blog blog) {
         Blog savedBlog = blogService.createBlog(blog);
         return ResponseEntity.ok(savedBlog);
     }

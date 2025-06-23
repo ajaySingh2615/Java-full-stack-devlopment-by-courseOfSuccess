@@ -91,10 +91,23 @@ const VendorRegistration = () => {
       return;
     }
 
+    // Debug the currentUser object
+    console.log("Current user:", currentUser);
+    
+    // Get the user ID (could be id, userId, or _id depending on your backend)
+    const userId = currentUser.userId || currentUser.id || currentUser._id;
+    
+    if (!userId) {
+      console.error("User ID not found in currentUser object:", currentUser);
+      setSubmitError("User ID not found. Please log out and log in again.");
+      setLoading(false);
+      return;
+    }
+
     const checkProfile = async () => {
       try {
         setLoading(true);
-        const response = await vendorService.checkVendorProfileExists(currentUser.id);
+        const response = await vendorService.checkVendorProfileExists(userId);
         setProfileExists(response.exists || false);
         
         if (response.exists) {
@@ -186,6 +199,13 @@ const VendorRegistration = () => {
       setLoading(true);
       setSubmitError('');
       
+      // Get the user ID (could be id, userId, or _id depending on your backend)
+      const userId = currentUser.userId || currentUser.id || currentUser._id;
+      
+      if (!userId) {
+        throw new Error("User ID not found. Please log out and log in again.");
+      }
+      
       const vendorData = {
         businessName: formData.businessName,
         businessType: formData.businessType,
@@ -201,14 +221,14 @@ const VendorRegistration = () => {
       
       if (profileExists) {
         // First get the vendor profile to get the vendorId
-        const profileResponse = await vendorService.getVendorProfileByUserId(currentUser.id);
+        const profileResponse = await vendorService.getVendorProfileByUserId(userId);
         if (profileResponse.success && profileResponse.data) {
           await vendorService.updateVendorProfile(profileResponse.data.id, vendorData);
         } else {
           throw new Error('Could not find your vendor profile');
         }
       } else {
-        await vendorService.createVendorProfile(currentUser.id, vendorData);
+        await vendorService.createVendorProfile(userId, vendorData);
       }
       
       setSuccess(true);

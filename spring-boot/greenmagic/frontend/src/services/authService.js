@@ -102,6 +102,7 @@ class AuthService {
    */
   async login(loginData) {
     try {
+      console.log("Login request:", loginData);
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -112,15 +113,28 @@ class AuthService {
       });
 
       const data = await response.json();
+      console.log("Raw login response from server:", data);
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
 
+      // Check if the response contains the expected data structure
+      if (!data.user && data.message === 'Login successful') {
+        // If the backend returns a different structure than expected
+        return {
+          success: true,
+          message: data.message || 'Login successful',
+          data: data // The entire response might contain the user object
+        };
+      }
+
       return {
         success: true,
         message: data.message || 'Login successful',
-        data: data.user
+        data: data.user || data,
+        profileComplete: data.profileComplete,
+        vendorStatus: data.vendorStatus
       };
     } catch (error) {
       console.error('Login error:', error);

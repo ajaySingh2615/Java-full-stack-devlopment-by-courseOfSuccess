@@ -126,17 +126,30 @@ const VendorRegister = () => {
         termsAccepted: formData.acceptTerms
       });
       
+      console.log("Vendor registration response:", response);
+      
       if (response.success) {
         // Log in the user
         const loginData = {
           email: formData.email,
           password: formData.password
         };
+        
+        console.log("Attempting login with:", loginData.email);
         const loginResponse = await authService.login(loginData);
+        console.log("Login response:", loginResponse);
         
         if (loginResponse.success) {
+          // Debug the user object
+          console.log("User data from login:", loginResponse.data);
+          
+          // Store user data in context and localStorage
           login(loginResponse.data);
-          navigate('/vendor-registration');
+          
+          // Navigate to vendor registration page
+          setTimeout(() => {
+            navigate('/vendor-registration');
+          }, 500); // Short delay to ensure context is updated
         } else {
           setSubmitError('Registration successful but login failed. Please try logging in manually.');
         }
@@ -144,6 +157,7 @@ const VendorRegister = () => {
         setSubmitError(response.message || 'Registration failed. Please try again.');
       }
     } catch (error) {
+      console.error("Registration/login error:", error);
       setSubmitError(error.message || 'An error occurred during registration. Please try again.');
     } finally {
       setLoading(false);

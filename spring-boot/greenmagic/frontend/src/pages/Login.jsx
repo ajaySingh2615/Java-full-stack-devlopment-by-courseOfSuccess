@@ -66,35 +66,53 @@ const Login = () => {
     }
 
     setLoading(true);
+    setErrors({});
 
     try {
+      console.log("Attempting login with:", formData.email);
       const response = await authService.login(formData);
+      console.log("Login response:", response);
       
-      if (response.message === 'Login successful' && response.user) {
+      // Check if we have a successful response with user data
+      if (response && response.success && response.data) {
+        console.log("Login successful, user data:", response.data);
+        
         // For vendor users, check profile completion status
-        if (response.user.roleName === 'VENDOR') {
+        if (response.data.roleName === 'VENDOR') {
+          console.log("Vendor login detected");
           const profileComplete = response.profileComplete || false;
           const vendorStatus = response.vendorStatus || null;
           
+          console.log("Profile complete:", profileComplete);
+          console.log("Vendor status:", vendorStatus);
+          
           // Login with vendor status info
-          login(response.user, vendorStatus, profileComplete);
+          login(response.data, vendorStatus, profileComplete);
           
           // Redirect based on profile completion status
           if (!profileComplete) {
+            console.log("Redirecting to vendor registration");
             navigate('/vendor-registration');
             return;
           }
         } else {
           // Regular login for non-vendor users
-          login(response.user);
+          console.log("Non-vendor login, storing user data");
+          login(response.data);
         }
         
         // Redirect to intended destination or dashboard
+        console.log("Redirecting to:", from);
         navigate(from);
       } else {
-        setErrors({ submit: response.message || 'Login failed' });
+        // Handle error case when response structure is unexpected
+        console.error("Login response format error:", response);
+        setErrors({ 
+          submit: response.message || 'Login failed. Unexpected response format.' 
+        });
       }
     } catch (error) {
+      console.error("Login error:", error);
       setErrors({ submit: error.message || 'Login failed. Please check your credentials.' });
     } finally {
       setLoading(false);

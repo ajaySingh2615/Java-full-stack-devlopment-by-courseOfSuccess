@@ -27,7 +27,9 @@ export const AuthProvider = ({ children }) => {
     
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        console.log("Loaded user from localStorage:", parsedUser);
+        setUser(parsedUser);
         
         if (storedVendorStatus) {
           setVendorProfileStatus(storedVendorStatus);
@@ -48,10 +50,27 @@ export const AuthProvider = ({ children }) => {
 
   // Login function
   const login = (userData, vendorStatus = null, profileComplete = false) => {
+    console.log("Login function called with:", userData);
+    
+    if (!userData) {
+      console.error("Attempted to login with null/undefined user data");
+      return;
+    }
+    
+    // Ensure we have a userId property
+    if (!userData.userId && (userData.id || userData._id)) {
+      userData.userId = userData.id || userData._id;
+      console.log("Added userId property:", userData);
+    }
+    
     setUser(userData);
     localStorage.setItem('greenmagic_user', JSON.stringify(userData));
+    console.log("User data stored in state and localStorage");
     
     if (userData.roleName === 'VENDOR') {
+      console.log("Vendor role detected, setting vendor status:", vendorStatus);
+      console.log("Setting profile complete:", profileComplete);
+      
       setVendorProfileStatus(vendorStatus);
       setVendorProfileComplete(profileComplete);
       
@@ -59,7 +78,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('greenmagic_vendor_status', vendorStatus);
       }
       
-      localStorage.setItem('greenmagic_vendor_profile_complete', profileComplete);
+      localStorage.setItem('greenmagic_vendor_profile_complete', String(profileComplete));
     }
   };
 

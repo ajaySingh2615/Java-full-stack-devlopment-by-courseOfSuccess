@@ -24,8 +24,11 @@ class VendorService {
         throw new Error(data.message || 'Failed to register vendor');
       }
 
-      // Return the user data without creating an initial vendor profile
-      return data;
+      return {
+        success: true,
+        message: data.message || 'Vendor registered successfully',
+        data: data.user
+      };
     } catch (error) {
       console.error('Vendor registration error:', error);
       throw error;
@@ -57,7 +60,8 @@ class VendorService {
 
       return {
         success: true,
-        ...data
+        message: data.message || 'Profile completed successfully',
+        data: data
       };
     } catch (error) {
       console.error('Vendor profile completion error:', error);
@@ -93,7 +97,10 @@ class VendorService {
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const response = JSON.parse(xhr.responseText);
-              resolve(response);
+              resolve({
+                success: true,
+                data: response
+              });
             } catch (error) {
               reject(new Error('Invalid response format'));
             }
@@ -122,18 +129,13 @@ class VendorService {
   }
 
   /**
-   * Create vendor profile for a user (deprecated)
+   * Create vendor profile for a user
    * @param {number} userId - User ID
    * @param {Object} vendorData - Vendor profile data
    * @returns {Promise} API response
-   * @deprecated Use registerVendor and completeVendorProfile instead
    */
   async createVendorProfile(userId, vendorData) {
     try {
-      // For initial profile creation during registration, don't include credentials
-      // since the user is not logged in yet
-      const isInitialCreation = vendorData.gstNumber === "22AAAAA0000A1Z5";
-      
       console.log("Creating vendor profile with data:", vendorData);
       console.log("Business type:", vendorData.businessType);
       
@@ -142,8 +144,7 @@ class VendorService {
         headers: {
           'Content-Type': 'application/json',
         },
-        // Only include credentials for authenticated requests (not during initial registration)
-        credentials: isInitialCreation ? 'omit' : 'include',
+        credentials: 'include',
         body: JSON.stringify(vendorData),
       });
 
@@ -153,7 +154,11 @@ class VendorService {
         throw new Error(data.message || 'Failed to create vendor profile');
       }
 
-      return data;
+      return {
+        success: true,
+        message: data.message || 'Vendor profile created successfully',
+        data: data
+      };
     } catch (error) {
       console.error('Vendor profile creation error:', error);
       throw error;
@@ -167,6 +172,10 @@ class VendorService {
    */
   async getVendorProfileByUserId(userId) {
     try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+      
       const response = await fetch(`${API_BASE_URL}/vendors/users/${userId}`, {
         method: 'GET',
         headers: {
@@ -181,7 +190,11 @@ class VendorService {
         throw new Error(data.message || 'Failed to get vendor profile');
       }
 
-      return data;
+      return {
+        success: true,
+        message: data.message || 'Vendor profile retrieved successfully',
+        data: data
+      };
     } catch (error) {
       console.error('Get vendor profile error:', error);
       throw error;
@@ -195,13 +208,18 @@ class VendorService {
    */
   async checkVendorProfileExists(userId) {
     try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+      
+      console.log(`Checking if vendor profile exists for user ID: ${userId}`);
+      
       const response = await fetch(`${API_BASE_URL}/vendors/users/${userId}/exists`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        // Don't include credentials for this public endpoint
-        credentials: 'omit',
+        credentials: 'include',  // Include credentials for authenticated requests
       });
 
       const data = await response.json();
@@ -210,7 +228,10 @@ class VendorService {
         throw new Error(data.message || 'Failed to check vendor profile');
       }
 
-      return data;
+      return {
+        success: true,
+        exists: data.exists || false
+      };
     } catch (error) {
       console.error('Check vendor profile error:', error);
       throw error;
@@ -225,6 +246,10 @@ class VendorService {
    */
   async updateVendorProfile(vendorId, vendorData) {
     try {
+      if (!vendorId) {
+        throw new Error('Vendor ID is required');
+      }
+      
       const response = await fetch(`${API_BASE_URL}/vendors/${vendorId}`, {
         method: 'PUT',
         headers: {
@@ -240,7 +265,11 @@ class VendorService {
         throw new Error(data.message || 'Failed to update vendor profile');
       }
 
-      return data;
+      return {
+        success: true,
+        message: data.message || 'Vendor profile updated successfully',
+        data: data
+      };
     } catch (error) {
       console.error('Update vendor profile error:', error);
       throw error;
@@ -253,7 +282,7 @@ class VendorService {
    * @returns {boolean} Is valid GST number
    */
   validateGstNumber(gstNumber) {
-    // GST number format: 2 digits, 5 chars, 4 digits, 1 char, 1 char/digit, Z, 1 char/digit
+    // GST number format: 2 digits state code + 10 digits PAN + 1 entity number + 1 check digit + Z
     const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
     return gstRegex.test(gstNumber);
   }

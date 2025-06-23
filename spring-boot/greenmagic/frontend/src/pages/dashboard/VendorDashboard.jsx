@@ -31,10 +31,11 @@ import '../../pages/Dashboard.css';
  * and view sales analytics.
  */
 const VendorDashboard = () => {
-  const { currentUser, getVendorStatus, isVendorProfileComplete } = useAuth();
+  const { currentUser, getVendorStatus, isVendorProfileComplete, updateVendorStatus } = useAuth();
   const [vendorProfile, setVendorProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [statusChangeNotification, setStatusChangeNotification] = useState(null);
   const [salesData, setSalesData] = useState({
     totalSales: 24500,
     monthlyRevenue: 3800,
@@ -47,19 +48,38 @@ const VendorDashboard = () => {
     { id: 'ORD-2025003', customer: 'Mike Johnson', amount: 3200, date: '2025-06-13', status: 'Shipped' },
     { id: 'ORD-2025004', customer: 'Lisa Brown', amount: 850, date: '2025-06-12', status: 'Pending' }
   ]);
-  const [vendorStatus, setVendorStatus] = useState('PENDING');
   
   // Load vendor status and profile
   useEffect(() => {
-    // Get vendor status from auth context or local storage
-    const status = getVendorStatus() || localStorage.getItem('greenmagic_vendor_status') || 'PENDING';
-    setVendorStatus(status);
-
     // Only fetch vendor profile if user is a vendor with completed profile
     if (currentUser && isVendorProfileComplete()) {
+      // First, try to use the status from auth context if available
+      const authStatus = getVendorStatus();
+      if (authStatus) {
+        // Create a minimal profile object with the auth status
+        setVendorProfile(prevProfile => ({
+          ...prevProfile,
+          status: authStatus,
+          businessName: currentUser?.name || 'Your Business'
+        }));
+      }
+      
+      // Then fetch full profile details from API
       fetchVendorProfile();
     }
-  }, [currentUser, isVendorProfileComplete, getVendorStatus]);
+  }, [currentUser, isVendorProfileComplete]);
+
+  // Set up periodic refresh to check for status updates
+  useEffect(() => {
+    if (currentUser && isVendorProfileComplete() && vendorProfile?.status === 'PENDING') {
+      // Check for status updates every 30 seconds if status is pending
+      const interval = setInterval(() => {
+        fetchVendorProfile();
+      }, 30000);
+
+      return () => clearInterval(interval);
+    }
+  }, [currentUser, isVendorProfileComplete, vendorProfile?.status]);
 
   const fetchVendorProfile = async () => {
     try {
@@ -73,15 +93,50 @@ const VendorDashboard = () => {
       const response = await vendorService.getVendorProfileByUserId(userId);
       
       if (response.success && response.data) {
-        // Check if the data is nested (common API pattern)
-        let profileData = response.data;
+        let profileData = response.data.data;
         
         // If the data contains a nested vendor profile object, use that instead
-        if (response.data.vendorProfile) {
-          profileData = response.data.vendorProfile;
+        if (response.data.data && response.data.data.vendorProfile) {
+          profileData = response.data.data.vendorProfile;
         }
         
         setVendorProfile(profileData);
+        
+        // Update the auth context with the fresh status from the database
+        const authStatus = getVendorStatus();
+        
+        // Only update if the API status is different and seems more recent
+        // Priority: If auth context has APPROVED but API has PENDING, trust auth context
+        if (profileData.status && profileData.status !== authStatus) {
+          // If auth context has APPROVED but API returns PENDING, it might be stale data
+          if (authStatus === 'APPROVED' && profileData.status === 'PENDING') {
+            // Update the profile data to use the auth context status
+            profileData.status = authStatus;
+            setVendorProfile(profileData);
+          } else {
+            // For other cases, trust the API and update auth context
+            const previousStatus = authStatus;
+            updateVendorStatus(profileData.status);
+            
+            // Show notification for status change
+            if (previousStatus === 'PENDING' && profileData.status === 'APPROVED') {
+              setStatusChangeNotification({
+                type: 'success',
+                message: 'Congratulations! Your vendor application has been approved!'
+              });
+            } else if (previousStatus === 'PENDING' && profileData.status === 'REJECTED') {
+              setStatusChangeNotification({
+                type: 'error',
+                message: 'Your vendor application has been rejected. Please check the details below.'
+              });
+            }
+            
+            // Clear notification after 5 seconds
+            setTimeout(() => {
+              setStatusChangeNotification(null);
+            }, 5000);
+          }
+        }
       } else {
         setError('Failed to fetch vendor profile');
       }
@@ -96,25 +151,25 @@ const VendorDashboard = () => {
     switch (status) {
       case 'APPROVED':
         return (
-          <div className="status-badge approved">
-            <CheckCircle size={16} />
-            <span>Approved</span>
-          </div>
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+            <CheckCircle className="h-4 w-4 mr-1" />
+            Approved
+          </span>
         );
       case 'REJECTED':
         return (
-          <div className="status-badge rejected">
-            <XCircle size={16} />
-            <span>Rejected</span>
-          </div>
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+            <XCircle className="h-4 w-4 mr-1" />
+            Rejected
+          </span>
         );
       case 'PENDING':
       default:
         return (
-          <div className="status-badge pending">
-            <AlertTriangle size={16} />
-            <span>Pending Approval</span>
-          </div>
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+            <AlertTriangle className="h-4 w-4 mr-1" />
+            Pending Approval
+          </span>
         );
     }
   };
@@ -134,24 +189,34 @@ const VendorDashboard = () => {
   };
 
   if (loading) {
-    return <div className="dashboard-loading">Loading dashboard...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
   }
   
   // Check if vendor profile is incomplete - redirect handled by ProtectedRoute
   if (!isVendorProfileComplete()) {
     return (
-      <div className="dashboard-page">
-        <div className="dashboard-container">
-          <div className="dashboard-welcome">
-            <h1>Welcome, {currentUser?.name || 'Vendor'}!</h1>
-            <p>Please complete your vendor profile to continue.</p>
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome, {currentUser?.name || 'Vendor'}!</h1>
+            <p className="text-gray-600">Please complete your vendor profile to continue.</p>
           </div>
           
-          <div className="vendor-incomplete-profile">
-            <AlertTriangle size={48} className="warning-icon" />
-            <h2>Profile Incomplete</h2>
-            <p>You need to complete your vendor profile before you can access the vendor dashboard.</p>
-            <Link to="/vendor-registration" className="btn-primary">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+            <AlertTriangle className="h-16 w-16 text-yellow-500 mx-auto mb-6" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Profile Incomplete</h2>
+            <p className="text-gray-600 mb-8">You need to complete your vendor profile before you can access the vendor dashboard.</p>
+            <Link 
+              to="/vendor-registration" 
+              className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 inline-block font-medium"
+            >
               Complete Profile
             </Link>
           </div>
@@ -162,310 +227,327 @@ const VendorDashboard = () => {
 
   // Vendor-specific dashboard
   return (
-    <div className="dashboard-page">
-      <div className="dashboard-container">
-        <div className="dashboard-welcome">
-          <h1>Welcome, {currentUser?.name || 'Vendor'}!</h1>
-          <p>Manage your GreenMagic store and track your sales.</p>
-          
-          {vendorProfile && getStatusBadge(vendorProfile.status)}
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Welcome Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Welcome, {currentUser?.name || 'Vendor'}!</h1>
+              <p className="text-gray-600 mt-2">Manage your GreenMagic store and track your sales</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              {vendorProfile && getStatusBadge(vendorProfile.status)}
+            </div>
+          </div>
         </div>
-        
+
+        {/* Status Change Notification */}
+        {statusChangeNotification && (
+          <div className={`rounded-lg p-4 mb-8 border-l-4 ${
+            statusChangeNotification.type === 'success' 
+              ? 'bg-green-50 border-green-400' 
+              : 'bg-red-50 border-red-400'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                {statusChangeNotification.type === 'success' ? (
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3" />
+                ) : (
+                  <AlertTriangle className="h-5 w-5 text-red-400 mr-3" />
+                )}
+                <span className={statusChangeNotification.type === 'success' ? 'text-green-800' : 'text-red-800'}>
+                  {statusChangeNotification.message}
+                </span>
+              </div>
+              <button 
+                onClick={() => setStatusChangeNotification(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Status-specific messages */}
         {vendorProfile && vendorProfile.status === 'PENDING' && (
-          <div className="vendor-approval-message">
-            <AlertTriangle size={24} />
-            <div>
-              <h3>Approval Pending</h3>
-              <p>Your vendor profile is under review by our team. This process typically takes 1-2 business days. 
-              You'll be able to sell products once approved.</p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+            <div className="flex items-start">
+              <AlertTriangle className="h-6 w-6 text-yellow-400 mr-4 mt-1" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-yellow-800 mb-2">Approval Pending</h3>
+                <p className="text-yellow-700 mb-4">
+                  Your vendor profile is under review by our team. This process typically takes 1-2 business days. 
+                  You'll be able to sell products once approved.
+                </p>
+                <button 
+                  onClick={fetchVendorProfile} 
+                  disabled={loading}
+                  className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 disabled:opacity-50"
+                >
+                  {loading ? 'Checking...' : 'Check Status'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {vendorProfile && vendorProfile.status === 'APPROVED' && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+            <div className="flex items-start">
+              <CheckCircle className="h-6 w-6 text-green-400 mr-4 mt-1" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-green-800 mb-2">Congratulations! Your Application is Approved</h3>
+                <p className="text-green-700 mb-4">
+                  Your vendor profile has been approved. You can now start listing and selling your products on GreenMagic.
+                </p>
+                <Link 
+                  to="/vendor/products" 
+                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 inline-block"
+                >
+                  Start Selling
+                </Link>
+              </div>
             </div>
           </div>
         )}
         
         {vendorProfile && vendorProfile.status === 'REJECTED' && (
-          <div className="vendor-approval-message rejected">
-            <XCircle size={24} />
-            <div>
-              <h3>Application Rejected</h3>
-              <p><strong>Reason:</strong> {vendorProfile.rejectionReason || 'No specific reason provided'}</p>
-              <p>Please contact our support team at support@greenmagic.com for assistance.</p>
-              <a href="mailto:support@greenmagic.com" className="btn-outline">Contact Support</a>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+            <div className="flex items-start">
+              <XCircle className="h-6 w-6 text-red-400 mr-4 mt-1" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-red-800 mb-2">Application Rejected</h3>
+                <p className="text-red-700 mb-2">
+                  <strong>Reason:</strong> {vendorProfile.rejectionReason || 'No specific reason provided'}
+                </p>
+                <p className="text-red-700 mb-4">
+                  Please contact our support team at support@greenmagic.com for assistance.
+                </p>
+                <a 
+                  href="mailto:support@greenmagic.com" 
+                  className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 inline-block"
+                >
+                  Contact Support
+                </a>
+              </div>
             </div>
           </div>
         )}
-        
-        {/* Show vendor details if profile exists */}
+
+        {/* Business Information */}
         {vendorProfile && (
-          <div className="vendor-profile-summary">
-            <div className="summary-header">
-              <h2>Business Information</h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <Building className="h-5 w-5 mr-2 text-gray-600" />
+                Business Information
+              </h2>
               {vendorProfile.status === 'APPROVED' && (
-                <Link to="/vendor/edit-profile" className="edit-profile-link">
-                  <Settings size={16} />
-                  <span>Edit Profile</span>
+                <Link 
+                  to="/vendor/edit-profile" 
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
+                >
+                  <Settings className="h-4 w-4 mr-1" />
+                  Edit Profile
                 </Link>
               )}
             </div>
             
-            <div className="vendor-profile-sections">
-              <div className="vendor-section">
-                <h3>
-                  <Building size={18} />
-                  <span>Business Details</span>
-                </h3>
-                <div className="vendor-profile-details">
-                  <p><strong>Business Name:</strong> {vendorProfile.businessName || currentUser?.name || "Not provided"}</p>
-                  {(vendorProfile.legalBusinessName || vendorProfile.businessType) && <p><strong>Legal Name:</strong> {vendorProfile.legalBusinessName || "Not provided"}</p>}
-                  <p><strong>Business Type:</strong> {vendorProfile.businessType || "Not provided"}</p>
-                  <p><strong>GST Number:</strong> {vendorProfile.gstNumber || "Not provided"}</p>
-                  <p><strong>PAN Number:</strong> {vendorProfile.panNumber || "Not provided"}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Business Details */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">Business Details</h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-500">Business Name</p>
+                    <p className="text-sm font-medium text-gray-900">{vendorProfile.businessName || currentUser?.name || "Not provided"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Business Type</p>
+                    <p className="text-sm font-medium text-gray-900">{vendorProfile.businessType || "Not provided"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">GST Number</p>
+                    <p className="text-sm font-medium text-gray-900">{vendorProfile.gstNumber || "Not provided"}</p>
+                  </div>
                 </div>
               </div>
-              
-              <div className="vendor-section">
-                <h3>
-                  <Mail size={18} />
-                  <span>Contact Information</span>
-                </h3>
-                <div className="vendor-profile-details">
-                  <p><strong>Business Email:</strong> {vendorProfile.businessEmail || currentUser?.email || "Not provided"}</p>
-                  <p><strong>Business Phone:</strong> {vendorProfile.businessPhone || currentUser?.phoneNumber || "Not provided"}</p>
-                  {vendorProfile.supportEmail && <p><strong>Support Email:</strong> {vendorProfile.supportEmail}</p>}
-                  {vendorProfile.websiteUrl && <p><strong>Website:</strong> <a href={vendorProfile.websiteUrl} target="_blank" rel="noopener noreferrer">{vendorProfile.websiteUrl}</a></p>}
+
+              {/* Contact Information */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">Contact Information</h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-500">Business Email</p>
+                    <p className="text-sm font-medium text-gray-900">{vendorProfile.businessEmail || currentUser?.email || "Not provided"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Business Phone</p>
+                    <p className="text-sm font-medium text-gray-900">{vendorProfile.businessPhone || currentUser?.phoneNumber || "Not provided"}</p>
+                  </div>
+                  {vendorProfile.websiteUrl && (
+                    <div>
+                      <p className="text-sm text-gray-500">Website</p>
+                      <a href={vendorProfile.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+                        {vendorProfile.websiteUrl}
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
-              
-              <div className="vendor-section">
-                <h3>
-                  <MapPin size={18} />
-                  <span>Address</span>
-                </h3>
-                <div className="vendor-profile-details">
+
+              {/* Address */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">Address</h3>
+                <div className="text-sm text-gray-900">
                   <p>{vendorProfile.addressLine1 || vendorProfile.address || "Address not provided"}</p>
                   {vendorProfile.addressLine2 && <p>{vendorProfile.addressLine2}</p>}
                   <p>{vendorProfile.city || ""}{vendorProfile.city && vendorProfile.state ? ", " : ""}{vendorProfile.state || ""}{(vendorProfile.city || vendorProfile.state) && vendorProfile.pincode ? " - " : ""}{vendorProfile.pincode || ""}</p>
                   <p>{vendorProfile.country || ""}</p>
                 </div>
               </div>
-              
-              {(vendorProfile.accountHolderName || vendorProfile.bankName) && (
-                <div className="vendor-section">
-                  <h3>
-                    <CreditCard size={18} />
-                    <span>Bank Details</span>
-                  </h3>
-                  <div className="vendor-profile-details">
-                    <p><strong>Account Holder:</strong> {vendorProfile.accountHolderName || "Not provided"}</p>
-                    <p><strong>Bank:</strong> {vendorProfile.bankName || "Not provided"} {vendorProfile.bankBranch && `(${vendorProfile.bankBranch})`}</p>
-                  </div>
-                </div>
-              )}
-              
-              {vendorProfile.storeDescription && (
-                <div className="vendor-section">
-                  <h3>
-                    <Info size={18} />
-                    <span>Store Information</span>
-                  </h3>
-                  <div className="vendor-profile-details">
-                    <p><strong>Store Name:</strong> {vendorProfile.storeDisplayName || vendorProfile.businessName || "Not provided"}</p>
-                    <p><strong>Description:</strong> {vendorProfile.storeDescription || "Not provided"}</p>
-                    {vendorProfile.productCategories && <p><strong>Categories:</strong> {vendorProfile.productCategories}</p>}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
-        
-        {/* Only show action cards if vendor is approved */}
-        {vendorProfile && vendorProfile.status === 'APPROVED' && (
-          <>
-            {/* Analytics Cards */}
-            <h2 className="dashboard-section-title">Performance Overview</h2>
-            <div className="analytics-grid">
-              <div className="analytics-card">
-                <div className="analytics-icon">
-                  <DollarSign size={24} />
-                </div>
-                <div className="analytics-data">
-                  <h3>Total Sales</h3>
-                  <div className="analytics-value">₹{salesData.totalSales.toLocaleString()}</div>
-                  <div className="analytics-trend positive">
-                    <TrendingUp size={16} />
-                    <span>+12% from last month</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="analytics-card">
-                <div className="analytics-icon">
-                  <BarChart2 size={24} />
-                </div>
-                <div className="analytics-data">
-                  <h3>Monthly Revenue</h3>
-                  <div className="analytics-value">₹{salesData.monthlyRevenue.toLocaleString()}</div>
-                  <div className="analytics-trend positive">
-                    <TrendingUp size={16} />
-                    <span>+8.5% from previous</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="analytics-card">
-                <div className="analytics-icon">
-                  <Truck size={24} />
-                </div>
-                <div className="analytics-data">
-                  <h3>Pending Orders</h3>
-                  <div className="analytics-value">{salesData.pendingOrders}</div>
-                  <div className="analytics-link">
-                    <Link to="/vendor/orders?status=pending">Process now</Link>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="analytics-card">
-                <div className="analytics-icon">
-                  <Users size={24} />
-                </div>
-                <div className="analytics-data">
-                  <h3>Customers</h3>
-                  <div className="analytics-value">{salesData.totalCustomers}</div>
-                  <div className="analytics-trend positive">
-                    <TrendingUp size={16} />
-                    <span>+5 new this month</span>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Recent Orders */}
-            <div className="dashboard-panel">
-              <div className="panel-header">
-                <h2>Recent Orders</h2>
-                <Link to="/vendor/orders" className="view-all">View All</Link>
-              </div>
-              <div className="panel-content">
-                <table className="orders-table">
-                  <thead>
-                    <tr>
-                      <th>Order ID</th>
-                      <th>Customer</th>
-                      <th>Amount</th>
-                      <th>Date</th>
-                      <th>Status</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentOrders.map(order => (
-                      <tr key={order.id}>
-                        <td>{order.id}</td>
-                        <td>{order.customer}</td>
-                        <td>₹{order.amount.toLocaleString()}</td>
-                        <td>{order.date}</td>
-                        <td>{getOrderStatusBadge(order.status)}</td>
-                        <td>
-                          <Link to={`/vendor/orders/${order.id}`} className="table-action">
-                            View
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Inventory Overview */}
-            <div className="dashboard-panel">
-              <div className="panel-header">
-                <h2>Inventory Overview</h2>
-                <Link to="/vendor/products" className="view-all">Manage Products</Link>
-              </div>
-              <div className="panel-content">
-                <div className="inventory-stats">
-                  <div className="inventory-stat">
-                    <div className="stat-value">18</div>
-                    <div className="stat-label">Total Products</div>
-                  </div>
-                  <div className="inventory-stat warning">
-                    <div className="stat-value">3</div>
-                    <div className="stat-label">Low Stock</div>
-                  </div>
-                  <div className="inventory-stat danger">
-                    <div className="stat-value">1</div>
-                    <div className="stat-label">Out of Stock</div>
-                  </div>
-                  <div className="inventory-stat">
-                    <div className="stat-value">5</div>
-                    <div className="stat-label">Categories</div>
-                  </div>
-                </div>
-                
-                <div className="quick-actions">
-                  <Link to="/vendor/products/new" className="quick-action">
-                    <PlusCircle size={16} />
-                    <span>Add Product</span>
-                  </Link>
-                  <Link to="/vendor/categories" className="quick-action">
-                    <Database size={16} />
-                    <span>Manage Categories</span>
-                  </Link>
-                  <Link to="/vendor/inventory" className="quick-action">
-                    <Package size={16} />
-                    <span>Update Inventory</span>
-                  </Link>
-                  <Link to="/vendor/reports/products" className="quick-action">
-                    <BarChart2 size={16} />
-                    <span>Product Performance</span>
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            <h2 className="dashboard-section-title">Manage Your Store</h2>
-            <div className="dashboard-cards">
-              <div className="dashboard-card">
-                <Package size={24} />
-                <h2>Products</h2>
-                <p>Manage your product listings</p>
-                <Link to="/vendor/products" className="card-link">Manage Products</Link>
-              </div>
-              
-              <div className="dashboard-card">
-                <ShoppingBag size={24} />
-                <h2>Orders</h2>
-                <p>View and process customer orders</p>
-                <Link to="/vendor/orders" className="card-link">View Orders</Link>
-              </div>
-              
-              <div className="dashboard-card">
-                <BarChart2 size={24} />
-                <h2>Analytics</h2>
-                <p>View detailed sales reports</p>
-                <Link to="/vendor/analytics" className="card-link">View Reports</Link>
-              </div>
-              
-              <div className="dashboard-card">
-                <Settings size={24} />
-                <h2>Store Settings</h2>
-                <p>Update your store information</p>
-                <Link to="/vendor/settings" className="card-link">Edit Store</Link>
-              </div>
-            </div>
-          </>
-        )}
-        
-        {/* Show error if any */}
-        {error && (
-          <div className="dashboard-error">
-            <XCircle size={20} />
-            <p>{error}</p>
+        {/* Recent Orders */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <Package className="h-5 w-5 mr-2 text-gray-600" />
+              Recent Orders
+            </h2>
+            <Link to="/vendor/orders" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+              View All Orders
+            </Link>
           </div>
-        )}
+          
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {recentOrders.map((order) => (
+                  <tr key={order.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{order.id}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.customer}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{order.amount.toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.date}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
+                        order.status === 'Shipped' ? 'bg-blue-100 text-blue-800' :
+                        order.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Inventory Overview */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <Database className="h-5 w-5 mr-2 text-gray-600" />
+              Inventory Overview
+            </h2>
+            <Link to="/vendor/inventory" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+              Manage Inventory
+            </Link>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">42</div>
+              <div className="text-sm text-blue-800">Total Products</div>
+            </div>
+            <div className="text-center p-4 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">38</div>
+              <div className="text-sm text-green-800">In Stock</div>
+            </div>
+            <div className="text-center p-4 bg-yellow-50 rounded-lg">
+              <div className="text-2xl font-bold text-yellow-600">3</div>
+              <div className="text-sm text-yellow-800">Low Stock</div>
+            </div>
+            <div className="text-center p-4 bg-red-50 rounded-lg">
+              <div className="text-2xl font-bold text-red-600">1</div>
+              <div className="text-sm text-red-800">Out of Stock</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Manage Your Store */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+            <Settings className="h-5 w-5 mr-2 text-gray-600" />
+            Manage Your Store
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Link to="/vendor/products" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <div className="flex items-center mb-3">
+                <ShoppingBag className="h-6 w-6 text-blue-600 mr-3" />
+                <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-600">Products</h3>
+              </div>
+              <p className="text-sm text-gray-600">Add, edit, and manage your product listings</p>
+            </Link>
+
+            <Link to="/vendor/orders" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <div className="flex items-center mb-3">
+                <Package className="h-6 w-6 text-green-600 mr-3" />
+                <h3 className="text-lg font-medium text-gray-900 group-hover:text-green-600">Orders</h3>
+              </div>
+              <p className="text-sm text-gray-600">View and manage customer orders</p>
+            </Link>
+
+            <Link to="/vendor/analytics" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <div className="flex items-center mb-3">
+                <BarChart2 className="h-6 w-6 text-purple-600 mr-3" />
+                <h3 className="text-lg font-medium text-gray-900 group-hover:text-purple-600">Analytics</h3>
+              </div>
+              <p className="text-sm text-gray-600">Track your sales and performance</p>
+            </Link>
+
+            <Link to="/vendor/customers" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <div className="flex items-center mb-3">
+                <Users className="h-6 w-6 text-indigo-600 mr-3" />
+                <h3 className="text-lg font-medium text-gray-900 group-hover:text-indigo-600">Customers</h3>
+              </div>
+              <p className="text-sm text-gray-600">View customer information and feedback</p>
+            </Link>
+
+            <Link to="/vendor/settings" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <div className="flex items-center mb-3">
+                <Settings className="h-6 w-6 text-gray-600 mr-3" />
+                <h3 className="text-lg font-medium text-gray-900 group-hover:text-gray-600">Settings</h3>
+              </div>
+              <p className="text-sm text-gray-600">Configure your store settings and preferences</p>
+            </Link>
+
+            <Link to="/vendor/support" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <div className="flex items-center mb-3">
+                <Info className="h-6 w-6 text-orange-600 mr-3" />
+                <h3 className="text-lg font-medium text-gray-900 group-hover:text-orange-600">Support</h3>
+              </div>
+              <p className="text-sm text-gray-600">Get help and contact our support team</p>
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -482,6 +482,7 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+  font-size: 0.875rem;
 }
 
 .orders-table th {
@@ -490,7 +491,6 @@
   border-bottom: 1px solid #e5e7eb;
   font-weight: 500;
   color: #6b7280;
-  font-size: 0.875rem;
 }
 
 .orders-table td {
@@ -649,5 +649,66 @@
   .orders-table {
     display: block;
     overflow-x: auto;
+  }
+}
+
+/* Status Change Notification */
+.status-notification {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid;
+  animation: slideIn 0.3s ease-out;
+}
+
+.status-notification.success {
+  background-color: #d1fae5;
+  border-left-color: #10b981;
+  color: #065f46;
+}
+
+.status-notification.error {
+  background-color: #fee2e2;
+  border-left-color: #ef4444;
+  color: #991b1b;
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.notification-content svg {
+  flex-shrink: 0;
+}
+
+.close-notification {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.close-notification:hover {
+  opacity: 1;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 } 

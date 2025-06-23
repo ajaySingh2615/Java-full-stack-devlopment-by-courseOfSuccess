@@ -1,0 +1,392 @@
+{
+  "designSystem": {
+    "name": "GreenMagic Minimal Design System",
+    "description": "A clean, minimal design system using Tailwind CSS for the GreenMagic platform",
+    "version": "1.0.0",
+    
+    "layout": {
+      "pageContainer": {
+        "description": "Main page wrapper with full height and background",
+        "classes": "min-h-screen bg-gray-50 py-8",
+        "usage": "Wrap entire page content"
+      },
+      "contentContainer": {
+        "description": "Centered content container with responsive padding",
+        "classes": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+        "usage": "Container for all page content"
+      },
+      "cardContainer": {
+        "description": "Standard white card with subtle shadow and border",
+        "classes": "bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8",
+        "usage": "Main content sections"
+      }
+    },
+
+    "typography": {
+      "pageTitle": {
+        "description": "Main page heading",
+        "classes": "text-3xl font-bold text-gray-900",
+        "usage": "Primary page title"
+      },
+      "sectionTitle": {
+        "description": "Section headings with icon support",
+        "classes": "text-xl font-semibold text-gray-900 flex items-center",
+        "iconClasses": "h-5 w-5 mr-2 text-gray-600",
+        "usage": "Section headers"
+      },
+      "subsectionTitle": {
+        "description": "Subsection headings",
+        "classes": "text-sm font-medium text-gray-700 uppercase tracking-wide",
+        "usage": "Category labels and subsections"
+      },
+      "bodyText": {
+        "description": "Standard body text",
+        "classes": "text-gray-600",
+        "usage": "Descriptions and body content"
+      },
+      "labelText": {
+        "description": "Form labels and field labels",
+        "classes": "text-sm text-gray-500",
+        "usage": "Field labels"
+      },
+      "valueText": {
+        "description": "Display values and data",
+        "classes": "text-sm font-medium text-gray-900",
+        "usage": "Data display"
+      }
+    },
+
+    "buttons": {
+      "primary": {
+        "description": "Primary action button",
+        "classes": "bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 font-medium",
+        "usage": "Main actions, form submissions"
+      },
+      "secondary": {
+        "description": "Secondary action button",
+        "classes": "bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700",
+        "usage": "Secondary actions"
+      },
+      "outline": {
+        "description": "Outline button for less prominent actions",
+        "classes": "border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50",
+        "usage": "Cancel, back actions"
+      },
+      "link": {
+        "description": "Text link button",
+        "classes": "text-blue-600 hover:text-blue-700 text-sm font-medium",
+        "usage": "Navigation links, view more"
+      },
+      "iconButton": {
+        "description": "Small button with icon",
+        "classes": "text-gray-400 hover:text-gray-600",
+        "usage": "Close buttons, small actions"
+      }
+    },
+
+    "statusBadges": {
+      "approved": {
+        "description": "Green success badge",
+        "classes": "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800",
+        "iconClasses": "h-4 w-4 mr-1",
+        "usage": "Approved status"
+      },
+      "pending": {
+        "description": "Yellow warning badge",
+        "classes": "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800",
+        "iconClasses": "h-4 w-4 mr-1",
+        "usage": "Pending status"
+      },
+      "rejected": {
+        "description": "Red error badge",
+        "classes": "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800",
+        "iconClasses": "h-4 w-4 mr-1",
+        "usage": "Rejected/error status"
+      },
+      "tableStatus": {
+        "delivered": "bg-green-100 text-green-800",
+        "shipped": "bg-blue-100 text-blue-800",
+        "processing": "bg-yellow-100 text-yellow-800",
+        "pending": "bg-gray-100 text-gray-800"
+      }
+    },
+
+    "notifications": {
+      "success": {
+        "description": "Success notification banner",
+        "classes": "rounded-lg p-4 mb-8 border-l-4 bg-green-50 border-green-400",
+        "contentClasses": "flex items-center justify-between",
+        "iconClasses": "h-5 w-5 text-green-400 mr-3",
+        "textClasses": "text-green-800",
+        "usage": "Success messages"
+      },
+      "error": {
+        "description": "Error notification banner",
+        "classes": "rounded-lg p-4 mb-8 border-l-4 bg-red-50 border-red-400",
+        "contentClasses": "flex items-center justify-between",
+        "iconClasses": "h-5 w-5 text-red-400 mr-3",
+        "textClasses": "text-red-800",
+        "usage": "Error messages"
+      },
+      "warning": {
+        "description": "Warning notification banner",
+        "classes": "bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8",
+        "contentClasses": "flex items-start",
+        "iconClasses": "h-6 w-6 text-yellow-400 mr-4 mt-1",
+        "textClasses": "text-yellow-700",
+        "usage": "Warning messages"
+      }
+    },
+
+    "tables": {
+      "container": {
+        "description": "Table container with scroll",
+        "classes": "overflow-x-auto",
+        "usage": "Wrap tables for responsive scroll"
+      },
+      "table": {
+        "description": "Standard table styling",
+        "classes": "min-w-full divide-y divide-gray-200",
+        "usage": "Main table element"
+      },
+      "header": {
+        "description": "Table header styling",
+        "classes": "bg-gray-50",
+        "usage": "Table thead"
+      },
+      "headerCell": {
+        "description": "Table header cell",
+        "classes": "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider",
+        "usage": "Table th elements"
+      },
+      "body": {
+        "description": "Table body styling",
+        "classes": "bg-white divide-y divide-gray-200",
+        "usage": "Table tbody"
+      },
+      "row": {
+        "description": "Table row with hover effect",
+        "classes": "hover:bg-gray-50",
+        "usage": "Table tr elements"
+      },
+      "cell": {
+        "description": "Standard table cell",
+        "classes": "px-6 py-4 whitespace-nowrap text-sm text-gray-900",
+        "usage": "Table td elements"
+      },
+      "cellBold": {
+        "description": "Bold table cell for important data",
+        "classes": "px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900",
+        "usage": "Important table data"
+      }
+    },
+
+    "grids": {
+      "responsive3Col": {
+        "description": "Responsive 3-column grid",
+        "classes": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6",
+        "usage": "3-column responsive layouts"
+      },
+      "responsive4Col": {
+        "description": "Responsive 4-column grid for stats",
+        "classes": "grid grid-cols-1 md:grid-cols-4 gap-6",
+        "usage": "Stats and metrics display"
+      },
+      "responsive2Col": {
+        "description": "Responsive 2-column grid",
+        "classes": "grid grid-cols-1 md:grid-cols-2 gap-6",
+        "usage": "2-column layouts"
+      }
+    },
+
+    "cards": {
+      "statCard": {
+        "description": "Colored stat card for metrics",
+        "variants": {
+          "blue": "text-center p-4 bg-blue-50 rounded-lg",
+          "green": "text-center p-4 bg-green-50 rounded-lg",
+          "yellow": "text-center p-4 bg-yellow-50 rounded-lg",
+          "red": "text-center p-4 bg-red-50 rounded-lg"
+        },
+        "valueClasses": "text-2xl font-bold",
+        "labelClasses": "text-sm",
+        "usage": "Dashboard statistics"
+      },
+      "actionCard": {
+        "description": "Clickable action card with hover effects",
+        "classes": "group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors",
+        "headerClasses": "flex items-center mb-3",
+        "iconClasses": "h-6 w-6 mr-3",
+        "titleClasses": "text-lg font-medium text-gray-900",
+        "descriptionClasses": "text-sm text-gray-600",
+        "usage": "Management action cards"
+      },
+      "infoCard": {
+        "description": "Information display card",
+        "classes": "space-y-4",
+        "itemClasses": "space-y-3",
+        "usage": "Business information display"
+      }
+    },
+
+    "forms": {
+      "fieldGroup": {
+        "description": "Form field grouping",
+        "classes": "space-y-3",
+        "usage": "Group related form fields"
+      },
+      "input": {
+        "description": "Standard form input",
+        "classes": "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500",
+        "usage": "Text inputs"
+      },
+      "select": {
+        "description": "Standard form select",
+        "classes": "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500",
+        "usage": "Dropdown selects"
+      }
+    },
+
+    "spacing": {
+      "sectionGap": "mb-8",
+      "cardPadding": "p-6",
+      "smallPadding": "p-4",
+      "itemGap": "gap-6",
+      "smallGap": "gap-3",
+      "headerMargin": "mb-6"
+    },
+
+    "loading": {
+      "container": {
+        "description": "Loading state container",
+        "classes": "min-h-screen bg-gray-50 flex items-center justify-center",
+        "usage": "Full page loading"
+      },
+      "content": {
+        "description": "Loading content wrapper",
+        "classes": "text-center",
+        "usage": "Center loading content"
+      },
+      "spinner": {
+        "description": "Loading spinner",
+        "classes": "animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4",
+        "usage": "Loading indicator"
+      },
+      "text": {
+        "description": "Loading text",
+        "classes": "text-lg text-gray-600",
+        "usage": "Loading message"
+      }
+    },
+
+    "colors": {
+      "primary": "green-600",
+      "primaryHover": "green-700",
+      "primaryLight": "green-50",
+      "secondary": "gray-600",
+      "success": "green-600",
+      "warning": "yellow-600",
+      "error": "red-600",
+      "info": "blue-600",
+      "text": {
+        "primary": "text-gray-900",
+        "secondary": "text-gray-600",
+        "muted": "text-gray-500"
+      },
+      "background": {
+        "page": "bg-gray-50",
+        "card": "bg-white",
+        "muted": "bg-gray-50"
+      }
+    },
+
+    "icons": {
+      "sizes": {
+        "small": "h-4 w-4",
+        "medium": "h-5 w-5",
+        "large": "h-6 w-6",
+        "xlarge": "h-16 w-16"
+      },
+      "colors": {
+        "primary": "text-gray-600",
+        "success": "text-green-600",
+        "warning": "text-yellow-600",
+        "error": "text-red-600",
+        "info": "text-blue-600"
+      }
+    },
+
+    "examples": {
+      "basicPage": {
+        "description": "Basic page structure example",
+        "code": "<div className=\"min-h-screen bg-gray-50 py-8\">\n  <div className=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8\">\n    <div className=\"bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8\">\n      <h1 className=\"text-3xl font-bold text-gray-900 mb-2\">Page Title</h1>\n      <p className=\"text-gray-600\">Page description</p>\n    </div>\n  </div>\n</div>"
+      },
+      "sectionWithHeader": {
+        "description": "Section with header and action link",
+        "code": "<div className=\"bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8\">\n  <div className=\"flex items-center justify-between mb-6\">\n    <h2 className=\"text-xl font-semibold text-gray-900 flex items-center\">\n      <Icon className=\"h-5 w-5 mr-2 text-gray-600\" />\n      Section Title\n    </h2>\n    <Link className=\"text-blue-600 hover:text-blue-700 text-sm font-medium\">\n      View All\n    </Link>\n  </div>\n  <!-- Section content -->\n</div>"
+      },
+      "statusBadge": {
+        "description": "Status badge with icon",
+        "code": "<span className=\"inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800\">\n  <CheckCircle className=\"h-4 w-4 mr-1\" />\n  Approved\n</span>"
+      },
+      "actionCard": {
+        "description": "Clickable action card",
+        "code": "<Link className=\"group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors\">\n  <div className=\"flex items-center mb-3\">\n    <Icon className=\"h-6 w-6 text-blue-600 mr-3\" />\n    <h3 className=\"text-lg font-medium text-gray-900 group-hover:text-blue-600\">Action Title</h3>\n  </div>\n  <p className=\"text-sm text-gray-600\">Action description</p>\n</Link>"
+      },
+      "statCard": {
+        "description": "Stat card with colored background",
+        "code": "<div className=\"text-center p-4 bg-blue-50 rounded-lg\">\n  <div className=\"text-2xl font-bold text-blue-600\">42</div>\n  <div className=\"text-sm text-blue-800\">Total Products</div>\n</div>"
+      },
+      "table": {
+        "description": "Complete table example",
+        "code": "<div className=\"overflow-x-auto\">\n  <table className=\"min-w-full divide-y divide-gray-200\">\n    <thead className=\"bg-gray-50\">\n      <tr>\n        <th className=\"px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider\">Header</th>\n      </tr>\n    </thead>\n    <tbody className=\"bg-white divide-y divide-gray-200\">\n      <tr className=\"hover:bg-gray-50\">\n        <td className=\"px-6 py-4 whitespace-nowrap text-sm text-gray-900\">Data</td>\n      </tr>\n    </tbody>\n  </table>\n</div>"
+      },
+      "notification": {
+        "description": "Success notification",
+        "code": "<div className=\"rounded-lg p-4 mb-8 border-l-4 bg-green-50 border-green-400\">\n  <div className=\"flex items-center justify-between\">\n    <div className=\"flex items-center\">\n      <CheckCircle className=\"h-5 w-5 text-green-400 mr-3\" />\n      <span className=\"text-green-800\">Success message</span>\n    </div>\n    <button className=\"text-gray-400 hover:text-gray-600\">×</button>\n  </div>\n</div>"
+      }
+    },
+
+    "bestPractices": [
+      "Always use consistent spacing (mb-8 for sections, p-6 for cards)",
+      "Use semantic color classes (green for success, red for error, yellow for warning)",
+      "Include hover states for interactive elements",
+      "Use proper text hierarchy (text-3xl for titles, text-xl for sections)",
+      "Maintain consistent border radius (rounded-lg)",
+      "Use subtle shadows (shadow-sm) for depth",
+      "Include responsive classes (md:, lg:) for mobile-first design",
+      "Use flex and grid for layouts instead of custom CSS",
+      "Keep icon sizes consistent within sections",
+      "Use proper contrast ratios for accessibility",
+      "Group related elements with consistent spacing",
+      "Use transition-colors for smooth hover effects",
+      "Maintain consistent padding (p-6 for cards, p-4 for smaller elements)",
+      "Use whitespace effectively with space-y-* classes",
+      "Keep color palette consistent across components"
+    ],
+
+    "quickReference": {
+      "commonPatterns": {
+        "pageWrapper": "min-h-screen bg-gray-50 py-8",
+        "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+        "card": "bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8",
+        "sectionHeader": "flex items-center justify-between mb-6",
+        "grid3": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6",
+        "button": "bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 font-medium",
+        "badge": "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+      },
+      "iconSizes": {
+        "small": "h-4 w-4",
+        "medium": "h-5 w-5", 
+        "large": "h-6 w-6"
+      },
+      "textSizes": {
+        "title": "text-3xl font-bold text-gray-900",
+        "section": "text-xl font-semibold text-gray-900",
+        "body": "text-gray-600",
+        "label": "text-sm text-gray-500",
+        "value": "text-sm font-medium text-gray-900"
+      }
+    }
+  }
+}

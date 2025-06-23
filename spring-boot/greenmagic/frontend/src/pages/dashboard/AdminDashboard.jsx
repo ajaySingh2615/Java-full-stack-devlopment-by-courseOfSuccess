@@ -120,11 +120,11 @@ const AdminDashboard = () => {
   // Filter vendors based on status, search query, and date range
   const getFilteredVendors = () => {
     return vendors.filter(vendor => {
-      // Filter by status
+    // Filter by status
       if (filters.status !== 'all' && vendor.status.toLowerCase() !== filters.status) {
-        return false;
-      }
-      
+      return false;
+    }
+    
       // Filter by search query (business name, owner name, GST number, email)
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -164,15 +164,15 @@ const AdminDashboard = () => {
             const oneMonthAgo = new Date();
             oneMonthAgo.setDate(now.getDate() - 30);
             if (vendorDate < oneMonthAgo) {
-              return false;
+      return false;
             }
             break;
           default:
             break;
         }
-      }
-      
-      return true;
+    }
+    
+    return true;
     }).sort((a, b) => {
       // Sort vendors
       switch (filters.sortBy) {
@@ -229,15 +229,15 @@ const AdminDashboard = () => {
       
       if (response.success) {
         // Update local vendors state
-        setVendors(vendors.map(vendor => {
+    setVendors(vendors.map(vendor => {
           if ((vendor.vendorId || vendor.id || vendor._id) === vendorId) {
-            return {
-              ...vendor,
+        return {
+          ...vendor,
               status: newStatus
-            };
-          }
-          return vendor;
-        }));
+        };
+      }
+      return vendor;
+    }));
         
         // Refresh vendor counts
         const countsResponse = await vendorService.safeGetVendorCounts();
@@ -827,143 +827,143 @@ const AdminDashboard = () => {
           </div>
         ) : (
           <>
-            {/* Overview Tab */}
-            {activeTab === 'overview' && (
-              <div className="admin-overview">
-                <div className="stats-grid">
-                  <div className="stat-card">
-                    <div className="stat-icon vendor-icon">
-                      <Users size={24} />
-                    </div>
-                    <div className="stat-content">
-                      <h3>Total Vendors</h3>
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <div className="admin-overview">
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-icon vendor-icon">
+                  <Users size={24} />
+                </div>
+                <div className="stat-content">
+                  <h3>Total Vendors</h3>
                       <div className="stat-value">{vendorCounts.TOTAL || 0}</div>
-                      <div className="stat-detail">
+                  <div className="stat-detail">
                         <span className="approved">{vendorCounts.APPROVED || 0} Approved</span>
                         <span className="pending">{vendorCounts.PENDING || 0} Pending</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="stat-card">
-                    <div className="stat-icon product-icon">
-                      <Package size={24} />
-                    </div>
-                    <div className="stat-content">
-                      <h3>Total Products</h3>
-                      <div className="stat-value">
-                        {vendors.reduce((sum, vendor) => sum + (vendor.productsCount || 0), 0)}
-                      </div>
-                      <div className="stat-detail">
-                        <span>From {vendors.filter(v => v.productsCount > 0).length} vendors</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="stat-card">
-                    <div className="stat-icon order-icon">
-                      <ShoppingBag size={24} />
-                    </div>
-                    <div className="stat-content">
-                      <h3>Total Orders</h3>
-                      <div className="stat-value">
-                        {vendors.reduce((sum, vendor) => sum + (vendor.ordersCount || 0), 0)}
-                      </div>
-                      <div className="stat-detail">
-                        <span>₹{vendors.reduce((sum, vendor) => sum + (vendor.revenue || 0), 0).toLocaleString()} Revenue</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
-                
-                <div className="admin-section">
-                  <div className="section-header">
-                    <h2>Recent Vendor Applications</h2>
-                    <Link to="/admin/vendors?filter=pending" className="view-all">View All</Link>
+              </div>
+              
+              <div className="stat-card">
+                <div className="stat-icon product-icon">
+                  <Package size={24} />
+                </div>
+                <div className="stat-content">
+                  <h3>Total Products</h3>
+                  <div className="stat-value">
+                        {vendors.reduce((sum, vendor) => sum + (vendor.productsCount || 0), 0)}
                   </div>
-                  
-                  <div className="vendor-applications">
-                    {vendors.filter(v => v.status === 'PENDING').length > 0 ? (
-                      <table className="admin-table">
-                        <thead>
-                          <tr>
-                            <th>Business Name</th>
-                            <th>Owner</th>
-                            <th>Registration Date</th>
-                            <th>GST Number</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {vendors
-                            .filter(vendor => vendor.status === 'PENDING')
-                            .slice(0, 5)
-                            .map(vendor => (
-                              <tr key={vendor.id}>
-                                <td>{vendor.businessName}</td>
-                                <td>{vendor.ownerName}</td>
+                  <div className="stat-detail">
+                    <span>From {vendors.filter(v => v.productsCount > 0).length} vendors</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="stat-card">
+                <div className="stat-icon order-icon">
+                  <ShoppingBag size={24} />
+                </div>
+                <div className="stat-content">
+                  <h3>Total Orders</h3>
+                  <div className="stat-value">
+                        {vendors.reduce((sum, vendor) => sum + (vendor.ordersCount || 0), 0)}
+                  </div>
+                  <div className="stat-detail">
+                        <span>₹{vendors.reduce((sum, vendor) => sum + (vendor.revenue || 0), 0).toLocaleString()} Revenue</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="admin-section">
+              <div className="section-header">
+                <h2>Recent Vendor Applications</h2>
+                <Link to="/admin/vendors?filter=pending" className="view-all">View All</Link>
+              </div>
+              
+              <div className="vendor-applications">
+                {vendors.filter(v => v.status === 'PENDING').length > 0 ? (
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Business Name</th>
+                        <th>Owner</th>
+                        <th>Registration Date</th>
+                        <th>GST Number</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vendors
+                        .filter(vendor => vendor.status === 'PENDING')
+                        .slice(0, 5)
+                        .map(vendor => (
+                          <tr key={vendor.id}>
+                            <td>{vendor.businessName}</td>
+                            <td>{vendor.ownerName}</td>
                                 <td>{formatDate(vendor.createdAt)}</td>
-                                <td>{vendor.gstNumber}</td>
-                                <td className="action-buttons">
-                                  <button 
-                                    className="action-btn view-btn"
+                            <td>{vendor.gstNumber}</td>
+                            <td className="action-buttons">
+                              <button 
+                                className="action-btn view-btn"
                                     title="View Details"
                                     onClick={() => openVendorDetail(vendor)}
-                                  >
-                                    <Eye size={16} />
-                                  </button>
-                                  <button 
-                                    className="action-btn approve-btn"
+                              >
+                                <Eye size={16} />
+                              </button>
+                              <button 
+                                className="action-btn approve-btn"
                                     title="Approve Vendor"
                                     onClick={() => openConfirmModal({
                                       type: 'approve',
                                       vendorId: vendor.id,
                                       vendorName: vendor.businessName
                                     })}
-                                  >
-                                    <CheckCircle size={16} />
-                                  </button>
-                                  <button 
-                                    className="action-btn reject-btn"
+                              >
+                                <CheckCircle size={16} />
+                              </button>
+                              <button 
+                                className="action-btn reject-btn"
                                     title="Reject Vendor"
                                     onClick={() => openConfirmModal({
                                       type: 'reject',
                                       vendorId: vendor.id,
                                       vendorName: vendor.businessName
                                     })}
-                                  >
-                                    <XCircle size={16} />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <div className="empty-state">
-                        <CheckCircle size={48} />
-                        <p>No pending vendor applications</p>
-                      </div>
-                    )}
+                              >
+                                <XCircle size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="empty-state">
+                    <CheckCircle size={48} />
+                    <p>No pending vendor applications</p>
                   </div>
-                </div>
+                )}
               </div>
-            )}
-            
-            {/* Vendors Tab */}
-            {activeTab === 'vendors' && (
-              <div className="admin-vendors">
+            </div>
+          </div>
+        )}
+        
+        {/* Vendors Tab */}
+        {activeTab === 'vendors' && (
+          <div className="admin-vendors">
                 <div className="filter-bar">
-                  <div className="search-box">
-                    <Search size={18} />
-                    <input 
-                      type="text" 
+              <div className="search-box">
+                <Search size={18} />
+                <input 
+                  type="text" 
                       placeholder="Search vendors by name, email, GST..." 
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                  
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              
                   <div className="filters">
                     <div className="filter-group">
                       <label>Status:</label>
@@ -1004,31 +1004,31 @@ const AdminDashboard = () => {
                       </select>
                     </div>
                     
-                    <button 
+                  <button 
                       className="filter-reset-btn"
                       onClick={resetFilters}
                     >
                       <RefreshCw size={14} />
                       Reset
-                    </button>
-                  </div>
+                  </button>
                 </div>
+              </div>
                 
                 <div className="filter-summary">
                   <div className="filter-tags">
                     <div className="results-count">
                       {filteredVendors.length} {filteredVendors.length === 1 ? 'vendor' : 'vendors'} found
-                    </div>
-                    
+            </div>
+            
                     {filters.status !== 'all' && (
                       <div className="filter-tag">
                         Status: {filters.status}
-                        <button 
+                          <button 
                           className="remove-filter"
                           onClick={() => setFilters({...filters, status: 'all'})}
-                        >
+                          >
                           <X size={12} />
-                        </button>
+                          </button>
                       </div>
                     )}
                     
@@ -1037,24 +1037,24 @@ const AdminDashboard = () => {
                         Date: {filters.dateRange === 'today' ? 'Today' : 
                                filters.dateRange === 'week' ? 'This Week' : 
                                'This Month'}
-                        <button 
+                            <button 
                           className="remove-filter"
                           onClick={() => setFilters({...filters, dateRange: 'all'})}
-                        >
+                            >
                           <X size={12} />
-                        </button>
+                            </button>
                       </div>
-                    )}
-                    
+                          )}
+                          
                     {searchQuery && (
                       <div className="filter-tag">
                         Search: {searchQuery}
-                        <button 
+                            <button 
                           className="remove-filter"
                           onClick={() => setSearchQuery('')}
-                        >
+                            >
                           <X size={12} />
-                        </button>
+                            </button>
                       </div>
                     )}
                   </div>
@@ -1076,45 +1076,45 @@ const AdminDashboard = () => {
                         );
                       })}
                     </div>
-                  ) : (
-                    <div className="empty-state">
-                      <Users size={48} />
-                      <p>No vendors found matching your filters</p>
-                      <button 
-                        className="reset-filters"
+              ) : (
+                <div className="empty-state">
+                  <Users size={48} />
+                  <p>No vendors found matching your filters</p>
+                  <button 
+                    className="reset-filters"
                         onClick={resetFilters}
-                      >
-                        Reset Filters
-                      </button>
-                    </div>
-                  )}
+                  >
+                    Reset Filters
+                  </button>
                 </div>
-              </div>
-            )}
-            
-            {/* Placeholder for other tabs */}
-            {activeTab === 'products' && (
-              <div className="admin-placeholder">
-                <Package size={48} />
-                <h2>Products Management</h2>
-                <p>This section is under development</p>
-              </div>
-            )}
-            
-            {activeTab === 'orders' && (
-              <div className="admin-placeholder">
-                <ShoppingBag size={48} />
-                <h2>Orders Management</h2>
-                <p>This section is under development</p>
-              </div>
-            )}
-            
-            {activeTab === 'settings' && (
-              <div className="admin-placeholder">
-                <Settings size={48} />
-                <h2>Admin Settings</h2>
-                <p>This section is under development</p>
-              </div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Placeholder for other tabs */}
+        {activeTab === 'products' && (
+          <div className="admin-placeholder">
+            <Package size={48} />
+            <h2>Products Management</h2>
+            <p>This section is under development</p>
+          </div>
+        )}
+        
+        {activeTab === 'orders' && (
+          <div className="admin-placeholder">
+            <ShoppingBag size={48} />
+            <h2>Orders Management</h2>
+            <p>This section is under development</p>
+          </div>
+        )}
+        
+        {activeTab === 'settings' && (
+          <div className="admin-placeholder">
+            <Settings size={48} />
+            <h2>Admin Settings</h2>
+            <p>This section is under development</p>
+          </div>
             )}
           </>
         )}

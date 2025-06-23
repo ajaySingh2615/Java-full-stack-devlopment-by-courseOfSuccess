@@ -15,6 +15,16 @@ import VendorRegister from './pages/VendorRegister';
 import VendorRegistration from './pages/VendorRegistration';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
+
+// Import new dashboard components
+import DashboardRouter from './pages/dashboard/index';
+import CustomerDashboard from './pages/dashboard/CustomerDashboard';
+import VendorDashboard from './pages/dashboard/VendorDashboard';
+import AdminDashboard from './pages/dashboard/AdminDashboard';
+
+// Import unauthorized component
+import Unauthorized from './pages/Unauthorized';
+
 import './App.css';
 
 function App() {
@@ -38,16 +48,36 @@ function App() {
                   <VendorRegistration />
                 </ProtectedRoute>
               } />
-              <Route path="/dashboard" element={
-                <ProtectedRoute requireCompleteVendorProfile={true}>
-                  <Dashboard />
+              
+              {/* Legacy dashboard route - will redirect based on user role */}
+              <Route path="/dashboard" element={<DashboardRouter />} />
+              
+              {/* Role-specific dashboard routes */}
+              <Route path="/customer/dashboard" element={
+                <ProtectedRoute requireAuth={true}>
+                  <CustomerDashboard />
                 </ProtectedRoute>
               } />
+              
+              <Route path="/vendor/dashboard" element={
+                <ProtectedRoute requireVendor={true} requireCompleteVendorProfile={true}>
+                  <VendorDashboard />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/dashboard" element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } />
+              
               <Route path="/admin/users" element={
                 <ProtectedRoute requireAdmin={true}>
                   <UserManagement />
                 </ProtectedRoute>
               } />
+
+              <Route path="/unauthorized" element={<Unauthorized />} />
             </Routes>
           </main>
           <Footer />

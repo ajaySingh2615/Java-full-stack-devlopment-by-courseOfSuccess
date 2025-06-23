@@ -28,17 +28,14 @@ export const AuthProvider = ({ children }) => {
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        console.log("Loaded user from localStorage:", parsedUser);
         setUser(parsedUser);
         
         if (storedVendorStatus) {
-          console.log("Loaded vendor status from localStorage:", storedVendorStatus);
           setVendorProfileStatus(storedVendorStatus);
         }
         
         if (storedProfileComplete) {
           const isComplete = storedProfileComplete === 'true';
-          console.log("Loaded profile complete from localStorage:", isComplete);
           setVendorProfileComplete(isComplete);
         }
       } catch (error) {
@@ -53,8 +50,6 @@ export const AuthProvider = ({ children }) => {
 
   // Login function
   const login = (userData, vendorStatus = null, profileComplete = false) => {
-    console.log("Login function called with:", userData);
-    
     if (!userData) {
       console.error("Attempted to login with null/undefined user data");
       return;
@@ -63,17 +58,12 @@ export const AuthProvider = ({ children }) => {
     // Ensure we have a userId property
     if (!userData.userId && (userData.id || userData._id)) {
       userData.userId = userData.id || userData._id;
-      console.log("Added userId property:", userData);
     }
     
     setUser(userData);
     localStorage.setItem('greenmagic_user', JSON.stringify(userData));
-    console.log("User data stored in state and localStorage");
     
     if (userData.roleName === 'VENDOR') {
-      console.log("Vendor role detected, setting vendor status:", vendorStatus);
-      console.log("Setting profile complete:", profileComplete);
-      
       setVendorProfileStatus(vendorStatus);
       setVendorProfileComplete(profileComplete);
       
@@ -87,21 +77,18 @@ export const AuthProvider = ({ children }) => {
 
   // Update vendor profile status
   const updateVendorStatus = (status) => {
-    console.log("Updating vendor status to:", status);
     setVendorProfileStatus(status);
     localStorage.setItem('greenmagic_vendor_status', status);
   };
   
   // Set vendor profile as complete
   const setVendorProfileCompleted = () => {
-    console.log("Setting vendor profile as completed");
     setVendorProfileComplete(true);
     localStorage.setItem('greenmagic_vendor_profile_complete', 'true');
   };
 
   // Logout function
   const logout = () => {
-    console.log("Logging out user");
     setUser(null);
     setVendorProfileStatus(null);
     setVendorProfileComplete(false);
@@ -130,20 +117,30 @@ export const AuthProvider = ({ children }) => {
     return user?.roleName === 'VENDOR';
   };
   
+  // Check if user is a regular customer
+  const isCustomer = () => {
+    return isAuthenticated() && !isAdmin() && !isVendor();
+  };
+  
   // Check if vendor profile is complete
   const isVendorProfileComplete = () => {
-    console.log("isVendorProfileComplete called, returning:", vendorProfileComplete);
-    
-    // TEMPORARY: Force return true for testing
-    console.log("FORCING vendorProfileComplete to true for testing");
-    return true;
+    return vendorProfileComplete;
   };
   
   // Get vendor status
   const getVendorStatus = () => {
-    // TEMPORARY: Force APPROVED status for testing
-    console.log("FORCING vendor status to APPROVED for testing");
-    return "APPROVED";
+    return vendorProfileStatus;
+  };
+  
+  // Get dashboard URL based on user role
+  const getDashboardUrl = () => {
+    if (isAdmin()) {
+      return '/admin/dashboard';
+    } else if (isVendor()) {
+      return '/vendor/dashboard';
+    } else {
+      return '/customer/dashboard';
+    }
   };
 
   const value = {
@@ -154,12 +151,14 @@ export const AuthProvider = ({ children }) => {
     getUserRole,
     isAdmin,
     isVendor,
+    isCustomer,
     vendorProfileStatus,
     vendorProfileComplete,
     isVendorProfileComplete,
     getVendorStatus,
     updateVendorStatus,
     setVendorProfileCompleted,
+    getDashboardUrl,
     loading
   };
 

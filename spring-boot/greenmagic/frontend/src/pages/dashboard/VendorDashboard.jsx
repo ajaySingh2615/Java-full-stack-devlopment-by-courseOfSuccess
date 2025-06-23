@@ -8,28 +8,30 @@ import {
   CheckCircle, 
   XCircle,
   Building,
-  Phone,
   Mail,
   MapPin,
   CreditCard,
   Info,
   BarChart2,
   TrendingUp,
-  Clock,
   DollarSign,
   Truck,
   Users,
   PlusCircle,
-  Edit,
-  Database,
-  Bell
+  Database
 } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import vendorService from '../services/vendorService';
-import './Dashboard.css';
+import { useAuth } from '../../contexts/AuthContext';
+import vendorService from '../../services/vendorService';
+import '../../pages/Dashboard.css';
 
-const Dashboard = () => {
-  const { currentUser, isVendor, getVendorStatus, isVendorProfileComplete, vendorProfileComplete } = useAuth();
+/**
+ * Vendor Dashboard Component
+ * 
+ * Dashboard for vendors to manage their store, products, orders,
+ * and view sales analytics.
+ */
+const VendorDashboard = () => {
+  const { currentUser, getVendorStatus, isVendorProfileComplete } = useAuth();
   const [vendorProfile, setVendorProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -54,10 +56,10 @@ const Dashboard = () => {
     setVendorStatus(status);
 
     // Only fetch vendor profile if user is a vendor with completed profile
-    if (currentUser && isVendor() && isVendorProfileComplete()) {
+    if (currentUser && isVendorProfileComplete()) {
       fetchVendorProfile();
     }
-  }, [currentUser, isVendor, isVendorProfileComplete, vendorProfileComplete, getVendorStatus]);
+  }, [currentUser, isVendorProfileComplete, getVendorStatus]);
 
   const fetchVendorProfile = async () => {
     try {
@@ -131,66 +133,12 @@ const Dashboard = () => {
     }
   };
 
-  // Get status badge class based on vendor status
-  const getStatusBadgeClass = () => {
-    switch(vendorStatus) {
-      case 'APPROVED':
-        return 'status-badge-approved';
-      case 'REJECTED':
-        return 'status-badge-rejected';
-      default:
-        return 'status-badge-pending';
-    }
-  };
-  
-  // Get status text based on vendor status
-  const getStatusText = () => {
-    switch(vendorStatus) {
-      case 'APPROVED':
-        return 'Approved';
-      case 'REJECTED':
-        return 'Rejected';
-      default:
-        return 'Pending Approval';
-    }
-  };
-
   if (loading) {
     return <div className="dashboard-loading">Loading dashboard...</div>;
   }
-
-  if (!isVendor()) {
-    // Customer Dashboard
-    return (
-      <div className="dashboard-page">
-        <div className="dashboard-container">
-          <div className="dashboard-welcome">
-            <h1>Welcome, {currentUser?.name || 'User'}!</h1>
-            <p>This is your GreenMagic customer dashboard.</p>
-          </div>
-          
-          <div className="dashboard-cards">
-            <div className="dashboard-card">
-              <ShoppingBag size={24} />
-              <h2>Your Orders</h2>
-              <p>View and track your orders</p>
-              <Link to="/orders" className="card-link">View Orders</Link>
-            </div>
-            
-            <div className="dashboard-card">
-              <Settings size={24} />
-              <h2>Account Settings</h2>
-              <p>Update your profile information</p>
-              <Link to="/profile" className="card-link">Edit Profile</Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
   
-  // Check if vendor profile is incomplete
-  if (isVendor() && !isVendorProfileComplete()) {
+  // Check if vendor profile is incomplete - redirect handled by ProtectedRoute
+  if (!isVendorProfileComplete()) {
     return (
       <div className="dashboard-page">
         <div className="dashboard-container">
@@ -523,4 +471,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard; 
+export default VendorDashboard;

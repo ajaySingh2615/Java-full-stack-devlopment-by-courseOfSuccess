@@ -549,6 +549,7 @@ class VendorService {
               content: [
                 { 
                   id: 1, 
+                  _id: 1,
                   businessName: 'Green Farms', 
                   ownerName: 'John Smith',
                   email: 'john@greenfarms.com',
@@ -562,6 +563,7 @@ class VendorService {
                 },
                 { 
                   id: 2, 
+                  _id: 2,
                   businessName: 'Organic Valley', 
                   ownerName: 'Sarah Johnson',
                   email: 'sarah@organicvalley.com',
@@ -575,6 +577,7 @@ class VendorService {
                 },
                 { 
                   id: 3, 
+                  _id: 3,
                   businessName: 'Nature\'s Basket', 
                   ownerName: 'Mike Williams',
                   email: 'mike@naturesbasket.com',
@@ -589,6 +592,7 @@ class VendorService {
                 },
                 { 
                   id: 4, 
+                  _id: 4,
                   businessName: 'Fresh Harvest', 
                   ownerName: 'Emily Brown',
                   email: 'emily@freshharvest.com',
@@ -629,6 +633,7 @@ class VendorService {
           content: [
             { 
               id: 1, 
+              _id: 1,
               businessName: 'Green Farms', 
               ownerName: 'John Smith',
               email: 'john@greenfarms.com',
@@ -642,6 +647,7 @@ class VendorService {
             },
             { 
               id: 2, 
+              _id: 2,
               businessName: 'Organic Valley', 
               ownerName: 'Sarah Johnson',
               email: 'sarah@organicvalley.com',
@@ -655,6 +661,7 @@ class VendorService {
             },
             { 
               id: 3, 
+              _id: 3,
               businessName: 'Nature\'s Basket', 
               ownerName: 'Mike Williams',
               email: 'mike@naturesbasket.com',
@@ -669,6 +676,7 @@ class VendorService {
             },
             { 
               id: 4, 
+              _id: 4,
               businessName: 'Fresh Harvest', 
               ownerName: 'Emily Brown',
               email: 'emily@freshharvest.com',

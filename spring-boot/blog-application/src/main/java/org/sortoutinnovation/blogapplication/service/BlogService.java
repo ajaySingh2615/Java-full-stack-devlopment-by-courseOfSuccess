@@ -1,5 +1,6 @@
 package org.sortoutinnovation.blogapplication.service;
 
+import jakarta.validation.Valid;
 import org.sortoutinnovation.blogapplication.model.Blog;
 
 import java.util.List;
@@ -13,4 +14,6 @@ public interface BlogService {
     Optional<Blog> getBlogById(Long id);
 
     void deleteBlogById(Long id);
+
+    Blog updateBlog(Long id, @Valid Blog blogRequest);
 }

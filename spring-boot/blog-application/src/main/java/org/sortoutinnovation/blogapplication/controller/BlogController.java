@@ -48,4 +48,12 @@ public class BlogController {
         blogService.deleteBlogById(blog.getId());
         return ResponseEntity.noContent().build();
     }
+
+    // update existing blog
+    @PutMapping("/{id}")
+    public ResponseEntity<Blog> updateBlog(@PathVariable Long id, @RequestBody @Valid Blog blogRequest){
+        Blog updatedBlog = blogService.updateBlog(id, blogRequest);
+        return ResponseEntity.ok(updatedBlog);
+    }
+
 }

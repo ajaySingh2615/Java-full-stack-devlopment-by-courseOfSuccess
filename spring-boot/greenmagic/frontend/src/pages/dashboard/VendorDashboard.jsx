@@ -18,7 +18,8 @@ import {
   Truck,
   Users,
   PlusCircle,
-  Database
+  Database,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import vendorService from '../../services/vendorService';
@@ -336,7 +337,7 @@ const VendorDashboard = () => {
           </div>
         )}
 
-        {/* Business Information */}
+        {/* Business Information - Always visible for all statuses */}
         {vendorProfile && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
             <div className="flex items-center justify-between mb-6">
@@ -412,142 +413,437 @@ const VendorDashboard = () => {
           </div>
         )}
 
-        {/* Recent Orders */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <Package className="h-5 w-5 mr-2 text-gray-600" />
-              Recent Orders
-            </h2>
-            <Link to="/vendor/orders" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-              View All Orders
-            </Link>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {recentOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{order.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.customer}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{order.amount.toLocaleString()}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.date}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
-                        order.status === 'Shipped' ? 'bg-blue-100 text-blue-800' :
-                        order.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Inventory Overview */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <Database className="h-5 w-5 mr-2 text-gray-600" />
-              Inventory Overview
-            </h2>
-            <Link to="/vendor/inventory" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-              Manage Inventory
-            </Link>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">42</div>
-              <div className="text-sm text-blue-800">Total Products</div>
+        {/* PENDING Status - Limited Dashboard View */}
+        {vendorProfile && vendorProfile.status === 'PENDING' && (
+          <div className="space-y-8">
+            {/* What happens next section */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Info className="h-5 w-5 text-blue-600" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-3">What happens next?</h3>
+                  <p className="text-sm text-blue-700 mb-4">
+                    Your application is being reviewed by our team. Here's the process:
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-xs font-medium text-blue-800">1</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-blue-900">Document Verification</p>
+                        <p className="text-sm text-blue-700">We're reviewing your business documents</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3">
+                      <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-xs font-medium text-gray-600">2</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-700">Business Validation</p>
+                        <p className="text-sm text-gray-600">GST and business details verification</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3">
+                      <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-xs font-medium text-gray-600">3</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-700">Approval Notification</p>
+                        <p className="text-sm text-gray-600">You'll receive email confirmation (1-2 days)</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 pt-4 border-t border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-blue-700">Review in progress...</span>
+                      <button 
+                        onClick={fetchVendorProfile} 
+                        disabled={loading}
+                        className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
+                      >
+                        {loading ? 'Checking...' : 'Check Status'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">38</div>
-              <div className="text-sm text-green-800">In Stock</div>
-            </div>
-            <div className="text-center p-4 bg-yellow-50 rounded-lg">
-              <div className="text-2xl font-bold text-yellow-600">3</div>
-              <div className="text-sm text-yellow-800">Low Stock</div>
-            </div>
-            <div className="text-center p-4 bg-red-50 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">1</div>
-              <div className="text-sm text-red-800">Out of Stock</div>
+
+            {/* Limited feature preview */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                <Package className="h-5 w-5 mr-2 text-gray-600" />
+                Coming Soon - Your Vendor Features
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 opacity-60">
+                  <div className="flex items-center mb-3">
+                    <ShoppingBag className="h-6 w-6 text-gray-400 mr-3" />
+                    <h3 className="text-lg font-medium text-gray-500">Product Management</h3>
+                  </div>
+                  <p className="text-sm text-gray-400">Add and manage your product catalog</p>
+                  <div className="mt-3 text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded inline-block">
+                    Available after approval
+                  </div>
+                </div>
+
+                <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 opacity-60">
+                  <div className="flex items-center mb-3">
+                    <Package className="h-6 w-6 text-gray-400 mr-3" />
+                    <h3 className="text-lg font-medium text-gray-500">Order Management</h3>
+                  </div>
+                  <p className="text-sm text-gray-400">Process and track customer orders</p>
+                  <div className="mt-3 text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded inline-block">
+                    Available after approval
+                  </div>
+                </div>
+
+                <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 opacity-60">
+                  <div className="flex items-center mb-3">
+                    <BarChart2 className="h-6 w-6 text-gray-400 mr-3" />
+                    <h3 className="text-lg font-medium text-gray-500">Sales Analytics</h3>
+                  </div>
+                  <p className="text-sm text-gray-400">Track your sales performance</p>
+                  <div className="mt-3 text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded inline-block">
+                    Available after approval
+                  </div>
+                </div>
+
+                <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 opacity-60">
+                  <div className="flex items-center mb-3">
+                    <Users className="h-6 w-6 text-gray-400 mr-3" />
+                    <h3 className="text-lg font-medium text-gray-500">Customer Management</h3>
+                  </div>
+                  <p className="text-sm text-gray-400">View customer information and feedback</p>
+                  <div className="mt-3 text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded inline-block">
+                    Available after approval
+                  </div>
+                </div>
+
+                <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 opacity-60">
+                  <div className="flex items-center mb-3">
+                    <DollarSign className="h-6 w-6 text-gray-400 mr-3" />
+                    <h3 className="text-lg font-medium text-gray-500">Payment & Billing</h3>
+                  </div>
+                  <p className="text-sm text-gray-400">Manage payments and billing</p>
+                  <div className="mt-3 text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded inline-block">
+                    Available after approval
+                  </div>
+                </div>
+
+                <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 opacity-60">
+                  <div className="flex items-center mb-3">
+                    <Truck className="h-6 w-6 text-gray-400 mr-3" />
+                    <h3 className="text-lg font-medium text-gray-500">Shipping & Logistics</h3>
+                  </div>
+                  <p className="text-sm text-gray-400">Configure shipping options</p>
+                  <div className="mt-3 text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded inline-block">
+                    Available after approval
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Manage Your Store */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-            <Settings className="h-5 w-5 mr-2 text-gray-600" />
-            Manage Your Store
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Link to="/vendor/products" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-              <div className="flex items-center mb-3">
-                <ShoppingBag className="h-6 w-6 text-blue-600 mr-3" />
-                <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-600">Products</h3>
+        {/* APPROVED Status - Full Dashboard Features */}
+        {vendorProfile && vendorProfile.status === 'APPROVED' && (
+          <div className="space-y-8">
+            {/* Sales Overview Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                      <DollarSign className="h-5 w-5 text-green-600" />
+                    </div>
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Total Sales</dt>
+                      <dd className="flex items-baseline">
+                        <div className="text-2xl font-semibold text-gray-900">₹{salesData.totalSales.toLocaleString()}</div>
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
               </div>
-              <p className="text-sm text-gray-600">Add, edit, and manage your product listings</p>
-            </Link>
 
-            <Link to="/vendor/orders" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-              <div className="flex items-center mb-3">
-                <Package className="h-6 w-6 text-green-600 mr-3" />
-                <h3 className="text-lg font-medium text-gray-900 group-hover:text-green-600">Orders</h3>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="h-5 w-5 text-blue-600" />
+                    </div>
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Monthly Revenue</dt>
+                      <dd className="flex items-baseline">
+                        <div className="text-2xl font-semibold text-gray-900">₹{salesData.monthlyRevenue.toLocaleString()}</div>
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
               </div>
-              <p className="text-sm text-gray-600">View and manage customer orders</p>
-            </Link>
 
-            <Link to="/vendor/analytics" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-              <div className="flex items-center mb-3">
-                <BarChart2 className="h-6 w-6 text-purple-600 mr-3" />
-                <h3 className="text-lg font-medium text-gray-900 group-hover:text-purple-600">Analytics</h3>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                      <Package className="h-5 w-5 text-yellow-600" />
+                    </div>
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Pending Orders</dt>
+                      <dd className="flex items-baseline">
+                        <div className="text-2xl font-semibold text-gray-900">{salesData.pendingOrders}</div>
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
               </div>
-              <p className="text-sm text-gray-600">Track your sales and performance</p>
-            </Link>
 
-            <Link to="/vendor/customers" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-              <div className="flex items-center mb-3">
-                <Users className="h-6 w-6 text-indigo-600 mr-3" />
-                <h3 className="text-lg font-medium text-gray-900 group-hover:text-indigo-600">Customers</h3>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <Users className="h-5 w-5 text-purple-600" />
+                    </div>
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Total Customers</dt>
+                      <dd className="flex items-baseline">
+                        <div className="text-2xl font-semibold text-gray-900">{salesData.totalCustomers}</div>
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
               </div>
-              <p className="text-sm text-gray-600">View customer information and feedback</p>
-            </Link>
+            </div>
 
-            <Link to="/vendor/settings" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-              <div className="flex items-center mb-3">
-                <Settings className="h-6 w-6 text-gray-600 mr-3" />
-                <h3 className="text-lg font-medium text-gray-900 group-hover:text-gray-600">Settings</h3>
+            {/* Recent Orders */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                  <Package className="h-5 w-5 mr-2 text-gray-600" />
+                  Recent Orders
+                </h2>
+                <Link to="/vendor/orders" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  View All Orders
+                </Link>
               </div>
-              <p className="text-sm text-gray-600">Configure your store settings and preferences</p>
-            </Link>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {recentOrders.map((order) => (
+                      <tr key={order.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{order.id}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.customer}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{order.amount.toLocaleString()}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.date}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
+                            order.status === 'Shipped' ? 'bg-blue-100 text-blue-800' :
+                            order.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
-            <Link to="/vendor/support" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-              <div className="flex items-center mb-3">
-                <Info className="h-6 w-6 text-orange-600 mr-3" />
-                <h3 className="text-lg font-medium text-gray-900 group-hover:text-orange-600">Support</h3>
+            {/* Inventory Overview */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                  <Database className="h-5 w-5 mr-2 text-gray-600" />
+                  Inventory Overview
+                </h2>
+                <Link to="/vendor/inventory" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  Manage Inventory
+                </Link>
               </div>
-              <p className="text-sm text-gray-600">Get help and contact our support team</p>
-            </Link>
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">42</div>
+                  <div className="text-sm text-blue-800">Total Products</div>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">38</div>
+                  <div className="text-sm text-green-800">In Stock</div>
+                </div>
+                <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                  <div className="text-2xl font-bold text-yellow-600">3</div>
+                  <div className="text-sm text-yellow-800">Low Stock</div>
+                </div>
+                <div className="text-center p-4 bg-red-50 rounded-lg">
+                  <div className="text-2xl font-bold text-red-600">1</div>
+                  <div className="text-sm text-red-800">Out of Stock</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Manage Your Store */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                <Settings className="h-5 w-5 mr-2 text-gray-600" />
+                Manage Your Store
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Link to="/vendor/products" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center mb-3">
+                    <ShoppingBag className="h-6 w-6 text-blue-600 mr-3" />
+                    <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-600">Products</h3>
+                  </div>
+                  <p className="text-sm text-gray-600">Add, edit, and manage your product listings</p>
+                </Link>
+
+                <Link to="/vendor/orders" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center mb-3">
+                    <Package className="h-6 w-6 text-green-600 mr-3" />
+                    <h3 className="text-lg font-medium text-gray-900 group-hover:text-green-600">Orders</h3>
+                  </div>
+                  <p className="text-sm text-gray-600">View and manage customer orders</p>
+                </Link>
+
+                <Link to="/vendor/analytics" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center mb-3">
+                    <BarChart2 className="h-6 w-6 text-purple-600 mr-3" />
+                    <h3 className="text-lg font-medium text-gray-900 group-hover:text-purple-600">Analytics</h3>
+                  </div>
+                  <p className="text-sm text-gray-600">Track your sales and performance</p>
+                </Link>
+
+                <Link to="/vendor/customers" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center mb-3">
+                    <Users className="h-6 w-6 text-indigo-600 mr-3" />
+                    <h3 className="text-lg font-medium text-gray-900 group-hover:text-indigo-600">Customers</h3>
+                  </div>
+                  <p className="text-sm text-gray-600">View customer information and feedback</p>
+                </Link>
+
+                <Link to="/vendor/settings" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center mb-3">
+                    <Settings className="h-6 w-6 text-gray-600 mr-3" />
+                    <h3 className="text-lg font-medium text-gray-900 group-hover:text-gray-600">Settings</h3>
+                  </div>
+                  <p className="text-sm text-gray-600">Configure your store settings and preferences</p>
+                </Link>
+
+                <Link to="/vendor/support" className="group block p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center mb-3">
+                    <Info className="h-6 w-6 text-orange-600 mr-3" />
+                    <h3 className="text-lg font-medium text-gray-900 group-hover:text-orange-600">Support</h3>
+                  </div>
+                  <p className="text-sm text-gray-600">Get help and contact our support team</p>
+                </Link>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* REJECTED Status - Support and Contact Information */}
+        {vendorProfile && vendorProfile.status === 'REJECTED' && (
+          <div className="space-y-8">
+            {/* Support Contact Section */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                <Info className="h-5 w-5 mr-2 text-gray-600" />
+                Need Help?
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-6 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center mb-4">
+                    <Mail className="h-6 w-6 text-blue-600 mr-3" />
+                    <h3 className="text-lg font-medium text-blue-900">Email Support</h3>
+                  </div>
+                  <p className="text-blue-700 mb-4">Get detailed assistance via email</p>
+                  <a 
+                    href="mailto:support@greenmagic.com?subject=Vendor Application - Assistance Required" 
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Email Support
+                  </a>
+                </div>
+
+                <div className="p-6 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center mb-4">
+                    <Building className="h-6 w-6 text-green-600 mr-3" />
+                    <h3 className="text-lg font-medium text-green-900">Reapply</h3>
+                  </div>
+                  <p className="text-green-700 mb-4">Submit a new application with corrected information</p>
+                  <Link 
+                    to="/vendor-registration" 
+                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                  >
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Start New Application
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* FAQ Section */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Frequently Asked Questions</h2>
+              
+              <div className="space-y-6">
+                <div className="border-b border-gray-200 pb-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Why was my application rejected?</h3>
+                  <p className="text-gray-600">Applications are typically rejected due to incomplete documentation, invalid business information, or failure to meet our vendor requirements. Check the rejection reason above for specific details.</p>
+                </div>
+                
+                <div className="border-b border-gray-200 pb-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Can I reapply?</h3>
+                  <p className="text-gray-600">Yes, you can submit a new application. Please ensure all information is accurate and complete, and address the issues mentioned in the rejection reason.</p>
+                </div>
+                
+                <div className="border-b border-gray-200 pb-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">How long does the review process take?</h3>
+                  <p className="text-gray-600">Our review process typically takes 1-2 business days. You'll receive an email notification once your application status changes.</p>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">What documents do I need?</h3>
+                  <p className="text-gray-600">Required documents include GST certificate, PAN card, business registration proof, bank account details, and identity verification documents.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

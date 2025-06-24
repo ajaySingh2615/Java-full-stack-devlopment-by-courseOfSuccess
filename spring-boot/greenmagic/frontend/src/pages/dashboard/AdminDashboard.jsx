@@ -335,95 +335,132 @@ const AdminDashboard = () => {
             
             {/* Business Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium text-gray-700 uppercase tracking-wide border-b border-gray-200 pb-2">Business Information</h4>
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <Store className="h-4 w-4 mr-2" />
-                      Business Name
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.businessName || 'N/A'}</div>
+              <div className="space-y-6">
+                <div className="pb-4 border-b border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-700 uppercase tracking-wide flex items-center">
+                    <Store className="h-4 w-4 mr-2" />
+                    Business Information
+                  </h4>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">Business Name</dt>
+                    <dd className="text-sm text-gray-900">{vendor.businessName || 'N/A'}</dd>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <Store className="h-4 w-4 mr-2" />
-                      Legal Business Name
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.legalBusinessName || 'N/A'}</div>
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">Legal Business Name</dt>
+                    <dd className="text-sm text-gray-900">{vendor.legalBusinessName || 'N/A'}</dd>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <Store className="h-4 w-4 mr-2" />
-                      Business Type
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.businessType ? vendor.businessType.replace(/_/g, ' ') : 'N/A'}</div>
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">Business Type</dt>
+                    <dd className="text-sm text-gray-900">
+                      {vendor.businessType ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          {vendor.businessType.replace(/_/g, ' ')}
+                        </span>
+                      ) : (
+                        'N/A'
+                      )}
+                    </dd>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <FileText className="h-4 w-4 mr-2" />
-                      GST Number
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.gstNumber || 'N/A'}</div>
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">GST Number</dt>
+                    <dd className="text-sm text-gray-900 font-mono">{vendor.gstNumber || 'N/A'}</dd>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <FileText className="h-4 w-4 mr-2" />
-                      PAN Number
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.panNumber || 'N/A'}</div>
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">PAN Number</dt>
+                    <dd className="text-sm text-gray-900 font-mono">{vendor.panNumber || 'N/A'}</dd>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <Tag className="h-4 w-4 mr-2" />
-                      Website
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">
-                      {vendor.websiteUrl ? 
-                        <a href={vendor.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700">{vendor.websiteUrl}</a> 
-                        : 'N/A'}
-                    </div>
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">Website</dt>
+                    <dd className="text-sm text-gray-900">
+                      {vendor.websiteUrl ? (
+                        <a 
+                          href={vendor.websiteUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="inline-flex items-center text-blue-600 hover:text-blue-700"
+                        >
+                          {vendor.websiteUrl}
+                          <svg className="ml-1 w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </a>
+                      ) : (
+                        'N/A'
+                      )}
+                    </dd>
                   </div>
                 </div>
               </div>
               
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium text-gray-700 uppercase tracking-wide border-b border-gray-200 pb-2">Contact Information</h4>
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <Mail className="h-4 w-4 mr-2" />
-                      Business Email
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.businessEmail || 'N/A'}</div>
+              <div className="space-y-6">
+                <div className="pb-4 border-b border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-700 uppercase tracking-wide flex items-center">
+                    <Mail className="h-4 w-4 mr-2" />
+                    Contact Information
+                  </h4>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">Business Email</dt>
+                    <dd className="text-sm text-gray-900">
+                      {vendor.businessEmail ? (
+                        <a href={`mailto:${vendor.businessEmail}`} className="text-blue-600 hover:text-blue-700">
+                          {vendor.businessEmail}
+                        </a>
+                      ) : (
+                        'N/A'
+                      )}
+                    </dd>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <Mail className="h-4 w-4 mr-2" />
-                      Support Email
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.supportEmail || 'N/A'}</div>
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">Support Email</dt>
+                    <dd className="text-sm text-gray-900">
+                      {vendor.supportEmail ? (
+                        <a href={`mailto:${vendor.supportEmail}`} className="text-blue-600 hover:text-blue-700">
+                          {vendor.supportEmail}
+                        </a>
+                      ) : (
+                        'N/A'
+                      )}
+                    </dd>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <Phone className="h-4 w-4 mr-2" />
-                      Business Phone
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.businessPhone || 'N/A'}</div>
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">Business Phone</dt>
+                    <dd className="text-sm text-gray-900">
+                      {vendor.businessPhone ? (
+                        <a href={`tel:${vendor.businessPhone}`} className="text-blue-600 hover:text-blue-700">
+                          {vendor.businessPhone}
+                        </a>
+                      ) : (
+                        'N/A'
+                      )}
+                    </dd>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <Phone className="h-4 w-4 mr-2" />
-                      Phone
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.phoneNumber || 'N/A'}</div>
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">Phone</dt>
+                    <dd className="text-sm text-gray-900">
+                      {vendor.phoneNumber ? (
+                        <a href={`tel:${vendor.phoneNumber}`} className="text-blue-600 hover:text-blue-700">
+                          {vendor.phoneNumber}
+                        </a>
+                      ) : (
+                        'N/A'
+                      )}
+                    </dd>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <Mail className="h-4 w-4 mr-2" />
-                      Email
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.email || 'N/A'}</div>
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">Email</dt>
+                    <dd className="text-sm text-gray-900">
+                      {vendor.email ? (
+                        <a href={`mailto:${vendor.email}`} className="text-blue-600 hover:text-blue-700">
+                          {vendor.email}
+                        </a>
+                      ) : (
+                        'N/A'
+                      )}
+                    </dd>
                   </div>
                 </div>
               </div>
@@ -431,91 +468,80 @@ const AdminDashboard = () => {
             
             {/* Address and Banking Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium text-gray-700 uppercase tracking-wide border-b border-gray-200 pb-2">Address Information</h4>
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Address Line 1
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.addressLine1 || vendor.address || 'N/A'}</div>
+              <div className="space-y-6">
+                <div className="pb-4 border-b border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-700 uppercase tracking-wide flex items-center">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Address Information
+                  </h4>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">Address Line 1</dt>
+                    <dd className="text-sm text-gray-900">{vendor.addressLine1 || vendor.address || 'N/A'}</dd>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Address Line 2
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.addressLine2 || 'N/A'}</div>
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">Address Line 2</dt>
+                    <dd className="text-sm text-gray-900">{vendor.addressLine2 || 'N/A'}</dd>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <FileText className="h-4 w-4 mr-2" />
-                      City
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col space-y-1">
+                      <dt className="text-sm font-medium text-gray-500">City</dt>
+                      <dd className="text-sm text-gray-900">{vendor.city || 'N/A'}</dd>
                     </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.city || 'N/A'}</div>
+                    <div className="flex flex-col space-y-1">
+                      <dt className="text-sm font-medium text-gray-500">State</dt>
+                      <dd className="text-sm text-gray-900">{vendor.state || 'N/A'}</dd>
+                    </div>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <FileText className="h-4 w-4 mr-2" />
-                      State
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col space-y-1">
+                      <dt className="text-sm font-medium text-gray-500">Pincode</dt>
+                      <dd className="text-sm text-gray-900 font-mono">{vendor.pincode || 'N/A'}</dd>
                     </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.state || 'N/A'}</div>
-                  </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Pincode
+                    <div className="flex flex-col space-y-1">
+                      <dt className="text-sm font-medium text-gray-500">Country</dt>
+                      <dd className="text-sm text-gray-900">{vendor.country || 'N/A'}</dd>
                     </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.pincode || 'N/A'}</div>
-                  </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Country
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.country || 'N/A'}</div>
                   </div>
                 </div>
               </div>
               
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium text-gray-700 uppercase tracking-wide border-b border-gray-200 pb-2">Banking Information</h4>
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Account Holder Name
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.accountHolderName || 'N/A'}</div>
+              <div className="space-y-6">
+                <div className="pb-4 border-b border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-700 uppercase tracking-wide flex items-center">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Banking Information
+                  </h4>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">Account Holder Name</dt>
+                    <dd className="text-sm text-gray-900">{vendor.accountHolderName || 'N/A'}</dd>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Account Number
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.accountNumber ? '******' + vendor.accountNumber.slice(-4) : 'N/A'}</div>
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">Account Number</dt>
+                    <dd className="text-sm text-gray-900 font-mono">
+                      {vendor.accountNumber ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          ******{vendor.accountNumber.slice(-4)}
+                        </span>
+                      ) : (
+                        'N/A'
+                      )}
+                    </dd>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <FileText className="h-4 w-4 mr-2" />
-                      IFSC Code
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.ifscCode || 'N/A'}</div>
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">IFSC Code</dt>
+                    <dd className="text-sm text-gray-900 font-mono">{vendor.ifscCode || 'N/A'}</dd>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Bank Name
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.bankName || 'N/A'}</div>
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">Bank Name</dt>
+                    <dd className="text-sm text-gray-900">{vendor.bankName || 'N/A'}</dd>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Bank Branch
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{vendor.bankBranch || 'N/A'}</div>
+                  <div className="flex flex-col space-y-1">
+                    <dt className="text-sm font-medium text-gray-500">Bank Branch</dt>
+                    <dd className="text-sm text-gray-900">{vendor.bankBranch || 'N/A'}</dd>
                   </div>
                 </div>
               </div>
@@ -1157,29 +1183,49 @@ const AdminDashboard = () => {
           <div>
             {/* Filter Bar */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-              <div className="flex flex-col lg:flex-row gap-4">
-                {/* Search Box */}
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input 
-                      type="text" 
-                      placeholder="Search vendors by name, email, GST..." 
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                    />
-                  </div>
+              <div className="space-y-6">
+                {/* Filter Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                  <h3 className="text-lg font-medium text-gray-900">Filter Vendors</h3>
+                  <button 
+                    className="mt-3 sm:mt-0 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    onClick={resetFilters}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Reset All
+                  </button>
                 </div>
                 
-                {/* Filters */}
-                <div className="flex flex-wrap gap-4">
-                  <div className="flex flex-col">
-                    <label className="text-sm text-gray-500 mb-1">Status</label>
+                {/* Search and Filters */}
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-4">
+                  {/* Search Box */}
+                  <div className="lg:col-span-5">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Search Vendors
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input 
+                        type="text" 
+                        placeholder="Search by name, email, GST..." 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Status Filter */}
+                  <div className="lg:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Status
+                    </label>
                     <select 
                       value={filters.status}
                       onChange={(e) => setFilters({...filters, status: e.target.value})}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                     >
                       <option value="all">All Status</option>
                       <option value="pending">Pending</option>
@@ -1188,12 +1234,15 @@ const AdminDashboard = () => {
                     </select>
                   </div>
                   
-                  <div className="flex flex-col">
-                    <label className="text-sm text-gray-500 mb-1">Date Range</label>
+                  {/* Date Range Filter */}
+                  <div className="lg:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date Range
+                    </label>
                     <select 
                       value={filters.dateRange}
                       onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                     >
                       <option value="all">All Time</option>
                       <option value="today">Today</option>
@@ -1202,12 +1251,15 @@ const AdminDashboard = () => {
                     </select>
                   </div>
                   
-                  <div className="flex flex-col">
-                    <label className="text-sm text-gray-500 mb-1">Sort By</label>
+                  {/* Sort By Filter */}
+                  <div className="lg:col-span-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Sort By
+                    </label>
                     <select 
                       value={filters.sortBy}
                       onChange={(e) => setFilters({...filters, sortBy: e.target.value})}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                     >
                       <option value="newest">Newest First</option>
                       <option value="oldest">Oldest First</option>
@@ -1215,64 +1267,64 @@ const AdminDashboard = () => {
                       <option value="name-desc">Name (Z-A)</option>
                     </select>
                   </div>
-                  
-                  <div className="flex flex-col justify-end">
-                    <button 
-                      className="border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 flex items-center"
-                      onClick={resetFilters}
-                    >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Reset
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>
                 
             {/* Filter Summary */}
-            <div className="mb-6">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="text-sm text-gray-600">
-                  {filteredVendors.length} {filteredVendors.length === 1 ? 'vendor' : 'vendors'} found
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                <div className="flex items-center">
+                  <span className="text-sm font-medium text-gray-900">
+                    {filteredVendors.length} {filteredVendors.length === 1 ? 'vendor' : 'vendors'} found
+                  </span>
+                  {(filters.status !== 'all' || filters.dateRange !== 'all' || searchQuery) && (
+                    <span className="ml-2 text-sm text-gray-500">
+                      • Filtered results
+                    </span>
+                  )}
                 </div>
                 
-                {filters.status !== 'all' && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                    Status: {filters.status}
-                    <button 
-                      className="ml-2 text-blue-600 hover:text-blue-700"
-                      onClick={() => setFilters({...filters, status: 'all'})}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                )}
-                
-                {filters.dateRange !== 'all' && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                    Date: {filters.dateRange === 'today' ? 'Today' : 
-                           filters.dateRange === 'week' ? 'This Week' : 
-                           'This Month'}
-                    <button 
-                      className="ml-2 text-blue-600 hover:text-blue-700"
-                      onClick={() => setFilters({...filters, dateRange: 'all'})}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                )}
-                        
-                {searchQuery && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                    Search: {searchQuery}
-                    <button 
-                      className="ml-2 text-blue-600 hover:text-blue-700"
-                      onClick={() => setSearchQuery('')}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                )}
+                {/* Active Filters */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {filters.status !== 'all' && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Status: {filters.status}
+                      <button 
+                        className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600 focus:outline-none focus:bg-blue-200 focus:text-blue-600"
+                        onClick={() => setFilters({...filters, status: 'all'})}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  
+                  {filters.dateRange !== 'all' && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Date: {filters.dateRange === 'today' ? 'Today' : 
+                             filters.dateRange === 'week' ? 'This Week' : 
+                             'This Month'}
+                      <button 
+                        className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600 focus:outline-none focus:bg-blue-200 focus:text-blue-600"
+                        onClick={() => setFilters({...filters, dateRange: 'all'})}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  
+                  {searchQuery && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Search: "{searchQuery.length > 20 ? searchQuery.substring(0, 20) + '...' : searchQuery}"
+                      <button 
+                        className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600 focus:outline-none focus:bg-blue-200 focus:text-blue-600"
+                        onClick={() => setSearchQuery('')}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
                 

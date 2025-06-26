@@ -1,0 +1,835 @@
+{
+  "customerManagement": {
+    "customerProfiles": {
+      "basic_information": {
+        "personal_details": {
+          "customer_id": {
+            "type": "auto_generated",
+            "format": "GM-CUST-{6_digit_number}",
+            "unique": true,
+            "display": "prominent"
+          },
+          "full_name": {
+            "type": "text",
+            "required": true,
+            "searchable": true,
+            "display": "full_name_with_title"
+          },
+          "email": {
+            "type": "email",
+            "required": true,
+            "verified": "email_verification_status",
+            "communication_preference": true
+          },
+          "phone": {
+            "type": "phone_number",
+            "country_code": "+91",
+            "required": true,
+            "verified": "otp_verification",
+            "whatsapp_enabled": true
+          },
+          "gender": {
+            "type": "select",
+            "options": ["male", "female", "other", "prefer_not_to_say"],
+            "optional": true,
+            "demographic_analytics": true
+          },
+          "date_of_birth": {
+            "type": "date",
+            "optional": true,
+            "birthday_campaigns": true,
+            "age_group_segmentation": true
+          },
+          "registration_date": {
+            "type": "auto_timestamp",
+            "format": "YYYY-MM-DD HH:mm:ss",
+            "customer_journey_tracking": true
+          }
+        },
+        "profile_image": {
+          "type": "image_upload",
+          "optional": true,
+          "max_size": "2MB",
+          "formats": ["jpg", "jpeg", "png"],
+          "auto_resize": "150x150"
+        },
+        "account_status": {
+          "type": "select",
+          "options": [
+            {"value": "active", "label": "Active", "color": "green"},
+            {"value": "inactive", "label": "Inactive", "color": "gray"},
+            {"value": "suspended", "label": "Suspended", "color": "red"},
+            {"value": "verification_pending", "label": "Verification Pending", "color": "yellow"}
+          ],
+          "default": "verification_pending",
+          "status_history": true
+        }
+      },
+      "contact_information": {
+        "addresses": {
+          "type": "multiple_addresses",
+          "max_addresses": 5,
+          "address_types": [
+            {"type": "home", "label": "Home Address", "icon": "home"},
+            {"type": "work", "label": "Work Address", "icon": "building"},
+            {"type": "billing", "label": "Billing Address", "icon": "credit_card"},
+            {"type": "shipping", "label": "Shipping Address", "icon": "truck"},
+            {"type": "other", "label": "Other", "icon": "map_pin"}
+          ],
+          "fields": {
+            "address_line_1": {
+              "type": "text",
+              "label": "Address Line 1",
+              "required": true,
+              "placeholder": "House/Flat/Office No., Building Name"
+            },
+            "address_line_2": {
+              "type": "text",
+              "label": "Address Line 2",
+              "optional": true,
+              "placeholder": "Street, Area, Landmark"
+            },
+            "city": {
+              "type": "text",
+              "label": "City",
+              "required": true,
+              "auto_suggestions": true
+            },
+            "state": {
+              "type": "select",
+              "label": "State",
+              "required": true,
+              "options": "indian_states"
+            },
+            "pincode": {
+              "type": "text",
+              "label": "PIN Code",
+              "required": true,
+              "pattern": "^[0-9]{6}$",
+              "delivery_zone_mapping": true
+            },
+            "country": {
+              "type": "select",
+              "label": "Country",
+              "default": "india",
+              "readonly": true
+            },
+            "is_default": {
+              "type": "checkbox",
+              "label": "Set as default address",
+              "single_default": true
+            }
+          },
+          "address_validation": {
+            "google_maps_integration": true,
+            "delivery_area_check": true,
+            "address_standardization": true
+          }
+        },
+        "communication_preferences": {
+          "email_notifications": {
+            "order_updates": {"default": true, "user_changeable": true},
+            "promotional_emails": {"default": true, "user_changeable": true},
+            "newsletter": {"default": false, "user_changeable": true},
+            "product_recommendations": {"default": true, "user_changeable": true},
+            "price_alerts": {"default": false, "user_changeable": true}
+          },
+          "sms_notifications": {
+            "order_updates": {"default": true, "user_changeable": true},
+            "delivery_updates": {"default": true, "user_changeable": true},
+            "promotional_sms": {"default": false, "user_changeable": true},
+            "otp_verification": {"default": true, "user_changeable": false}
+          },
+          "whatsapp_notifications": {
+            "order_updates": {"default": false, "user_changeable": true},
+            "delivery_updates": {"default": false, "user_changeable": true},
+            "customer_support": {"default": false, "user_changeable": true}
+          },
+          "push_notifications": {
+            "app_notifications": {"default": true, "user_changeable": true},
+            "browser_notifications": {"default": false, "user_changeable": true}
+          }
+        }
+      },
+      "purchase_behavior": {
+        "order_history": {
+          "total_orders": {
+            "calculation": "count_of_all_orders",
+            "display": "prominent_metric"
+          },
+          "completed_orders": {
+            "calculation": "delivered_orders_count",
+            "success_rate": "completed/total*100"
+          },
+          "cancelled_orders": {
+            "calculation": "cancelled_orders_count",
+            "cancellation_rate": "cancelled/total*100",
+            "cancellation_reasons": "categorized_tracking"
+          },
+          "returned_orders": {
+            "calculation": "returned_orders_count",
+            "return_rate": "returned/completed*100",
+            "return_reasons": "quality_analysis"
+          },
+          "order_timeline": {
+            "chronological_view": true,
+            "order_details": true,
+            "status_tracking": true,
+            "reorder_options": true
+          }
+        },
+        "spending_analysis": {
+          "lifetime_value": {
+            "calculation": "sum_of_all_order_values",
+            "currency_format": true,
+            "trend_analysis": true,
+            "segment_classification": true
+          },
+          "average_order_value": {
+            "calculation": "total_spent/total_orders",
+            "comparison_to_platform_avg": true,
+            "trend_over_time": true
+          },
+          "monthly_spending": {
+            "spending_pattern": "monthly_breakdown",
+            "seasonal_trends": true,
+            "budget_tracking": true
+          },
+          "category_preferences": {
+            "spending_by_category": "percentage_breakdown",
+            "favorite_categories": "top_3_categories",
+            "category_loyalty": "repeat_purchase_rate",
+            "cross_category_purchases": true
+          }
+        },
+        "purchase_patterns": {
+          "frequency_analysis": {
+            "purchase_frequency": "orders_per_month",
+            "frequency_trend": "increasing_decreasing_stable",
+            "seasonal_patterns": "festival_season_impact",
+            "loyalty_indicators": "regular_irregular_buyer"
+          },
+          "timing_preferences": {
+            "preferred_shopping_days": "day_of_week_analysis",
+            "preferred_shopping_hours": "time_of_day_analysis",
+            "session_behavior": "browsing_to_purchase_time",
+            "decision_making_speed": "cart_to_checkout_time"
+          },
+          "product_preferences": {
+            "favorite_products": "most_purchased_items",
+            "favorite_brands": "brand_loyalty_analysis",
+            "price_sensitivity": "discount_response_behavior",
+            "quality_preference": "premium_vs_economy_choices"
+          }
+        }
+      },
+      "engagement_metrics": {
+        "interaction_history": {
+          "website_activity": {
+            "total_visits": "session_count",
+            "pages_viewed": "page_view_count",
+            "time_spent": "average_session_duration",
+            "bounce_rate": "single_page_sessions",
+            "conversion_rate": "visits_to_purchase_ratio"
+          },
+          "product_interactions": {
+            "products_viewed": "unique_product_views",
+            "products_wishlisted": "wishlist_additions",
+            "products_compared": "comparison_tool_usage",
+            "reviews_written": "review_contribution",
+            "questions_asked": "product_inquiry_count"
+          },
+          "support_interactions": {
+            "support_tickets": "help_request_count",
+            "chat_sessions": "live_chat_usage",
+            "phone_calls": "customer_service_calls",
+            "resolution_satisfaction": "support_rating_average"
+          }
+        },
+        "loyalty_metrics": {
+          "customer_loyalty_score": {
+            "calculation": "composite_score_algorithm",
+            "factors": [
+              "purchase_frequency",
+              "order_value_growth",
+              "review_participation",
+              "referral_activity",
+              "complaint_ratio"
+            ],
+            "score_range": "0_to_100",
+            "tier_classification": true
+          },
+          "referral_activity": {
+            "referrals_made": "customers_referred",
+            "successful_referrals": "referred_customers_who_purchased",
+            "referral_value": "revenue_from_referrals",
+            "referral_rewards_earned": "incentive_tracking"
+          },
+          "engagement_score": {
+            "social_sharing": "product_shares_count",
+            "review_helpfulness": "helpful_review_votes",
+            "community_participation": "forum_activity",
+            "brand_advocacy": "positive_mention_tracking"
+          }
+        }
+      }
+    },
+    "customerSegmentation": {
+      "value_based_segments": {
+        "vip_customers": {
+          "criteria": {
+            "lifetime_value": "top_5_percent",
+            "purchase_frequency": "minimum_monthly_purchase",
+            "order_value": "consistently_high_aov",
+            "loyalty_score": "above_80"
+          },
+          "benefits": {
+            "exclusive_discounts": "20_percent_higher_than_regular",
+            "early_access": "new_product_launches",
+            "dedicated_support": "priority_customer_service",
+            "free_shipping": "no_minimum_order_value",
+            "personalized_service": "dedicated_account_manager"
+          },
+          "communication_strategy": {
+            "personalized_emails": "monthly_newsletters",
+            "exclusive_offers": "vip_only_promotions",
+            "birthday_specials": "premium_gift_vouchers",
+            "feedback_requests": "product_development_input"
+          }
+        },
+        "loyal_customers": {
+          "criteria": {
+            "purchase_frequency": "minimum_quarterly_purchase",
+            "customer_tenure": "minimum_6_months",
+            "return_rate": "below_average",
+            "review_participation": "active_reviewer"
+          },
+          "benefits": {
+            "loyalty_points": "enhanced_earning_rate",
+            "member_discounts": "exclusive_member_pricing",
+            "early_bird_access": "sale_previews",
+            "birthday_rewards": "special_discount_codes"
+          },
+          "retention_strategies": {
+            "surprise_rewards": "unexpected_benefits",
+            "milestone_recognition": "loyalty_achievement_badges",
+            "exclusive_content": "behind_the_scenes_access",
+            "community_access": "loyal_customer_forum"
+          }
+        },
+        "new_customers": {
+          "criteria": {
+            "registration_date": "within_30_days",
+            "order_count": "1_to_3_orders",
+            "customer_journey_stage": "early_adopter"
+          },
+          "onboarding_program": {
+            "welcome_series": "3_email_onboarding_sequence",
+            "first_purchase_discount": "15_percent_off",
+            "tutorial_content": "how_to_shop_guide",
+            "customer_service_introduction": "proactive_support_outreach"
+          },
+          "conversion_strategy": {
+            "abandoned_cart_recovery": "gentle_reminder_sequence",
+            "product_recommendations": "based_on_browsing_history",
+            "social_proof": "customer_review_highlights",
+            "urgency_creation": "limited_time_offers"
+          }
+        },
+        "at_risk_customers": {
+          "criteria": {
+            "last_purchase": "more_than_3_months_ago",
+            "engagement_decline": "reduced_website_activity",
+            "support_issues": "recent_complaints",
+            "loyalty_score_drop": "declining_satisfaction"
+          },
+          "win_back_campaigns": {
+            "personalized_offers": "based_on_purchase_history",
+            "apology_campaigns": "if_service_issues_identified",
+            "product_updates": "improvements_since_last_purchase",
+            "feedback_surveys": "understand_dissatisfaction_reasons"
+          },
+          "re_engagement_tactics": {
+            "email_reactivation": "compelling_subject_lines",
+            "sms_campaigns": "urgent_limited_time_offers",
+            "retargeting_ads": "social_media_and_display",
+            "personal_outreach": "phone_calls_for_high_value_customers"
+          }
+        }
+      },
+      "behavioral_segments": {
+        "shopping_behavior": {
+          "bargain_hunters": {
+            "identification": "high_discount_sensitivity",
+            "characteristics": "wait_for_sales_compare_prices",
+            "marketing_approach": "discount_alerts_price_comparison",
+            "product_recommendations": "value_for_money_options"
+          },
+          "premium_shoppers": {
+            "identification": "consistently_choose_premium_products",
+            "characteristics": "quality_over_price_brand_conscious",
+            "marketing_approach": "quality_highlights_exclusivity",
+            "product_recommendations": "premium_and_luxury_items"
+          },
+          "impulse_buyers": {
+            "identification": "quick_purchase_decisions",
+            "characteristics": "minimal_comparison_shopping",
+            "marketing_approach": "urgency_limited_time_offers",
+            "product_recommendations": "trending_items_flash_sales"
+          },
+          "research_oriented": {
+            "identification": "extensive_product_research",
+            "characteristics": "read_reviews_compare_specifications",
+            "marketing_approach": "detailed_information_comparison_tools",
+            "product_recommendations": "educational_content_reviews"
+          }
+        },
+        "lifecycle_stage": {
+          "explorers": {
+            "stage": "discovering_brand_and_products",
+            "needs": "product_education_trust_building",
+            "content_strategy": "how_to_guides_benefits_explanation",
+            "conversion_tactics": "free_samples_trial_offers"
+          },
+          "committed_buyers": {
+            "stage": "regular_purchase_pattern_established",
+            "needs": "convenience_reliability_consistency",
+            "content_strategy": "product_updates_usage_tips",
+            "retention_tactics": "subscription_offers_bulk_discounts"
+          },
+          "advocates": {
+            "stage": "actively_recommend_to_others",
+            "needs": "recognition_exclusive_benefits",
+            "content_strategy": "behind_the_scenes_co_creation",
+            "engagement_tactics": "referral_programs_ambassador_roles"
+          }
+        }
+      },
+      "demographic_segments": {
+        "age_groups": {
+          "gen_z": {
+            "age_range": "18_to_25",
+            "characteristics": "digital_native_social_media_influenced",
+            "preferred_channels": "instagram_whatsapp_app_notifications",
+            "marketing_approach": "visual_content_influencer_partnerships",
+            "product_preferences": "trendy_affordable_sustainable"
+          },
+          "millennials": {
+            "age_range": "26_to_40",
+            "characteristics": "career_focused_family_oriented_convenience_seeking",
+            "preferred_channels": "email_facebook_website",
+            "marketing_approach": "value_proposition_time_saving_benefits",
+            "product_preferences": "quality_organic_family_sized"
+          },
+          "gen_x": {
+            "age_range": "41_to_55",
+            "characteristics": "established_careers_health_conscious_brand_loyal",
+            "preferred_channels": "email_phone_website",
+            "marketing_approach": "detailed_information_health_benefits",
+            "product_preferences": "premium_health_focused_traditional"
+          },
+          "baby_boomers": {
+            "age_range": "55_plus",
+            "characteristics": "quality_focused_relationship_oriented_traditional",
+            "preferred_channels": "phone_email_personal_interaction",
+            "marketing_approach": "personal_service_quality_assurance",
+            "product_preferences": "traditional_natural_artisanal"
+          }
+        },
+        "geographic_segments": {
+          "metro_cities": {
+            "cities": ["mumbai", "delhi", "bangalore", "hyderabad", "pune", "chennai"],
+            "characteristics": "convenience_focused_premium_willing_fast_paced",
+            "delivery_expectations": "same_day_next_day",
+            "product_preferences": "premium_organic_international_brands",
+            "marketing_channels": "digital_heavy_social_media"
+          },
+          "tier_2_cities": {
+            "characteristics": "value_conscious_quality_aware_growing_income",
+            "delivery_expectations": "2_to_3_days_acceptable",
+            "product_preferences": "value_for_money_trusted_brands",
+            "marketing_channels": "mixed_digital_traditional"
+          },
+          "rural_areas": {
+            "characteristics": "price_sensitive_traditional_community_influenced",
+            "delivery_expectations": "flexible_cost_effective",
+            "product_preferences": "basic_necessity_bulk_packaging",
+            "marketing_channels": "word_of_mouth_local_influencers"
+          }
+        }
+      }
+    },
+    "customerEngagement": {
+      "communication_tools": {
+        "messaging_system": {
+          "internal_messaging": {
+            "customer_to_vendor": {
+              "message_types": ["text", "image", "document"],
+              "real_time_chat": true,
+              "file_sharing": true,
+              "message_history": true,
+              "read_receipts": true,
+              "typing_indicators": true
+            },
+            "vendor_to_customer": {
+              "quick_replies": "template_based_responses",
+              "rich_media": "images_videos_documents",
+              "broadcast_messages": "bulk_announcements",
+              "personalized_messages": "individual_customer_targeting"
+            },
+            "automated_messaging": {
+              "welcome_messages": "new_customer_onboarding",
+              "order_updates": "status_change_notifications",
+              "abandoned_cart": "recovery_message_sequence",
+              "post_purchase": "follow_up_and_feedback_requests"
+            }
+          },
+          "external_integrations": {
+            "whatsapp_business": {
+              "order_notifications": true,
+              "customer_support": true,
+              "marketing_messages": true,
+              "catalog_sharing": true
+            },
+            "email_campaigns": {
+              "transactional_emails": "order_confirmations_receipts",
+              "promotional_emails": "offers_and_discounts",
+              "newsletters": "product_updates_company_news",
+              "triggered_emails": "behavior_based_automation"
+            },
+            "sms_gateway": {
+              "otp_verification": true,
+              "order_updates": true,
+              "promotional_sms": true,
+              "delivery_notifications": true
+            }
+          }
+        },
+        "feedback_collection": {
+          "rating_system": {
+            "product_ratings": {
+              "scale": "1_to_5_stars",
+              "categories": ["quality", "value_for_money", "packaging", "freshness"],
+              "mandatory_rating": false,
+              "incentive_for_rating": "loyalty_points"
+            },
+            "service_ratings": {
+              "delivery_experience": "speed_packaging_delivery_person",
+              "customer_support": "responsiveness_helpfulness_resolution",
+              "overall_experience": "complete_purchase_journey",
+              "vendor_performance": "product_quality_service_communication"
+            }
+          },
+          "review_system": {
+            "written_reviews": {
+              "character_limits": "minimum_50_maximum_1000",
+              "review_categories": "pros_cons_usage_tips",
+              "photo_reviews": "customer_uploaded_images",
+              "video_reviews": "customer_testimonials"
+            },
+            "review_moderation": {
+              "automated_screening": "spam_inappropriate_content",
+              "manual_review": "flagged_content_verification",
+              "response_mechanism": "vendor_replies_to_reviews",
+              "helpful_voting": "community_validation"
+            },
+            "review_incentives": {
+              "loyalty_points": "points_for_verified_reviews",
+              "discount_coupons": "future_purchase_incentives",
+              "featured_reviews": "showcase_quality_reviews",
+              "reviewer_badges": "recognition_system"
+            }
+          },
+          "survey_system": {
+            "post_purchase_surveys": {
+              "timing": "7_days_after_delivery",
+              "questions": "satisfaction_improvement_suggestions",
+              "format": "multiple_choice_and_open_ended",
+              "incentives": "small_discount_for_completion"
+            },
+            "periodic_satisfaction_surveys": {
+              "frequency": "quarterly",
+              "scope": "overall_platform_experience",
+              "nps_measurement": "net_promoter_score",
+              "improvement_tracking": "satisfaction_trends"
+            },
+            "exit_surveys": {
+              "trigger": "account_deactivation_unsubscribe",
+              "purpose": "understand_churn_reasons",
+              "win_back_attempts": "final_retention_offers",
+              "feedback_analysis": "improve_service_quality"
+            }
+          }
+        },
+        "loyalty_programs": {
+          "points_system": {
+            "earning_structure": {
+              "purchase_points": "1_point_per_rupee_spent",
+              "bonus_activities": {
+                "account_creation": 100,
+                "email_verification": 50,
+                "first_purchase": 200,
+                "review_writing": 25,
+                "referral_success": 500,
+                "birthday_bonus": 100,
+                "social_sharing": 10
+              },
+              "tier_multipliers": {
+                "bronze": "1x_points",
+                "silver": "1.25x_points",
+                "gold": "1.5x_points",
+                "platinum": "2x_points"
+              }
+            },
+            "redemption_options": {
+              "discount_vouchers": {
+                "100_points": "₹10_discount",
+                "500_points": "₹60_discount",
+                "1000_points": "₹150_discount",
+                "2500_points": "₹400_discount"
+              },
+              "free_products": "points_based_product_catalog",
+              "exclusive_access": "premium_products_early_releases",
+              "shipping_benefits": "free_express_delivery"
+            },
+            "point_management": {
+              "expiry_policy": "points_expire_in_12_months",
+              "point_transfer": "gift_points_to_family",
+              "point_history": "detailed_earning_spending_log",
+              "point_alerts": "expiry_warnings_earning_opportunities"
+            }
+          },
+          "tier_system": {
+            "tier_structure": {
+              "bronze": {
+                "requirements": "0_to_5000_annual_spend",
+                "benefits": "basic_loyalty_points_free_shipping_over_500"
+              },
+              "silver": {
+                "requirements": "5001_to_15000_annual_spend",
+                "benefits": "1.25x_points_priority_support_member_discounts"
+              },
+              "gold": {
+                "requirements": "15001_to_35000_annual_spend",
+                "benefits": "1.5x_points_free_shipping_early_access_birthday_gifts"
+              },
+              "platinum": {
+                "requirements": "35000_plus_annual_spend",
+                "benefits": "2x_points_dedicated_manager_exclusive_products_vip_events"
+              }
+            },
+            "tier_progression": {
+              "automatic_upgrades": "based_on_annual_spending",
+              "tier_maintenance": "spending_threshold_each_year",
+              "downgrade_protection": "3_month_grace_period",
+              "tier_benefits_communication": "email_dashboard_notifications"
+            }
+          },
+          "special_programs": {
+            "referral_program": {
+              "referrer_benefits": "500_points_plus_10_percent_discount",
+              "referee_benefits": "200_points_plus_first_order_discount",
+              "referral_tracking": "unique_codes_link_sharing",
+              "multi_level_referrals": "rewards_for_indirect_referrals"
+            },
+            "birthday_program": {
+              "birthday_rewards": "special_discount_loyalty_points_surprise_gifts",
+              "birthday_month_benefits": "extended_celebration_period",
+              "birthday_product_suggestions": "personalized_gift_recommendations",
+              "family_birthday_tracking": "rewards_for_family_members"
+            },
+            "anniversary_program": {
+              "account_anniversary": "customer_since_celebration",
+              "purchase_anniversary": "first_order_commemoration",
+              "milestone_rewards": "achievement_based_benefits",
+              "personalized_offers": "based_on_journey_history"
+            }
+          }
+        }
+      },
+      "personalization_engine": {
+        "product_recommendations": {
+          "collaborative_filtering": {
+            "customers_like_you": "similar_customer_purchase_patterns",
+            "frequently_bought_together": "product_association_rules",
+            "trending_in_your_area": "geographic_preference_analysis",
+            "seasonal_recommendations": "time_based_product_suggestions"
+          },
+          "content_based_filtering": {
+            "similar_products": "product_attribute_matching",
+            "brand_preferences": "preferred_brand_suggestions",
+            "category_expansion": "cross_category_recommendations",
+            "price_range_matching": "budget_appropriate_suggestions"
+          },
+          "hybrid_recommendations": {
+            "personalized_homepage": "customized_product_display",
+            "dynamic_search_results": "personalized_search_ranking",
+            "email_product_suggestions": "targeted_email_campaigns",
+            "push_notification_products": "relevant_product_alerts"
+          }
+        },
+        "content_personalization": {
+          "dynamic_content": {
+            "personalized_banners": "customer_interest_based_promotions",
+            "customized_categories": "preferred_category_highlighting",
+            "seasonal_content": "weather_and_festival_based_content",
+            "lifestyle_content": "health_cooking_lifestyle_tips"
+          },
+          "communication_personalization": {
+            "email_customization": "name_preference_based_content",
+            "notification_timing": "optimal_send_time_analysis",
+            "language_preferences": "multi_language_support",
+            "channel_optimization": "preferred_communication_channel"
+          }
+        },
+        "behavioral_tracking": {
+          "website_behavior": {
+            "page_visit_tracking": "product_category_interest_mapping",
+            "search_behavior": "query_analysis_intent_understanding",
+            "cart_behavior": "abandonment_pattern_analysis",
+            "session_analysis": "engagement_depth_measurement"
+          },
+          "purchase_behavior": {
+            "buying_patterns": "frequency_seasonality_preferences",
+            "price_sensitivity": "discount_response_analysis",
+            "brand_loyalty": "brand_switching_behavior",
+            "category_affinity": "product_category_preferences"
+          },
+          "engagement_behavior": {
+            "content_interaction": "blog_reading_video_watching",
+            "social_sharing": "product_content_sharing_patterns",
+            "review_participation": "review_writing_helpfulness",
+            "support_interaction": "help_seeking_behavior"
+          }
+        }
+      }
+    },
+    "customerSupport": {
+      "support_channels": {
+        "live_chat": {
+          "availability": "business_hours_with_bot_after_hours",
+          "response_time": "within_2_minutes",
+          "escalation_process": "bot_to_human_handoff",
+          "chat_features": {
+            "file_sharing": true,
+            "screen_sharing": true,
+            "voice_notes": true,
+            "chat_history": true,
+            "satisfaction_rating": true
+          },
+          "multilingual_support": ["hindi", "english", "regional_languages"],
+          "integration": "order_history_product_catalog_access"
+        },
+        "phone_support": {
+          "toll_free_number": "dedicated_customer_service_line",
+          "availability": "10am_to_8pm_monday_to_saturday",
+          "call_routing": "issue_type_based_routing",
+          "call_features": {
+            "call_recording": "quality_and_training",
+            "callback_option": "avoid_long_wait_times",
+            "ivr_system": "intelligent_call_routing",
+            "call_analytics": "performance_monitoring"
+          },
+          "priority_support": "vip_customers_dedicated_line"
+        },
+        "email_support": {
+          "response_time": "within_4_hours_business_days",
+          "ticket_system": "automated_ticket_generation",
+          "email_features": {
+            "auto_acknowledgment": "immediate_response_confirmation",
+            "ticket_tracking": "customer_portal_access",
+            "attachment_support": "images_documents_videos",
+            "follow_up_automation": "resolution_satisfaction_check"
+          },
+          "escalation_matrix": "severity_based_escalation"
+        },
+        "social_media_support": {
+          "platforms": ["facebook", "twitter", "instagram"],
+          "response_time": "within_1_hour",
+          "public_response_protocol": "professional_helpful_responses",
+          "private_message_handling": "detailed_issue_resolution",
+          "social_listening": "proactive_issue_identification"
+        }
+      },
+      "issue_management": {
+        "ticket_system": {
+          "ticket_categories": {
+            "order_issues": {
+              "subcategories": ["order_status", "delivery_delay", "wrong_item", "damaged_item"],
+              "priority": "high",
+              "sla": "4_hours_response_24_hours_resolution"
+            },
+            "payment_issues": {
+              "subcategories": ["payment_failure", "refund_delay", "double_charge", "payment_method"],
+              "priority": "critical",
+              "sla": "1_hour_response_4_hours_resolution"
+            },
+            "product_issues": {
+              "subcategories": ["quality_concern", "missing_parts", "wrong_specifications", "expired_product"],
+              "priority": "high",
+              "sla": "2_hours_response_8_hours_resolution"
+            },
+            "account_issues": {
+              "subcategories": ["login_problems", "password_reset", "profile_update", "verification_issues"],
+              "priority": "medium",
+              "sla": "4_hours_response_24_hours_resolution"
+            },
+            "general_inquiries": {
+              "subcategories": ["product_information", "delivery_areas", "bulk_orders", "partnership"],
+              "priority": "low",
+              "sla": "8_hours_response_48_hours_resolution"
+            }
+          },
+          "workflow_automation": {
+            "auto_routing": "category_based_agent_assignment",
+            "priority_scoring": "customer_tier_issue_severity",
+            "escalation_rules": "time_based_automatic_escalation",
+            "resolution_templates": "common_issue_quick_responses"
+          }
+        },
+        "resolution_process": {
+          "issue_diagnosis": {
+            "automated_checks": "order_status_payment_status_delivery_tracking",
+            "knowledge_base_search": "similar_issue_resolution_history",
+            "customer_context": "order_history_previous_issues_preferences",
+            "severity_assessment": "business_impact_customer_satisfaction_risk"
+          },
+          "resolution_actions": {
+            "immediate_actions": "refund_replacement_compensation",
+            "follow_up_actions": "process_improvement_prevention_measures",
+            "customer_communication": "proactive_updates_resolution_confirmation",
+            "documentation": "issue_resolution_knowledge_base_update"
+          },
+          "quality_assurance": {
+            "resolution_verification": "customer_satisfaction_confirmation",
+            "follow_up_surveys": "resolution_effectiveness_measurement",
+            "case_review": "complex_case_analysis",
+            "process_improvement": "recurring_issue_pattern_analysis"
+          }
+        }
+      },
+      "knowledge_management": {
+        "customer_facing_kb": {
+          "faq_section": {
+            "categories": "organized_by_topic",
+            "search_functionality": "intelligent_search",
+            "popular_questions": "frequently_accessed_content",
+            "video_tutorials": "visual_explanations"
+          },
+          "self_service_portal": {
+            "order_tracking": "real_time_status_updates",
+            "return_initiation": "self_service_return_process",
+            "account_management": "profile_address_preference_updates",
+            "download_center": "invoices_receipts_certificates"
+          }
+        },
+        "agent_knowledge_base": {
+          "resolution_guides": "step_by_step_issue_resolution",
+          "product_information": "detailed_product_specifications",
+          "policy_documentation": "return_refund_delivery_policies",
+          "escalation_procedures": "when_and_how_to_escalate"
+        }
+      }
+    }
+  }
+} 

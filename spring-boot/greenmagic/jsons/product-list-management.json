@@ -1,0 +1,554 @@
+{
+  "productListManagement": {
+    "dataTable": {
+      "columns": {
+        "selection": {
+          "type": "checkbox",
+          "label": "Select",
+          "width": "50px",
+          "sortable": false,
+          "bulk_select": true,
+          "sticky": true
+        },
+        "image": {
+          "type": "image",
+          "label": "Image",
+          "width": "80px",
+          "sortable": false,
+          "thumbnail_size": "60x60",
+          "fallback_image": "/images/placeholder.png",
+          "hover_preview": true
+        },
+        "title": {
+          "type": "text_with_link",
+          "label": "Product Title",
+          "width": "30%",
+          "sortable": true,
+          "searchable": true,
+          "inline_edit": false,
+          "link_to": "product_edit_page",
+          "highlight_search": true
+        },
+        "sku": {
+          "type": "text",
+          "label": "SKU",
+          "width": "120px",
+          "sortable": true,
+          "searchable": true,
+          "copy_to_clipboard": true,
+          "monospace_font": true
+        },
+        "category": {
+          "type": "badge",
+          "label": "Category",
+          "width": "150px",
+          "sortable": true,
+          "filterable": true,
+          "color_coded": true,
+          "hierarchical_display": true
+        },
+        "price": {
+          "type": "currency",
+          "label": "Price",
+          "width": "100px",
+          "sortable": true,
+          "inline_edit": true,
+          "currency": "INR",
+          "highlight_discounts": true,
+          "show_mrp_comparison": true
+        },
+        "stock": {
+          "type": "stock_indicator",
+          "label": "Stock",
+          "width": "100px",
+          "sortable": true,
+          "inline_edit": true,
+          "color_coded": true,
+          "stock_levels": {
+            "in_stock": {"color": "green", "threshold": "above_low_stock"},
+            "low_stock": {"color": "yellow", "threshold": "1_to_low_stock"},
+            "out_of_stock": {"color": "red", "threshold": "0"}
+          },
+          "quick_restock": true
+        },
+        "status": {
+          "type": "status_toggle",
+          "label": "Status",
+          "width": "100px",
+          "sortable": true,
+          "inline_edit": true,
+          "options": {
+            "active": {"label": "Active", "color": "green", "icon": "check_circle"},
+            "inactive": {"label": "Inactive", "color": "gray", "icon": "pause_circle"},
+            "draft": {"label": "Draft", "color": "yellow", "icon": "edit"}
+          }
+        },
+        "performance": {
+          "type": "performance_indicator",
+          "label": "Performance",
+          "width": "120px",
+          "sortable": true,
+          "metrics": ["views", "orders", "revenue"],
+          "time_period": "last_30_days",
+          "visual_indicator": "progress_bar"
+        },
+        "created_date": {
+          "type": "date",
+          "label": "Created",
+          "width": "100px",
+          "sortable": true,
+          "format": "DD/MM/YYYY",
+          "relative_time": true
+        },
+        "actions": {
+          "type": "action_buttons",
+          "label": "Actions",
+          "width": "150px",
+          "sortable": false,
+          "sticky_right": true,
+          "actions": [
+            {
+              "type": "view",
+              "label": "View",
+              "icon": "eye",
+              "action": "open_product_preview",
+              "tooltip": "Quick preview"
+            },
+            {
+              "type": "edit",
+              "label": "Edit",
+              "icon": "edit",
+              "action": "navigate_to_edit",
+              "tooltip": "Edit product"
+            },
+            {
+              "type": "duplicate",
+              "label": "Duplicate",
+              "icon": "copy",
+              "action": "duplicate_product",
+              "tooltip": "Create copy",
+              "confirmation": false
+            },
+            {
+              "type": "delete",
+              "label": "Delete",
+              "icon": "trash",
+              "action": "delete_product",
+              "tooltip": "Delete product",
+              "confirmation": true,
+              "dangerous": true
+            }
+          ]
+        }
+      },
+      "display_options": {
+        "pagination": {
+          "per_page_options": [10, 25, 50, 100],
+          "default_per_page": 25,
+          "show_total_count": true,
+          "infinite_scroll": false,
+          "server_side": true
+        },
+        "sorting": {
+          "default_sort": "created_date",
+          "default_order": "desc",
+          "multi_column_sort": true,
+          "sort_indicators": true
+        },
+        "layout_options": {
+          "view_modes": ["table", "grid", "list"],
+          "default_view": "table",
+          "responsive_breakpoints": true,
+          "column_visibility_toggle": true,
+          "column_width_adjustment": true
+        }
+      }
+    },
+    "filteringSystem": {
+      "quick_filters": {
+        "all_products": {
+          "label": "All Products",
+          "query": {},
+          "default": true
+        },
+        "active_products": {
+          "label": "Active",
+          "query": {"status": "active"},
+          "badge_count": true
+        },
+        "low_stock": {
+          "label": "Low Stock",
+          "query": {"stock_level": "low"},
+          "urgent": true,
+          "badge_count": true
+        },
+        "out_of_stock": {
+          "label": "Out of Stock",
+          "query": {"stock_level": "out"},
+          "urgent": true,
+          "badge_count": true
+        },
+        "draft_products": {
+          "label": "Drafts",
+          "query": {"status": "draft"},
+          "badge_count": true
+        },
+        "recently_added": {
+          "label": "Recently Added",
+          "query": {"created_date": "last_7_days"},
+          "badge_count": true
+        },
+        "top_performing": {
+          "label": "Top Sellers",
+          "query": {"performance": "top_10_percent"},
+          "badge_count": true
+        }
+      },
+      "advanced_filters": {
+        "category_filter": {
+          "type": "hierarchical_multiselect",
+          "label": "Categories",
+          "source": "product_categories",
+          "search_within": true,
+          "select_parent_children": true,
+          "collapse_expand": true
+        },
+        "price_range": {
+          "type": "dual_range_slider",
+          "label": "Price Range",
+          "min": 0,
+          "max": "auto_detect",
+          "currency": "INR",
+          "step": 10,
+          "display_histogram": true
+        },
+        "stock_filter": {
+          "type": "multiselect",
+          "label": "Stock Status",
+          "options": [
+            {"value": "in_stock", "label": "In Stock", "color": "green"},
+            {"value": "low_stock", "label": "Low Stock", "color": "yellow"},
+            {"value": "out_of_stock", "label": "Out of Stock", "color": "red"}
+          ]
+        },
+        "date_filters": {
+          "type": "date_range_group",
+          "label": "Date Filters",
+          "ranges": {
+            "created_date": {
+              "label": "Created Date",
+              "type": "date_range_picker",
+              "presets": ["today", "yesterday", "last_7_days", "last_30_days", "last_3_months"]
+            },
+            "updated_date": {
+              "label": "Last Updated",
+              "type": "date_range_picker",
+              "presets": ["today", "yesterday", "last_7_days", "last_30_days"]
+            }
+          }
+        },
+        "performance_filters": {
+          "type": "performance_metrics",
+          "label": "Performance",
+          "metrics": {
+            "view_count": {
+              "label": "Product Views",
+              "type": "range_slider",
+              "time_period": "last_30_days"
+            },
+            "order_count": {
+              "label": "Orders",
+              "type": "range_slider",
+              "time_period": "last_30_days"
+            },
+            "revenue": {
+              "label": "Revenue Generated",
+              "type": "currency_range",
+              "time_period": "last_30_days"
+            },
+            "rating": {
+              "label": "Customer Rating",
+              "type": "star_rating_filter",
+              "min_rating": 1,
+              "max_rating": 5
+            }
+          }
+        },
+        "attribute_filters": {
+          "type": "dynamic_attribute_filters",
+          "label": "Product Attributes",
+          "source": "product_attributes",
+          "render_based_on_category": true,
+          "multi_value_support": true
+        }
+      },
+      "saved_filters": {
+        "enabled": true,
+        "max_saved_filters": 10,
+        "default_filters": [
+          {
+            "name": "Urgent Attention Needed",
+            "filters": {"stock_level": ["low", "out"], "status": "active"},
+            "shared": false
+          },
+          {
+            "name": "Ready to Promote",
+            "filters": {"status": "active", "stock_level": "in_stock", "rating": "4_and_above"},
+            "shared": false
+          }
+        ]
+      }
+    },
+    "searchFunctionality": {
+      "global_search": {
+        "placeholder": "Search products by title, SKU, or description...",
+        "search_fields": ["title", "sku", "description", "tags", "category"],
+        "real_time_search": true,
+        "minimum_characters": 2,
+        "debounce_delay": 300,
+        "highlight_matches": true
+      },
+      "advanced_search": {
+        "enabled": true,
+        "modal_interface": true,
+        "fields": {
+          "title": {"type": "text", "operators": ["contains", "starts_with", "exact"]},
+          "sku": {"type": "text", "operators": ["contains", "exact"]},
+          "description": {"type": "text", "operators": ["contains"]},
+          "tags": {"type": "tag_search", "operators": ["any", "all", "none"]},
+          "created_by": {"type": "user_search", "operators": ["is", "is_not"]}
+        }
+      },
+      "search_suggestions": {
+        "enabled": true,
+        "max_suggestions": 8,
+        "suggestion_types": ["recent_searches", "popular_searches", "product_matches"],
+        "keyboard_navigation": true
+      },
+      "search_history": {
+        "enabled": true,
+        "max_history_items": 20,
+        "persist_across_sessions": true,
+        "clear_history_option": true
+      }
+    },
+    "bulkOperations": {
+      "selection": {
+        "select_all_visible": true,
+        "select_all_filtered": true,
+        "select_by_criteria": true,
+        "selection_persistence": "across_pages",
+        "max_selection_limit": 1000
+      },
+      "available_operations": {
+        "status_change": {
+          "label": "Change Status",
+          "icon": "toggle",
+          "options": ["active", "inactive", "draft"],
+          "confirmation_required": true,
+          "batch_size": 100
+        },
+        "category_change": {
+          "label": "Change Category",
+          "icon": "folder",
+          "category_selector": "hierarchical",
+          "confirmation_required": true,
+          "batch_size": 50
+        },
+        "price_adjustment": {
+          "label": "Adjust Prices",
+          "icon": "dollar_sign",
+          "adjustment_types": [
+            {"type": "percentage_increase", "label": "Increase by %"},
+            {"type": "percentage_decrease", "label": "Decrease by %"},
+            {"type": "fixed_increase", "label": "Increase by Amount"},
+            {"type": "fixed_decrease", "label": "Decrease by Amount"},
+            {"type": "set_price", "label": "Set Fixed Price"}
+          ],
+          "preview_changes": true,
+          "confirmation_required": true
+        },
+        "stock_update": {
+          "label": "Update Stock",
+          "icon": "package",
+          "update_types": [
+            {"type": "set_quantity", "label": "Set Stock Quantity"},
+            {"type": "add_quantity", "label": "Add to Stock"},
+            {"type": "subtract_quantity", "label": "Reduce Stock"}
+          ],
+          "csv_upload": true,
+          "confirmation_required": true
+        },
+        "tag_management": {
+          "label": "Manage Tags",
+          "icon": "tag",
+          "operations": ["add_tags", "remove_tags", "replace_tags"],
+          "tag_suggestions": true,
+          "batch_size": 200
+        },
+        "export_data": {
+          "label": "Export Selected",
+          "icon": "download",
+          "formats": ["csv", "excel", "pdf"],
+          "include_images": true,
+          "custom_fields": true,
+          "no_confirmation": true
+        },
+        "duplicate_products": {
+          "label": "Duplicate Products",
+          "icon": "copy",
+          "naming_pattern": "{original_title} - Copy",
+          "modify_sku": true,
+          "confirmation_required": true,
+          "batch_size": 20
+        },
+        "delete_products": {
+          "label": "Delete Products",
+          "icon": "trash",
+          "soft_delete": true,
+          "confirmation_required": true,
+          "additional_confirmation_for_active": true,
+          "batch_size": 50
+        }
+      },
+      "bulk_edit_modal": {
+        "enabled": true,
+        "editable_fields": [
+          "status", "category", "tags", "delivery_time", 
+          "returnable", "cod_available", "free_shipping"
+        ],
+        "field_modification_types": {
+          "replace": "Replace current value",
+          "append": "Add to existing value",
+          "remove": "Remove from existing value"
+        },
+        "preview_changes": true,
+        "undo_capability": true
+      }
+    },
+    "importExportSystem": {
+      "csv_import": {
+        "enabled": true,
+        "template_download": true,
+        "supported_operations": ["create", "update", "create_or_update"],
+        "file_size_limit": "10MB",
+        "max_rows": 1000,
+        "validation": {
+          "real_time": true,
+          "error_reporting": "detailed",
+          "skip_invalid_rows": true
+        },
+        "field_mapping": {
+          "auto_detect": true,
+          "manual_mapping": true,
+          "save_mapping_templates": true
+        },
+        "image_handling": {
+          "url_import": true,
+          "zip_upload": true,
+          "image_validation": true
+        }
+      },
+      "excel_export": {
+        "enabled": true,
+        "custom_field_selection": true,
+        "include_images": true,
+        "multiple_sheets": true,
+        "formatting": {
+          "headers": true,
+          "filters": true,
+          "conditional_formatting": true
+        },
+        "scheduled_exports": true
+      },
+      "pdf_export": {
+        "enabled": true,
+        "templates": ["product_catalog", "inventory_report", "price_list"],
+        "custom_branding": true,
+        "include_images": true
+      }
+    },
+    "quickActions": {
+      "inline_editing": {
+        "enabled_fields": ["price", "stock", "status"],
+        "auto_save": true,
+        "validation": "real_time",
+        "undo_capability": true,
+        "keyboard_shortcuts": true
+      },
+      "product_preview": {
+        "modal_preview": true,
+        "customer_view": true,
+        "edit_from_preview": true,
+        "share_preview_link": true
+      },
+      "duplicate_product": {
+        "one_click_duplicate": true,
+        "duplicate_options": {
+          "include_images": true,
+          "include_variants": true,
+          "modify_title": true,
+          "new_sku_generation": true
+        }
+      },
+      "product_sharing": {
+        "internal_sharing": true,
+        "customer_preview_link": true,
+        "social_media_sharing": true,
+        "qr_code_generation": true
+      }
+    },
+    "performanceOptimization": {
+      "virtual_scrolling": {
+        "enabled": true,
+        "threshold": 100,
+        "buffer_size": 20
+      },
+      "lazy_loading": {
+        "images": true,
+        "data": true,
+        "progressive_loading": true
+      },
+      "caching": {
+        "client_side_caching": true,
+        "cache_duration": 300000,
+        "cache_invalidation": "smart"
+      },
+      "data_optimization": {
+        "field_selection": true,
+        "compression": true,
+        "minimal_initial_load": true
+      }
+    },
+    "userExperience": {
+      "responsive_design": {
+        "mobile_optimized": true,
+        "tablet_optimized": true,
+        "touch_gestures": true
+      },
+      "keyboard_shortcuts": {
+        "enabled": true,
+        "shortcuts": {
+          "ctrl+a": "select_all",
+          "ctrl+d": "duplicate_selected",
+          "delete": "delete_selected",
+          "ctrl+f": "focus_search",
+          "escape": "clear_selection"
+        },
+        "help_modal": true
+      },
+      "contextual_help": {
+        "tooltips": true,
+        "guided_tour": true,
+        "help_articles": true,
+        "video_tutorials": true
+      },
+      "customization": {
+        "column_preferences": true,
+        "filter_preferences": true,
+        "layout_preferences": true,
+        "theme_selection": true
+      }
+    }
+  }
+} 

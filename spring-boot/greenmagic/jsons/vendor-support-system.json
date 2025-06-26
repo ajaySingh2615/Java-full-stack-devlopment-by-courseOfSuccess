@@ -1,0 +1,59 @@
+{
+  "vendorSupportSystem": {
+    "helpDesk": {
+      "ticket_system": {
+        "categories": [
+          {"id": "technical", "label": "Technical Issues", "priority": "high"},
+          {"id": "account", "label": "Account Management", "priority": "medium"},
+          {"id": "payments", "label": "Payment Issues", "priority": "critical"},
+          {"id": "products", "label": "Product Management", "priority": "medium"},
+          {"id": "orders", "label": "Order Management", "priority": "high"},
+          {"id": "general", "label": "General Inquiry", "priority": "low"}
+        ],
+        "sla": {
+          "critical": "1_hour_response",
+          "high": "4_hours_response",
+          "medium": "24_hours_response",
+          "low": "48_hours_response"
+        }
+      },
+      "contact_methods": {
+        "live_chat": {"availability": "9am_to_9pm", "language": "english_hindi"},
+        "phone": {"toll_free": "1800-xxx-xxxx", "hours": "9am_to_6pm"},
+        "email": {"address": "vendor-support@greenmagic.com", "response_time": "4_hours"},
+        "whatsapp": {"number": "+91-xxxxx-xxxxx", "automated_responses": true}
+      }
+    },
+    "knowledge_base": {
+      "getting_started": {
+        "vendor_onboarding": {"type": "step_by_step_guide", "video": true},
+        "product_listing": {"type": "tutorial", "interactive": true},
+        "order_management": {"type": "video_tutorial"},
+        "payment_setup": {"type": "documentation"}
+      },
+      "advanced_features": {
+        "analytics_dashboard": {"type": "video_guide"},
+        "bulk_operations": {"type": "tutorial"},
+        "promotional_tools": {"type": "documentation"},
+        "api_integration": {"type": "developer_docs"}
+      },
+      "faq": {
+        "common_questions": "searchable_faq_database",
+        "video_answers": "visual_explanations",
+        "community_qa": "vendor_peer_support"
+      }
+    },
+    "training_resources": {
+      "webinars": {
+        "live_sessions": {"frequency": "weekly", "topics": "business_growth"},
+        "recorded_sessions": {"library": "on_demand_access"},
+        "certification": {"completion_certificates": true}
+      },
+      "documentation": {
+        "user_manuals": {"format": "pdf_interactive"},
+        "best_practices": {"industry_guides": true},
+        "case_studies": {"success_stories": true}
+      }
+    }
+  }
+} 

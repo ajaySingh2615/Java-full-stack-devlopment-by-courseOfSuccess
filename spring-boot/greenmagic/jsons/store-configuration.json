@@ -1,0 +1,63 @@
+{
+  "storeConfiguration": {
+    "storeProfile": {
+      "basic_info": {
+        "store_name": {"type": "text", "required": true, "max_length": 100},
+        "store_tagline": {"type": "text", "max_length": 200},
+        "store_description": {"type": "rich_text", "max_length": 2000},
+        "store_logo": {"type": "image_upload", "max_size": "2MB"},
+        "store_banner": {"type": "image_upload", "max_size": "5MB"},
+        "contact_info": {
+          "phone": {"type": "phone", "required": true},
+          "email": {"type": "email", "required": true},
+          "whatsapp": {"type": "phone", "optional": true}
+        }
+      },
+      "business_details": {
+        "business_type": {"type": "select", "options": ["individual", "partnership", "pvt_ltd", "llp"]},
+        "gstin": {"type": "text", "pattern": "^[0-9]{15}$"},
+        "pan": {"type": "text", "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]{1}$"},
+        "fssai": {"type": "text", "pattern": "^[0-9]{14}$"},
+        "trade_license": {"type": "file_upload"}
+      },
+      "address": {
+        "warehouse_address": {"type": "address_form", "required": true},
+        "registered_address": {"type": "address_form", "required": true},
+        "pickup_address": {"type": "address_form", "required": true}
+      }
+    },
+    "store_settings": {
+      "operational_hours": {
+        "working_days": {"type": "multi_checkbox", "options": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]},
+        "opening_time": {"type": "time_picker"},
+        "closing_time": {"type": "time_picker"},
+        "break_time": {"type": "time_range", "optional": true}
+      },
+      "shipping_settings": {
+        "delivery_zones": {"type": "pincode_manager", "max_pincodes": 500},
+        "delivery_charges": {"type": "rate_matrix"},
+        "free_shipping_threshold": {"type": "currency"},
+        "cod_availability": {"type": "checkbox"},
+        "express_delivery": {"type": "checkbox"}
+      },
+      "return_policy": {
+        "returnable": {"type": "checkbox"},
+        "return_window": {"type": "select", "options": ["7", "15", "30"]},
+        "return_conditions": {"type": "multiselect"},
+        "return_address": {"type": "address_form"}
+      }
+    },
+    "branding": {
+      "theme_colors": {
+        "primary_color": {"type": "color_picker"},
+        "secondary_color": {"type": "color_picker"},
+        "accent_color": {"type": "color_picker"}
+      },
+      "store_images": {
+        "about_images": {"type": "multiple_image_upload", "max_files": 5},
+        "team_images": {"type": "multiple_image_upload", "max_files": 10},
+        "facility_images": {"type": "multiple_image_upload", "max_files": 8}
+      }
+    }
+  }
+} 

@@ -1,0 +1,105 @@
+{
+  "uiComponents": {
+    "form_components": {
+      "input_field": {
+        "variants": ["text", "email", "phone", "number", "password"],
+        "states": ["default", "focus", "error", "disabled", "loading"],
+        "features": ["validation", "masking", "auto_complete", "character_counter"]
+      },
+      "select_dropdown": {
+        "variants": ["single_select", "multi_select", "searchable", "hierarchical"],
+        "features": ["async_loading", "infinite_scroll", "custom_options", "tags"]
+      },
+      "file_upload": {
+        "types": ["single_file", "multiple_files", "drag_drop", "image_upload"],
+        "features": ["preview", "progress", "validation", "crop_resize"]
+      },
+      "date_picker": {
+        "variants": ["single_date", "date_range", "time_picker", "datetime"],
+        "features": ["locale_support", "custom_formats", "restrictions"]
+      }
+    },
+    "data_display": {
+      "data_table": {
+        "features": ["sorting", "filtering", "pagination", "row_selection", "inline_editing"],
+        "responsive": "mobile_card_view",
+        "export": ["csv", "excel", "pdf"]
+      },
+      "charts": {
+        "types": ["line", "bar", "pie", "area", "scatter", "heatmap"],
+        "interactivity": ["zoom", "pan", "tooltip", "drill_down"],
+        "responsive": true
+      },
+      "cards": {
+        "variants": ["info_card", "metric_card", "product_card", "profile_card"],
+        "states": ["loading", "error", "empty", "interactive"]
+      }
+    },
+    "navigation": {
+      "sidebar": {
+        "variants": ["collapsible", "fixed", "responsive"],
+        "features": ["search", "favorites", "breadcrumbs"]
+      },
+      "tabs": {
+        "variants": ["horizontal", "vertical", "scrollable"],
+        "features": ["lazy_loading", "dynamic_tabs", "closeable"]
+      },
+      "breadcrumbs": {
+        "features": ["clickable", "dropdown_overflow", "custom_separators"]
+      }
+    },
+    "feedback": {
+      "notifications": {
+        "types": ["success", "error", "warning", "info"],
+        "positions": ["top_right", "top_center", "bottom_right"],
+        "features": ["auto_dismiss", "action_buttons", "progress_bar"]
+      },
+      "modals": {
+        "variants": ["confirmation", "form", "fullscreen", "drawer"],
+        "features": ["backdrop_click", "escape_key", "custom_sizes"]
+      },
+      "loading_states": {
+        "types": ["spinner", "skeleton", "progress_bar", "dots"],
+        "contexts": ["button", "page", "component", "overlay"]
+      }
+    }
+  },
+  "design_system": {
+    "colors": {
+      "primary": "#059669",
+      "secondary": "#0891B2",
+      "accent": "#F59E0B",
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444",
+      "info": "#3B82F6"
+    },
+    "typography": {
+      "font_family": "Inter, system-ui, sans-serif",
+      "font_sizes": {
+        "xs": "0.75rem",
+        "sm": "0.875rem",
+        "base": "1rem",
+        "lg": "1.125rem",
+        "xl": "1.25rem",
+        "2xl": "1.5rem",
+        "3xl": "1.875rem"
+      }
+    },
+    "spacing": {
+      "xs": "0.25rem",
+      "sm": "0.5rem",
+      "md": "1rem",
+      "lg": "1.5rem",
+      "xl": "2rem",
+      "2xl": "3rem"
+    },
+    "breakpoints": {
+      "sm": "640px",
+      "md": "768px",
+      "lg": "1024px",
+      "xl": "1280px",
+      "2xl": "1536px"
+    }
+  }
+} 

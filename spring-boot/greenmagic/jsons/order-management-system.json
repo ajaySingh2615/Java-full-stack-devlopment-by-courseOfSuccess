@@ -1,0 +1,413 @@
+{
+  "orderManagementSystem": {
+    "orderStatuses": {
+      "new": {
+        "label": "New Order",
+        "description": "Order just received, awaiting vendor action",
+        "color": "#3B82F6",
+        "icon": "package",
+        "priority": "high",
+        "sla": {"response_time": 2, "unit": "hours", "auto_escalate": true},
+        "available_actions": [
+          {
+            "action": "accept_order",
+            "label": "Accept Order",
+            "icon": "check",
+            "color": "green",
+            "auto_actions": ["reserve_inventory", "send_customer_notification"]
+          },
+          {
+            "action": "reject_order",
+            "label": "Reject Order",
+            "icon": "x",
+            "color": "red",
+            "confirmation_required": true,
+            "reason_required": true
+          }
+        ],
+        "next_statuses": ["accepted", "rejected"]
+      },
+      "accepted": {
+        "label": "Order Accepted",
+        "description": "Order confirmed by vendor, processing will begin",
+        "color": "#10B981",
+        "icon": "check_circle",
+        "priority": "medium",
+        "sla": {"response_time": 4, "unit": "hours"},
+        "available_actions": [
+          {
+            "action": "start_processing",
+            "label": "Start Processing",
+            "icon": "play",
+            "color": "blue"
+          }
+        ],
+        "next_statuses": ["processing", "cancelled"]
+      },
+      "processing": {
+        "label": "Processing",
+        "description": "Order is being prepared for shipment",
+        "color": "#F59E0B",
+        "icon": "clock",
+        "priority": "medium",
+        "sla": {"response_time": 24, "unit": "hours"},
+        "available_actions": [
+          {
+            "action": "mark_ready_to_ship",
+            "label": "Ready to Ship",
+            "icon": "truck",
+            "color": "blue"
+          }
+        ],
+        "sub_statuses": ["quality_check", "packaging", "final_inspection"],
+        "next_statuses": ["ready_to_ship", "shipped", "cancelled"]
+      },
+      "ready_to_ship": {
+        "label": "Ready to Ship",
+        "description": "Order packed and ready for pickup/dispatch",
+        "color": "#F97316",
+        "icon": "truck",
+        "priority": "high",
+        "sla": {"response_time": 6, "unit": "hours"},
+        "available_actions": [
+          {
+            "action": "hand_over_to_courier",
+            "label": "Courier Pickup",
+            "icon": "truck",
+            "color": "blue",
+            "tracking_number_input": true
+          },
+          {
+            "action": "self_delivery",
+            "label": "Self Delivery",
+            "icon": "user",
+            "color": "green"
+          }
+        ],
+        "next_statuses": ["shipped", "out_for_delivery"]
+      },
+      "shipped": {
+        "label": "Shipped",
+        "description": "Order dispatched and in transit",
+        "color": "#8B5CF6",
+        "icon": "plane",
+        "priority": "low",
+        "tracking_required": true,
+        "customer_visible": true,
+        "available_actions": [
+          {
+            "action": "update_tracking",
+            "label": "Update Tracking",
+            "icon": "map_pin",
+            "color": "blue"
+          },
+          {
+            "action": "mark_delivered",
+            "label": "Mark Delivered",
+            "icon": "check_square",
+            "color": "green",
+            "delivery_proof": true
+          }
+        ],
+        "tracking_integration": {
+          "supported_couriers": ["delhivery", "bluedart", "ecom", "dtdc"],
+          "real_time_updates": true
+        },
+        "next_statuses": ["out_for_delivery", "delivered", "return_in_transit"]
+      },
+      "out_for_delivery": {
+        "label": "Out for Delivery",
+        "description": "Order is out for final delivery",
+        "color": "#EC4899",
+        "icon": "truck",
+        "priority": "high",
+        "customer_visible": true,
+        "available_actions": [
+          {
+            "action": "confirm_delivery",
+            "label": "Confirm Delivery",
+            "icon": "check",
+            "color": "green",
+            "delivery_proof_required": true
+          },
+          {
+            "action": "delivery_failed",
+            "label": "Delivery Failed",
+            "icon": "x",
+            "color": "red",
+            "failure_reason": true
+          }
+        ],
+        "next_statuses": ["delivered", "delivery_failed", "return_in_transit"]
+      },
+      "delivered": {
+        "label": "Delivered",
+        "description": "Order successfully delivered to customer",
+        "color": "#059669",
+        "icon": "check_square",
+        "priority": "low",
+        "final_status": true,
+        "customer_visible": true,
+        "available_actions": [
+          {
+            "action": "request_review",
+            "label": "Request Review",
+            "icon": "star",
+            "color": "yellow"
+          },
+          {
+            "action": "process_return",
+            "label": "Process Return",
+            "icon": "rotate_ccw",
+            "color": "orange"
+          }
+        ],
+        "auto_actions": ["payment_release_to_vendor", "feedback_request"],
+        "next_statuses": ["returned", "exchanged"]
+      },
+      "cancelled": {
+        "label": "Cancelled",
+        "description": "Order has been cancelled",
+        "color": "#DC2626",
+        "icon": "x_circle",
+        "final_status": true,
+        "cancellation_reasons": [
+          "out_of_stock", "customer_request", "quality_issues", 
+          "delivery_issues", "payment_failure", "vendor_unavailable"
+        ],
+        "available_actions": [
+          {
+            "action": "process_refund",
+            "label": "Process Refund",
+            "icon": "dollar_sign",
+            "color": "green"
+          }
+        ],
+        "auto_actions": ["refund_initiation", "inventory_release"]
+      },
+      "returned": {
+        "label": "Returned",
+        "description": "Order has been returned by customer",
+        "color": "#6B7280",
+        "icon": "rotate_ccw",
+        "return_window_days": 7,
+        "return_reasons": [
+          "quality_issues", "wrong_product", "size_issues", 
+          "customer_dissatisfaction", "damaged_during_shipping"
+        ],
+        "available_actions": [
+          {
+            "action": "inspect_return",
+            "label": "Inspect Return",
+            "icon": "search",
+            "color": "blue"
+          },
+          {
+            "action": "approve_return",
+            "label": "Approve Return",
+            "icon": "check",
+            "color": "green"
+          }
+        ],
+        "next_statuses": ["refunded", "exchanged", "return_rejected"]
+      }
+    },
+    "orderDashboard": {
+      "metrics_cards": [
+        {
+          "id": "todays_orders",
+          "title": "Today's Orders",
+          "value_calculation": "count_today",
+          "comparison_period": "yesterday",
+          "color": "blue",
+          "icon": "shopping_bag"
+        },
+        {
+          "id": "pending_processing",
+          "title": "Pending Processing",
+          "value_calculation": "status_count:new,accepted",
+          "urgency_indicator": "high_if_sla_breach",
+          "color": "yellow",
+          "icon": "clock"
+        },
+        {
+          "id": "ready_to_ship",
+          "title": "Ready to Ship",
+          "value_calculation": "status_count:ready_to_ship",
+          "action_required": true,
+          "color": "orange",
+          "icon": "truck"
+        },
+        {
+          "id": "monthly_revenue",
+          "title": "Monthly Revenue",
+          "value_calculation": "sum_current_month:order_value",
+          "comparison_period": "last_month",
+          "color": "green",
+          "icon": "dollar_sign"
+        }
+      ],
+      "quick_filters": [
+        {
+          "id": "urgent_orders",
+          "label": "Urgent Orders",
+          "filter": {"sla_breach": true, "status": ["new", "accepted", "processing"]},
+          "color": "red"
+        },
+        {
+          "id": "high_value_orders",
+          "label": "High Value Orders",
+          "filter": {"order_value": {"gte": 5000}},
+          "color": "gold"
+        },
+        {
+          "id": "cod_orders",
+          "label": "COD Orders",
+          "filter": {"payment_method": "cod"},
+          "color": "brown"
+        }
+      ]
+    },
+    "orderDetailManagement": {
+      "order_information": {
+        "basic_details": {
+          "order_id": {"display": "prominent", "copyable": true, "qr_code": true},
+          "order_date": {"format": "DD/MM/YYYY HH:mm", "relative_time": true},
+          "order_status": {"badge_display": true, "status_history": true},
+          "order_value": {"currency_format": true, "breakdown_link": true}
+        },
+        "customer_details": {
+          "customer_profile": {
+            "name": "customer_name",
+            "contact": {
+              "phone": {"whatsapp_link": true, "call_link": true},
+              "email": {"email_link": true}
+            },
+            "address": {"formatted_display": true, "map_link": true}
+          }
+        },
+        "product_details": {
+          "product_list": {
+            "columns": ["image", "name", "variant", "quantity", "unit_price", "total_price"],
+            "product_links": true,
+            "stock_status": true
+          }
+        }
+      },
+      "communication_center": {
+        "customer_messages": {
+          "message_thread": {
+            "chronological_order": true,
+            "message_types": ["text", "image", "document"],
+            "read_receipts": true
+          },
+          "quick_replies": {
+            "templates": [
+              {
+                "id": "order_confirmation",
+                "title": "Order Confirmed",
+                "message": "Your order has been confirmed and will be processed within 24 hours."
+              },
+              {
+                "id": "shipped_notification",
+                "title": "Order Shipped",
+                "message": "Great news! Your order has been shipped. Tracking ID: [TRACKING_ID]"
+              }
+            ]
+          }
+        }
+      },
+      "logistics_management": {
+        "shipping_details": {
+          "courier_selection": {
+            "available_couriers": ["delhivery", "bluedart", "ecom", "dtdc", "self_delivery"],
+            "rate_comparison": true,
+            "delivery_time_estimation": true
+          },
+          "tracking_integration": {
+            "real_time_tracking": true,
+            "milestone_updates": true,
+            "eta_predictions": true
+          }
+        }
+      }
+    },
+    "automationRules": {
+      "status_transitions": {
+        "auto_accept_conditions": {
+          "payment_confirmed": true,
+          "stock_available": true,
+          "customer_verified": true
+        },
+        "auto_ship_conditions": {
+          "payment_received": true,
+          "items_packed": true,
+          "courier_scheduled": true
+        }
+      },
+      "notification_triggers": {
+        "sla_warnings": {
+          "80_percent_time_elapsed": "yellow_alert",
+          "100_percent_time_elapsed": "red_alert"
+        },
+        "customer_notifications": {
+          "order_confirmation": "immediate",
+          "status_updates": "real_time",
+          "delivery_updates": "milestone_based"
+        }
+      }
+    },
+    "orderFilters": {
+      "status_filters": {
+        "all_orders": {"label": "All Orders", "default": true},
+        "new_orders": {"label": "New Orders", "urgent": true},
+        "processing": {"label": "Processing", "color": "yellow"},
+        "shipped": {"label": "Shipped", "color": "blue"},
+        "delivered": {"label": "Delivered", "color": "green"},
+        "cancelled": {"label": "Cancelled", "color": "red"},
+        "returned": {"label": "Returned", "color": "gray"}
+      },
+      "date_filters": {
+        "today": "Today's Orders",
+        "yesterday": "Yesterday's Orders",
+        "last_7_days": "Last 7 Days",
+        "last_30_days": "Last 30 Days",
+        "custom_range": "Custom Date Range"
+      },
+      "value_filters": {
+        "high_value": "Orders > ₹5,000",
+        "medium_value": "Orders ₹1,000 - ₹5,000",
+        "low_value": "Orders < ₹1,000"
+      },
+      "payment_filters": {
+        "cod": "Cash on Delivery",
+        "prepaid": "Prepaid Orders",
+        "pending_payment": "Payment Pending"
+      }
+    },
+    "bulkOperations": {
+      "available_operations": [
+        {
+          "action": "bulk_status_update",
+          "label": "Update Status",
+          "applicable_statuses": ["new", "accepted", "processing"]
+        },
+        {
+          "action": "bulk_courier_assign",
+          "label": "Assign Courier",
+          "applicable_statuses": ["ready_to_ship"]
+        },
+        {
+          "action": "bulk_export",
+          "label": "Export Orders",
+          "formats": ["csv", "excel", "pdf"]
+        },
+        {
+          "action": "bulk_print_labels",
+          "label": "Print Shipping Labels",
+          "applicable_statuses": ["ready_to_ship", "shipped"]
+        }
+      ]
+    }
+  }
+} 

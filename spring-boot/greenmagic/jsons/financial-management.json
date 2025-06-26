@@ -1,0 +1,562 @@
+{
+  "financialManagement": {
+    "revenueTracking": {
+      "salesRevenue": {
+        "gross_sales": {
+          "calculation": "sum(order_value) where status = 'delivered'",
+          "time_periods": {
+            "daily": "today_yesterday_comparison",
+            "weekly": "current_week_vs_previous_week",
+            "monthly": "current_month_vs_previous_month",
+            "quarterly": "current_quarter_vs_previous_quarter",
+            "yearly": "current_year_vs_previous_year"
+          },
+          "breakdown": {
+            "by_category": "revenue_per_product_category",
+            "by_product": "top_revenue_generating_products",
+            "by_customer_segment": "revenue_from_different_customer_tiers",
+            "by_payment_method": "cod_vs_prepaid_revenue"
+          },
+          "visualization": {
+            "type": "line_chart_with_trend",
+            "comparison_overlay": true,
+            "goal_tracking": true,
+            "forecast_projection": "next_3_months"
+          }
+        },
+        "net_sales": {
+          "calculation": "gross_sales - returns - cancellations",
+          "return_deductions": {
+            "full_returns": "complete_order_value_deduction",
+            "partial_returns": "item_wise_deduction",
+            "return_processing_fee": "if_applicable"
+          },
+          "cancellation_impact": {
+            "vendor_cancellations": "loss_calculation",
+            "customer_cancellations": "opportunity_cost",
+            "system_cancellations": "technical_issue_impact"
+          },
+          "adjustments": {
+            "promotional_discounts": "coupon_and_offer_deductions",
+            "platform_fees": "marketplace_commission_deduction",
+            "payment_gateway_charges": "transaction_fee_deduction"
+          }
+        },
+        "average_order_value": {
+          "calculation": "net_sales / number_of_orders",
+          "trend_analysis": {
+            "monthly_trends": "aov_growth_or_decline",
+            "seasonal_patterns": "festival_and_season_impact",
+            "customer_segment_aov": "premium_vs_regular_customers",
+            "category_influence": "high_value_vs_low_value_categories"
+          },
+          "optimization_insights": {
+            "upselling_opportunities": "products_to_bundle",
+            "cross_selling_potential": "complementary_product_recommendations",
+            "pricing_strategy": "optimal_price_points",
+            "minimum_order_value": "free_shipping_threshold_impact"
+          }
+        }
+      },
+      "revenueStreams": {
+        "product_sales": {
+          "primary_revenue": "main_product_sales_revenue",
+          "variant_revenue": "different_product_variants",
+          "seasonal_revenue": "seasonal_product_performance",
+          "bulk_order_revenue": "wholesale_and_bulk_sales"
+        },
+        "shipping_revenue": {
+          "shipping_charges": "customer_paid_shipping_fees",
+          "express_delivery": "premium_delivery_charges",
+          "packaging_fees": "special_packaging_charges",
+          "cod_charges": "cash_on_delivery_fees"
+        },
+        "additional_revenue": {
+          "gift_wrapping": "gift_service_charges",
+          "customization_fees": "product_personalization_charges",
+          "extended_warranty": "additional_service_fees",
+          "installation_services": "if_applicable"
+        },
+        "promotional_impact": {
+          "discount_revenue_impact": "sales_increase_vs_margin_decrease",
+          "coupon_effectiveness": "coupon_driven_sales_analysis",
+          "loyalty_program_cost": "points_redemption_impact",
+          "referral_program_cost": "referral_bonus_expenses"
+        }
+      }
+    },
+    "expenseManagement": {
+      "cost_of_goods_sold": {
+        "product_cost": {
+          "purchase_price": "vendor_to_supplier_cost",
+          "bulk_discount_impact": "quantity_based_pricing",
+          "seasonal_cost_variation": "supply_cost_fluctuations",
+          "quality_premium": "organic_premium_product_costs"
+        },
+        "logistics_cost": {
+          "inbound_shipping": "supplier_to_warehouse_cost",
+          "storage_cost": "warehouse_and_inventory_holding",
+          "outbound_shipping": "warehouse_to_customer_delivery",
+          "return_logistics": "reverse_supply_chain_costs"
+        },
+        "packaging_cost": {
+          "primary_packaging": "product_packaging_materials",
+          "secondary_packaging": "shipping_box_and_protection",
+          "eco_friendly_packaging": "sustainable_packaging_premium",
+          "branding_materials": "labels_inserts_promotional"
+        },
+        "quality_control": {
+          "inspection_cost": "quality_check_expenses",
+          "testing_fees": "product_testing_and_certification",
+          "rejection_cost": "defective_product_losses",
+          "compliance_cost": "regulatory_compliance_expenses"
+        }
+      },
+      "operational_expenses": {
+        "platform_fees": {
+          "marketplace_commission": "platform_percentage_fees",
+          "listing_fees": "product_listing_charges",
+          "promotional_fees": "advertising_and_promotion_costs",
+          "payment_gateway_fees": "transaction_processing_charges"
+        },
+        "marketing_expenses": {
+          "digital_advertising": "google_facebook_instagram_ads",
+          "content_creation": "photography_videography_copywriting",
+          "influencer_marketing": "collaboration_and_sponsorship",
+          "email_marketing": "email_platform_and_automation_costs"
+        },
+        "technology_costs": {
+          "website_maintenance": "hosting_domain_development",
+          "software_subscriptions": "inventory_accounting_crm_tools",
+          "mobile_app": "app_development_and_maintenance",
+          "cybersecurity": "security_tools_and_services"
+        },
+        "human_resources": {
+          "staff_salaries": "employee_compensation",
+          "freelancer_costs": "temporary_and_project_workers",
+          "training_expenses": "skill_development_costs",
+          "benefits_and_insurance": "employee_benefits_coverage"
+        },
+        "administrative_costs": {
+          "office_rent": "workspace_expenses",
+          "utilities": "electricity_internet_phone",
+          "legal_compliance": "licensing_registration_legal_fees",
+          "accounting_services": "bookkeeping_tax_preparation"
+        }
+      },
+      "variable_costs": {
+        "shipping_costs": {
+          "courier_charges": "delivery_partner_fees",
+          "fuel_surcharge": "variable_delivery_costs",
+          "distance_based_pricing": "location_specific_rates",
+          "weight_based_charges": "package_weight_impact"
+        },
+        "payment_processing": {
+          "card_transaction_fees": "credit_debit_card_charges",
+          "upi_charges": "digital_payment_fees",
+          "net_banking_fees": "online_banking_charges",
+          "wallet_transaction_costs": "digital_wallet_fees"
+        },
+        "customer_acquisition": {
+          "referral_bonuses": "customer_referral_rewards",
+          "first_time_discounts": "new_customer_incentives",
+          "loyalty_program_costs": "points_and_rewards_expenses",
+          "customer_service": "support_and_resolution_costs"
+        }
+      }
+    },
+    "profitabilityAnalysis": {
+      "gross_profit": {
+        "calculation": "net_sales - cost_of_goods_sold",
+        "gross_margin": "gross_profit / net_sales * 100",
+        "product_level_profitability": {
+          "high_margin_products": "most_profitable_items",
+          "low_margin_products": "items_needing_optimization",
+          "loss_making_products": "products_to_discontinue_or_reprice",
+          "category_wise_margins": "profitable_vs_unprofitable_categories"
+        },
+        "margin_improvement": {
+          "cost_reduction_opportunities": "supplier_negotiation_bulk_buying",
+          "price_optimization": "competitive_pricing_analysis",
+          "product_mix_optimization": "focus_on_high_margin_items",
+          "operational_efficiency": "process_improvement_cost_savings"
+        }
+      },
+      "operating_profit": {
+        "calculation": "gross_profit - operating_expenses",
+        "operating_margin": "operating_profit / net_sales * 100",
+        "expense_optimization": {
+          "fixed_cost_analysis": "rent_salary_subscription_optimization",
+          "variable_cost_control": "shipping_payment_marketing_efficiency",
+          "automation_opportunities": "process_digitization_cost_savings",
+          "outsourcing_analysis": "build_vs_buy_decisions"
+        },
+        "breakeven_analysis": {
+          "breakeven_point": "minimum_sales_to_cover_costs",
+          "margin_of_safety": "sales_above_breakeven_level",
+          "contribution_margin": "sales_minus_variable_costs",
+          "leverage_analysis": "fixed_cost_impact_on_profitability"
+        }
+      },
+      "net_profit": {
+        "calculation": "operating_profit - taxes - interest",
+        "profit_margin": "net_profit / net_sales * 100",
+        "profit_distribution": {
+          "reinvestment": "business_growth_and_expansion",
+          "owner_withdrawal": "profit_distribution_to_owners",
+          "reserve_fund": "emergency_and_opportunity_fund",
+          "tax_provisions": "income_tax_and_compliance_reserves"
+        },
+        "profitability_trends": {
+          "monthly_profit_analysis": "profit_consistency_and_growth",
+          "seasonal_profitability": "peak_and_lean_season_performance",
+          "year_over_year_growth": "annual_profit_improvement",
+          "benchmark_comparison": "industry_and_competitor_analysis"
+        }
+      }
+    },
+    "payoutManagement": {
+      "payment_schedule": {
+        "payout_frequency": {
+          "daily_payouts": "for_high_volume_vendors",
+          "weekly_payouts": "standard_payout_schedule",
+          "bi_weekly_payouts": "alternative_schedule_option",
+          "monthly_payouts": "consolidated_payment_option"
+        },
+        "payout_criteria": {
+          "minimum_threshold": "minimum_amount_for_payout",
+          "order_completion": "delivered_orders_only",
+          "return_window": "payout_after_return_period",
+          "dispute_clearance": "no_pending_complaints_or_issues"
+        },
+        "hold_periods": {
+          "new_vendor_hold": "longer_hold_for_new_vendors",
+          "high_risk_hold": "extended_hold_for_risky_transactions",
+          "dispute_hold": "payments_on_hold_during_disputes",
+          "compliance_hold": "regulatory_compliance_verification"
+        }
+      },
+      "payout_calculation": {
+        "gross_amount": "total_order_value_for_delivered_orders",
+        "deductions": {
+          "platform_commission": "marketplace_fee_percentage",
+          "payment_gateway_charges": "transaction_processing_fees",
+          "shipping_cost_adjustment": "shipping_subsidy_deduction",
+          "promotional_cost_sharing": "discount_cost_allocation",
+          "penalty_deductions": "sla_breach_quality_issue_penalties",
+          "return_deductions": "returned_order_value_deduction",
+          "tax_deductions": "tds_and_other_tax_deductions"
+        },
+        "net_payout": "gross_amount - total_deductions",
+        "bonus_additions": {
+          "performance_bonus": "exceptional_service_rewards",
+          "volume_incentive": "high_sales_volume_bonuses",
+          "quality_bonus": "high_rating_and_low_return_rewards",
+          "loyalty_bonus": "long_term_partnership_benefits"
+        }
+      },
+      "payout_methods": {
+        "bank_transfer": {
+          "neft_rtgs": "traditional_banking_transfer",
+          "imps": "immediate_payment_service",
+          "account_verification": "bank_account_validation_process",
+          "transfer_limits": "daily_monthly_transfer_limits"
+        },
+        "digital_wallets": {
+          "paytm": "digital_wallet_transfer",
+          "phonepe": "upi_based_transfer",
+          "google_pay": "instant_transfer_option",
+          "wallet_balance_management": "transfer_to_bank_options"
+        },
+        "upi_transfer": {
+          "direct_upi": "vendor_upi_id_transfer",
+          "instant_settlement": "real_time_payment_option",
+          "upi_verification": "payment_address_validation",
+          "transaction_limits": "upi_transfer_restrictions"
+        },
+        "cheque_payment": {
+          "physical_cheque": "traditional_payment_method",
+          "courier_delivery": "cheque_delivery_process",
+          "clearance_time": "cheque_processing_duration",
+          "minimum_amount": "cheque_payment_threshold"
+        }
+      },
+      "payout_tracking": {
+        "payout_history": {
+          "transaction_records": "complete_payout_transaction_history",
+          "payment_status": "initiated_processed_completed_failed",
+          "reconciliation": "order_to_payment_matching",
+          "dispute_tracking": "payment_related_issue_resolution"
+        },
+        "payout_dashboard": {
+          "pending_amount": "earnings_awaiting_payout",
+          "processed_amount": "payments_completed_this_period",
+          "hold_amount": "payments_on_hold_with_reasons",
+          "lifetime_earnings": "total_earnings_since_inception"
+        },
+        "notifications": {
+          "payout_processed": "successful_payment_confirmation",
+          "payout_failed": "failed_payment_alert_with_reasons",
+          "hold_notification": "payment_hold_explanation",
+          "document_request": "kyc_or_additional_document_requirements"
+        }
+      }
+    },
+    "taxManagement": {
+      "gst_compliance": {
+        "gst_registration": {
+          "gstin_verification": "vendor_gst_number_validation",
+          "gst_certificate": "registration_certificate_upload",
+          "gst_category": "regular_composition_scheme_classification",
+          "state_registration": "multi_state_gst_registration"
+        },
+        "gst_calculation": {
+          "product_wise_gst": "category_based_gst_rates",
+          "interstate_gst": "igst_for_cross_state_transactions",
+          "intrastate_gst": "cgst_sgst_for_same_state_transactions",
+          "reverse_charge": "applicable_reverse_charge_scenarios"
+        },
+        "gst_invoice": {
+          "tax_compliant_invoice": "gst_invoice_format_compliance",
+          "hsn_code_mapping": "product_hsn_code_association",
+          "tax_breakup": "detailed_gst_calculation_display",
+          "invoice_series": "sequential_invoice_numbering"
+        },
+        "gst_returns": {
+          "gstr1_data": "sales_return_data_preparation",
+          "gstr3b_reconciliation": "monthly_return_reconciliation",
+          "input_tax_credit": "purchase_gst_credit_management",
+          "annual_return": "yearly_gst_return_compilation"
+        }
+      },
+      "tds_management": {
+        "tds_applicability": {
+          "vendor_threshold": "annual_payment_threshold_for_tds",
+          "tds_rate": "applicable_tds_percentage",
+          "pan_verification": "vendor_pan_card_validation",
+          "exemption_categories": "tds_exemption_scenarios"
+        },
+        "tds_deduction": {
+          "automatic_calculation": "tds_calculation_from_payments",
+          "tds_certificate": "form_16a_generation",
+          "quarterly_statement": "tds_return_preparation",
+          "tds_deposit": "government_tds_remittance"
+        },
+        "tds_reporting": {
+          "vendor_wise_tds": "individual_vendor_tds_summary",
+          "monthly_tds_report": "period_wise_tds_deduction",
+          "annual_tds_statement": "yearly_tds_compilation",
+          "reconciliation_report": "tds_deduction_vs_deposit_matching"
+        }
+      },
+      "income_tax": {
+        "profit_calculation": "taxable_income_computation",
+        "depreciation": "asset_depreciation_calculation",
+        "business_expenses": "allowable_deduction_identification",
+        "tax_planning": "advance_tax_and_planning_suggestions"
+      },
+      "other_taxes": {
+        "professional_tax": "state_professional_tax_compliance",
+        "cess": "applicable_cess_calculation",
+        "local_taxes": "municipal_and_local_tax_compliance",
+        "international_tax": "export_import_tax_implications"
+      }
+    },
+    "financialReporting": {
+      "dashboard_metrics": {
+        "key_financial_indicators": {
+          "revenue_growth": "month_over_month_revenue_growth",
+          "profit_margin": "current_profit_margin_percentage",
+          "cash_flow": "positive_negative_cash_flow_status",
+          "expense_ratio": "expenses_as_percentage_of_revenue"
+        },
+        "performance_cards": {
+          "total_revenue": {
+            "current_period_revenue": "this_month_quarter_year",
+            "comparison": "vs_previous_period",
+            "trend_indicator": "up_down_stable",
+            "target_achievement": "goal_vs_actual"
+          },
+          "profit_margin": {
+            "gross_margin": "gross_profit_percentage",
+            "net_margin": "net_profit_percentage",
+            "margin_trend": "improving_declining_stable",
+            "industry_comparison": "vs_industry_average"
+          },
+          "expense_breakdown": {
+            "major_expense_categories": "top_expense_areas",
+            "expense_trend": "increasing_decreasing_expenses",
+            "cost_efficiency": "expense_per_unit_sold",
+            "optimization_opportunities": "areas_for_cost_reduction"
+          }
+        }
+      },
+      "financial_statements": {
+        "profit_loss_statement": {
+          "revenue_section": {
+            "gross_sales": "total_sales_before_returns",
+            "net_sales": "sales_after_returns_and_discounts",
+            "other_income": "non_operating_income"
+          },
+          "expense_section": {
+            "cost_of_goods_sold": "direct_product_costs",
+            "operating_expenses": "business_operating_costs",
+            "other_expenses": "non_operating_expenses"
+          },
+          "profit_section": {
+            "gross_profit": "sales_minus_cogs",
+            "operating_profit": "gross_profit_minus_operating_expenses",
+            "net_profit": "final_profit_after_all_expenses"
+          },
+          "period_options": ["monthly", "quarterly", "yearly"],
+          "comparison_analysis": "current_vs_previous_period"
+        },
+        "cash_flow_statement": {
+          "operating_activities": {
+            "cash_from_sales": "customer_payment_receipts",
+            "cash_to_suppliers": "payment_to_suppliers",
+            "operating_expenses_cash": "cash_spent_on_operations"
+          },
+          "investing_activities": {
+            "asset_purchases": "equipment_technology_investments",
+            "asset_sales": "disposal_of_assets",
+            "investment_income": "returns_from_investments"
+          },
+          "financing_activities": {
+            "loan_receipts": "borrowed_funds",
+            "loan_repayments": "debt_service_payments",
+            "owner_contributions": "capital_injections"
+          },
+          "net_cash_flow": "total_cash_in_minus_cash_out",
+          "cash_position": "ending_cash_balance"
+        },
+        "balance_sheet": {
+          "assets": {
+            "current_assets": {
+              "cash_and_equivalents": "liquid_cash_available",
+              "accounts_receivable": "money_owed_by_customers",
+              "inventory": "stock_value_at_cost",
+              "prepaid_expenses": "advance_payments_made"
+            },
+            "fixed_assets": {
+              "equipment": "business_equipment_value",
+              "technology": "software_and_systems_value",
+              "accumulated_depreciation": "asset_depreciation_total"
+            }
+          },
+          "liabilities": {
+            "current_liabilities": {
+              "accounts_payable": "money_owed_to_suppliers",
+              "accrued_expenses": "expenses_incurred_not_paid",
+              "short_term_debt": "loans_due_within_year"
+            },
+            "long_term_liabilities": {
+              "long_term_debt": "loans_due_after_year",
+              "deferred_tax": "future_tax_obligations"
+            }
+          },
+          "equity": {
+            "owner_equity": "owner_investment_in_business",
+            "retained_earnings": "accumulated_business_profits"
+          }
+        }
+      },
+      "analytical_reports": {
+        "trend_analysis": {
+          "revenue_trends": "sales_growth_patterns_over_time",
+          "seasonality_analysis": "seasonal_business_patterns",
+          "product_performance": "top_and_bottom_performing_products",
+          "customer_value_trends": "customer_lifetime_value_changes"
+        },
+        "variance_analysis": {
+          "budget_vs_actual": "planned_vs_actual_performance",
+          "forecast_accuracy": "prediction_vs_reality_analysis",
+          "expense_variance": "budget_vs_actual_expenses",
+          "revenue_variance": "expected_vs_actual_revenue"
+        },
+        "ratio_analysis": {
+          "profitability_ratios": "margin_and_return_ratios",
+          "efficiency_ratios": "asset_and_inventory_turnover",
+          "liquidity_ratios": "cash_and_quick_ratios",
+          "growth_ratios": "revenue_and_profit_growth_rates"
+        }
+      },
+      "export_options": {
+        "report_formats": {
+          "pdf_reports": "formatted_financial_reports",
+          "excel_exports": "data_for_further_analysis",
+          "csv_data": "raw_data_export",
+          "api_integration": "third_party_accounting_software"
+        },
+        "customization": {
+          "date_range_selection": "custom_period_reports",
+          "report_sections": "selective_report_components",
+          "branding": "company_logo_and_branding",
+          "language_options": "multi_language_reports"
+        },
+        "automation": {
+          "scheduled_reports": "automatic_report_generation",
+          "email_delivery": "automated_report_distribution",
+          "cloud_storage": "automatic_backup_to_cloud",
+          "stakeholder_sharing": "investor_partner_report_sharing"
+        }
+      }
+    },
+    "budgetingForecasting": {
+      "budget_planning": {
+        "revenue_budgets": {
+          "sales_targets": "monthly_quarterly_annual_targets",
+          "category_wise_targets": "product_category_revenue_goals",
+          "seasonal_adjustments": "festival_season_target_modifications",
+          "growth_projections": "expected_business_growth_rates"
+        },
+        "expense_budgets": {
+          "fixed_expense_budget": "rent_salary_subscription_budgets",
+          "variable_expense_budget": "shipping_marketing_variable_costs",
+          "capital_expenditure": "equipment_technology_investment_plans",
+          "contingency_budget": "emergency_and_unexpected_expense_buffer"
+        },
+        "profit_planning": {
+          "target_profit_margin": "desired_profitability_goals",
+          "breakeven_planning": "minimum_sales_targets",
+          "reinvestment_planning": "profit_reinvestment_allocation",
+          "distribution_planning": "profit_sharing_and_withdrawal_plans"
+        }
+      },
+      "forecasting_models": {
+        "sales_forecasting": {
+          "historical_data_analysis": "past_sales_pattern_analysis",
+          "trend_projection": "linear_exponential_trend_analysis",
+          "seasonal_forecasting": "seasonal_pattern_prediction",
+          "market_factor_adjustment": "external_factor_consideration"
+        },
+        "cash_flow_forecasting": {
+          "cash_inflow_prediction": "expected_customer_payments",
+          "cash_outflow_prediction": "planned_expense_payments",
+          "working_capital_forecast": "inventory_and_receivable_projections",
+          "financing_needs": "loan_and_investment_requirements"
+        },
+        "scenario_planning": {
+          "best_case_scenario": "optimistic_business_projections",
+          "worst_case_scenario": "pessimistic_business_projections",
+          "most_likely_scenario": "realistic_business_expectations",
+          "contingency_planning": "risk_mitigation_strategies"
+        }
+      },
+      "performance_monitoring": {
+        "budget_vs_actual": {
+          "variance_calculation": "difference_between_planned_and_actual",
+          "variance_analysis": "reasons_for_budget_deviations",
+          "corrective_actions": "steps_to_address_variances",
+          "budget_revision": "mid_year_budget_adjustments"
+        },
+        "forecast_accuracy": {
+          "prediction_accuracy": "forecast_vs_actual_comparison",
+          "model_refinement": "improving_forecasting_accuracy",
+          "external_factor_impact": "market_condition_effect_analysis",
+          "learning_integration": "incorporating_new_insights"
+        }
+      }
+    }
+  }
+} 

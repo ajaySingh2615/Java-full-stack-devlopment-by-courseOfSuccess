@@ -25,6 +25,14 @@ import AdminDashboard from './pages/dashboard/AdminDashboard';
 // Import unauthorized component
 import Unauthorized from './pages/Unauthorized';
 
+// Import Phase 1 Vendor Components
+import VendorProducts from './pages/vendor/VendorProducts';
+import VendorOrders from './pages/vendor/VendorOrders';
+import VendorAnalytics from './pages/vendor/VendorAnalytics';
+import VendorCustomers from './pages/vendor/VendorCustomers';
+import VendorSettings from './pages/vendor/VendorSettings';
+import VendorSupport from './pages/vendor/VendorSupport';
+
 import './App.css';
 
 function App() {
@@ -74,6 +82,43 @@ function App() {
               <Route path="/admin/users" element={
                 <ProtectedRoute requireAdmin={true}>
                   <UserManagement />
+                </ProtectedRoute>
+              } />
+
+              {/* Phase 1 Vendor Routes */}
+              <Route path="/vendor/products" element={
+                <ProtectedRoute requireVendor={true} requireCompleteVendorProfile={true}>
+                  <VendorProducts />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/vendor/orders" element={
+                <ProtectedRoute requireVendor={true} requireCompleteVendorProfile={true}>
+                  <VendorOrders />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/vendor/analytics" element={
+                <ProtectedRoute requireVendor={true} requireCompleteVendorProfile={true}>
+                  <VendorAnalytics />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/vendor/customers" element={
+                <ProtectedRoute requireVendor={true} requireCompleteVendorProfile={true}>
+                  <VendorCustomers />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/vendor/settings" element={
+                <ProtectedRoute requireVendor={true} requireCompleteVendorProfile={true}>
+                  <VendorSettings />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/vendor/support" element={
+                <ProtectedRoute requireVendor={true} requireCompleteVendorProfile={true}>
+                  <VendorSupport />
                 </ProtectedRoute>
               } />
 

@@ -1,0 +1,875 @@
+{
+  "productForm": {
+    "sections": {
+      "basic_information": {
+        "title": "Basic Product Information",
+        "description": "Essential product details",
+        "order": 1,
+        "fields": {
+          "product_title": {
+            "type": "text",
+            "label": "Product Title",
+            "placeholder": "e.g., Organic Basmati Rice Premium Quality 5kg",
+            "max_length": 100,
+            "min_length": 10,
+            "validation": {
+              "required": true,
+              "pattern": "^[a-zA-Z0-9\\s\\-\\.\\(\\)]+$",
+              "custom_rules": ["no_special_characters_except_dash_dot_parentheses"]
+            },
+            "help_text": "Clear, descriptive title that customers will see",
+            "seo_impact": true
+          },
+          "category": {
+            "type": "hierarchical_select",
+            "label": "Product Category",
+            "validation": {
+              "required": true
+            },
+            "source": "product_categories",
+            "auto_hsn": true,
+            "auto_gst": true,
+            "onChange": "update_subcategory_options",
+            "help_text": "Select the most specific category for your product"
+          },
+          "subcategory": {
+            "type": "select",
+            "label": "Sub-category",
+            "validation": {
+              "required": true
+            },
+            "dependent_on": "category",
+            "dynamic_options": true
+          },
+          "brand_name": {
+            "type": "select_or_input",
+            "label": "Brand Name",
+            "options": [
+              {"value": "local_brand", "label": "Local/Homemade Brand"},
+              {"value": "organic_india", "label": "Organic India"},
+              {"value": "patanjali", "label": "Patanjali"},
+              {"value": "24_mantra", "label": "24 Mantra Organic"},
+              {"value": "custom", "label": "Other (Please specify)"}
+            ],
+            "validation": {
+              "required": true
+            },
+            "custom_input": {
+              "show_when": "custom",
+              "max_length": 50,
+              "validation": "required"
+            }
+          },
+          "sku_code": {
+            "type": "text",
+            "label": "SKU Code",
+            "auto_generate": true,
+            "pattern": "GM{category_code}{vendor_id}{product_number}",
+            "validation": {
+              "required": true,
+              "unique": true,
+              "pattern": "^GM[A-Z]{2}[0-9]{3}[0-9]{4}$"
+            },
+            "editable": false,
+            "help_text": "Unique product identifier (auto-generated)"
+          },
+          "product_type": {
+            "type": "radio",
+            "label": "Product Type",
+            "options": [
+              {"value": "simple", "label": "Simple Product", "description": "Single product without variants"},
+              {"value": "variable", "label": "Variable Product", "description": "Product with variants (size, weight, etc.)"}
+            ],
+            "default": "simple",
+            "validation": {
+              "required": true
+            }
+          }
+        }
+      },
+      "pricing_strategy": {
+        "title": "Pricing & Offers",
+        "description": "Set your product pricing and offers",
+        "order": 2,
+        "fields": {
+          "mrp": {
+            "type": "currency",
+            "label": "Maximum Retail Price (MRP)",
+            "currency": "INR",
+            "validation": {
+              "required": true,
+              "numeric": true,
+              "min": 1,
+              "max": 100000
+            },
+            "help_text": "Maximum retail price as per government regulations"
+          },
+          "selling_price": {
+            "type": "currency",
+            "label": "Your Selling Price",
+            "currency": "INR",
+            "validation": {
+              "required": true,
+              "numeric": true,
+              "lte": "mrp"
+            },
+            "auto_calculate_discount": true,
+            "help_text": "Price at which you want to sell (must be ≤ MRP)"
+          },
+          "discount_percentage": {
+            "type": "number",
+            "label": "Discount %",
+            "readonly": true,
+            "auto_calculate": true,
+            "formula": "((mrp - selling_price) / mrp) * 100",
+            "display_format": "percentage",
+            "help_text": "Automatically calculated discount percentage"
+          },
+          "cost_price": {
+            "type": "currency",
+            "label": "Your Cost Price (Optional)",
+            "currency": "INR",
+            "validation": {
+              "numeric": true,
+              "min": 0
+            },
+            "private": true,
+            "help_text": "For your internal profit calculation (not shown to customers)"
+          },
+          "offer_validity": {
+            "type": "date_range",
+            "label": "Special Offer Period",
+            "fields": {
+              "start_date": {
+                "type": "datetime",
+                "label": "Offer Start Date",
+                "validation": {
+                  "date": true,
+                  "after_or_equal": "today"
+                }
+              },
+              "end_date": {
+                "type": "datetime",
+                "label": "Offer End Date",
+                "validation": {
+                  "date": true,
+                  "after": "start_date"
+                }
+              }
+            },
+            "optional": true,
+            "help_text": "Limited time pricing (optional)"
+          },
+          "bulk_pricing": {
+            "type": "repeater",
+            "label": "Bulk Pricing Tiers",
+            "description": "Offer discounts for bulk orders",
+            "fields": {
+              "min_quantity": {
+                "type": "number",
+                "label": "Minimum Quantity",
+                "validation": {
+                  "required": true,
+                  "numeric": true,
+                  "min": 1
+                }
+              },
+              "discount_type": {
+                "type": "select",
+                "label": "Discount Type",
+                "options": [
+                  {"value": "percentage", "label": "Percentage Off"},
+                  {"value": "fixed_amount", "label": "Fixed Amount Off"},
+                  {"value": "fixed_price", "label": "Fixed Price Per Unit"}
+                ]
+              },
+              "discount_value": {
+                "type": "number",
+                "label": "Discount Value",
+                "validation": {
+                  "required": true,
+                  "numeric": true,
+                  "min": 0
+                }
+              }
+            },
+            "max_tiers": 5,
+            "optional": true
+          }
+        }
+      },
+      "inventory_management": {
+        "title": "Inventory & Stock",
+        "description": "Manage your product inventory",
+        "order": 3,
+        "fields": {
+          "stock_quantity": {
+            "type": "number",
+            "label": "Available Stock Quantity",
+            "validation": {
+              "required": true,
+              "numeric": true,
+              "min": 0,
+              "max": 10000
+            },
+            "help_text": "Current available quantity in your inventory"
+          },
+          "unit_of_measurement": {
+            "type": "select",
+            "label": "Unit of Measurement",
+            "options": [
+              {"value": "pieces", "label": "Pieces/Items"},
+              {"value": "kg", "label": "Kilograms (kg)"},
+              {"value": "grams", "label": "Grams (g)"},
+              {"value": "liters", "label": "Liters (L)"},
+              {"value": "ml", "label": "Milliliters (ml)"},
+              {"value": "packets", "label": "Packets"},
+              {"value": "boxes", "label": "Boxes"},
+              {"value": "bottles", "label": "Bottles"}
+            ],
+            "validation": {
+              "required": true
+            }
+          },
+          "minimum_order_quantity": {
+            "type": "number",
+            "label": "Minimum Order Quantity",
+            "default": 1,
+            "validation": {
+              "required": true,
+              "numeric": true,
+              "min": 1
+            },
+            "help_text": "Minimum quantity customer must order"
+          },
+          "maximum_order_quantity": {
+            "type": "number",
+            "label": "Maximum Order Quantity (Optional)",
+            "validation": {
+              "numeric": true,
+              "gte": "minimum_order_quantity"
+            },
+            "help_text": "Maximum quantity per order (leave empty for no limit)"
+          },
+          "low_stock_alert": {
+            "type": "number",
+            "label": "Low Stock Alert Threshold",
+            "default": 10,
+            "validation": {
+              "required": true,
+              "numeric": true,
+              "min": 1
+            },
+            "help_text": "Get notified when stock falls below this number"
+          },
+          "track_quantity": {
+            "type": "checkbox",
+            "label": "Track stock quantity for this product",
+            "default": true,
+            "help_text": "Uncheck if this is a service or unlimited item"
+          },
+          "stock_status": {
+            "type": "auto_calculate",
+            "readonly": true,
+            "logic": "stock_quantity > low_stock_alert ? 'in_stock' : (stock_quantity > 0 ? 'low_stock' : 'out_of_stock')",
+            "display_as": "badge"
+          },
+          "restock_date": {
+            "type": "date",
+            "label": "Expected Restock Date",
+            "conditional": "stock_status === 'out_of_stock'",
+            "validation": {
+              "date": true,
+              "after": "today"
+            },
+            "help_text": "When do you expect to restock this item?"
+          }
+        }
+      },
+      "product_variants": {
+        "title": "Product Variants",
+        "description": "Add variations like size, weight, color, etc.",
+        "order": 4,
+        "conditional": "product_type === 'variable'",
+        "fields": {
+          "variant_attributes": {
+            "type": "variant_builder",
+            "label": "Product Attributes",
+            "attributes": {
+              "weight": {
+                "label": "Weight/Size",
+                "options": ["250g", "500g", "1kg", "2kg", "5kg", "10kg"],
+                "allow_custom": true,
+                "price_modifier_type": "percentage_or_fixed"
+              },
+              "packaging": {
+                "label": "Packaging Type",
+                "options": ["pouch", "bottle", "jar", "box", "sack", "can"],
+                "allow_custom": true,
+                "additional_cost": "currency"
+              },
+              "quality_grade": {
+                "label": "Quality Grade",
+                "options": ["premium", "standard", "economy"],
+                "price_modifier_type": "percentage"
+              },
+              "flavor": {
+                "label": "Flavor/Variety",
+                "options": ["original", "spicy", "sweet", "tangy"],
+                "allow_custom": true
+              }
+            },
+            "variant_generation": "automatic",
+            "stock_tracking": "individual",
+            "pricing": "individual_or_inherited"
+          },
+          "variant_matrix": {
+            "type": "matrix_table",
+            "auto_generated": true,
+            "columns": ["combination", "sku", "price", "stock", "image", "enabled"],
+            "bulk_edit": true,
+            "import_export": true
+          }
+        }
+      },
+      "media_gallery": {
+        "title": "Product Images & Media",
+        "description": "Upload product photos and videos",
+        "order": 5,
+        "fields": {
+          "main_image": {
+            "type": "image_upload",
+            "label": "Main Product Image",
+            "validation": {
+              "required": true,
+              "image": true,
+              "max_size": "2MB",
+              "min_dimensions": "800x800",
+              "aspect_ratio": "1:1_preferred"
+            },
+            "features": {
+              "crop_tool": true,
+              "resize_tool": true,
+              "filters": ["brightness", "contrast", "saturation"]
+            },
+            "help_text": "This will be the primary image customers see. Square format (1:1) recommended."
+          },
+          "gallery_images": {
+            "type": "multiple_image_upload",
+            "label": "Additional Product Images",
+            "max_files": 6,
+            "validation": {
+              "image": true,
+              "max_size": "2MB",
+              "min_dimensions": "600x600"
+            },
+            "features": {
+              "drag_drop": true,
+              "reorder": true,
+              "crop_tool": true,
+              "bulk_upload": true
+            },
+            "image_types": [
+              {"label": "Product in use", "description": "Show product being used"},
+              {"label": "Detail shots", "description": "Close-up of important features"},
+              {"label": "Packaging", "description": "How product is packaged"},
+              {"label": "Ingredients/Contents", "description": "What's inside the product"},
+              {"label": "Size comparison", "description": "Show scale/size reference"},
+              {"label": "Lifestyle", "description": "Product in lifestyle context"}
+            ],
+            "help_text": "Show different angles, uses, and details of your product"
+          },
+          "product_video": {
+            "type": "video_upload_or_url",
+            "label": "Product Video (Optional)",
+            "upload_options": {
+              "max_size": "50MB",
+              "formats": ["mp4", "webm", "mov"],
+              "duration_limit": "60_seconds"
+            },
+            "url_options": {
+              "supported_platforms": ["youtube", "vimeo"],
+              "validation": "valid_url"
+            },
+            "help_text": "Short video showing your product (increases customer engagement)"
+          },
+          "image_alt_tags": {
+            "type": "text_array",
+            "label": "Image Alt Text",
+            "description": "Describe each image for SEO and accessibility",
+            "auto_generate": true,
+            "editable": true,
+            "max_length_per_tag": 100
+          }
+        }
+      },
+      "shipping_logistics": {
+        "title": "Shipping & Delivery",
+        "description": "Configure shipping options",
+        "order": 6,
+        "fields": {
+          "weight_for_shipping": {
+            "type": "number",
+            "label": "Shipping Weight (kg)",
+            "validation": {
+              "required": true,
+              "numeric": true,
+              "min": 0.01,
+              "max": 50
+            },
+            "step": 0.01,
+            "help_text": "Actual weight for shipping calculation"
+          },
+          "dimensions": {
+            "type": "dimensions",
+            "label": "Package Dimensions",
+            "fields": {
+              "length": {"type": "number", "label": "Length (cm)", "validation": {"numeric": true, "min": 1}},
+              "width": {"type": "number", "label": "Width (cm)", "validation": {"numeric": true, "min": 1}},
+              "height": {"type": "number", "label": "Height (cm)", "validation": {"numeric": true, "min": 1}}
+            },
+            "auto_calculate_volume": true,
+            "help_text": "Package dimensions for shipping calculation"
+          },
+          "delivery_time": {
+            "type": "select",
+            "label": "Estimated Delivery Time",
+            "options": [
+              {"value": "same_day", "label": "Same Day (within city)"},
+              {"value": "next_day", "label": "Next Day"},
+              {"value": "2-3_days", "label": "2-3 Business Days"},
+              {"value": "3-5_days", "label": "3-5 Business Days"},
+              {"value": "5-7_days", "label": "5-7 Business Days"},
+              {"value": "7-10_days", "label": "1-2 Weeks"}
+            ],
+            "default": "3-5_days",
+            "validation": {
+              "required": true
+            }
+          },
+          "shipping_class": {
+            "type": "select",
+            "label": "Shipping Class",
+            "options": [
+              {"value": "standard", "label": "Standard Items"},
+              {"value": "fragile", "label": "Fragile Items"},
+              {"value": "perishable", "label": "Perishable/Fresh Items"},
+              {"value": "liquid", "label": "Liquid Items"},
+              {"value": "oversized", "label": "Oversized Items"},
+              {"value": "hazardous", "label": "Hazardous Materials"}
+            ],
+            "default": "standard",
+            "additional_fields": {
+              "perishable": {
+                "cold_storage_required": "checkbox",
+                "expiry_tracking": "checkbox"
+              },
+              "fragile": {
+                "special_packaging": "checkbox",
+                "insurance_required": "checkbox"
+              }
+            }
+          },
+          "free_shipping": {
+            "type": "checkbox",
+            "label": "Offer Free Shipping",
+            "default": false,
+            "conditional_field": {
+              "show_when": true,
+              "field": "free_shipping_threshold",
+              "type": "currency",
+              "label": "Free shipping above order value",
+              "help_text": "Minimum order value for free shipping"
+            }
+          },
+          "returnable": {
+            "type": "checkbox",
+            "label": "Allow Returns",
+            "default": true,
+            "conditional_fields": {
+              "return_window": {
+                "type": "select",
+                "label": "Return Window",
+                "options": [
+                  {"value": "7_days", "label": "7 Days"},
+                  {"value": "15_days", "label": "15 Days"},
+                  {"value": "30_days", "label": "30 Days"}
+                ],
+                "default": "7_days"
+              },
+              "return_conditions": {
+                "type": "multiselect",
+                "label": "Return Conditions",
+                "options": [
+                  {"value": "unused", "label": "Product must be unused"},
+                  {"value": "original_packaging", "label": "Original packaging required"},
+                  {"value": "tags_attached", "label": "Tags must be attached"},
+                  {"value": "no_consumables", "label": "Consumables not returnable"}
+                ]
+              }
+            }
+          },
+          "cod_available": {
+            "type": "checkbox",
+            "label": "Cash on Delivery Available",
+            "default": true,
+            "help_text": "Allow customers to pay on delivery"
+          }
+        }
+      },
+      "product_descriptions": {
+        "title": "Product Descriptions",
+        "description": "Detailed product information",
+        "order": 7,
+        "fields": {
+          "short_description": {
+            "type": "textarea",
+            "label": "Short Description",
+            "max_length": 300,
+            "validation": {
+              "required": true,
+              "min_length": 50
+            },
+            "features": {
+              "bullet_points": true,
+              "character_counter": true,
+              "seo_keywords_highlight": true
+            },
+            "help_text": "Brief, compelling description shown in product listings",
+            "template_suggestions": [
+              "Key benefits and features",
+              "What makes it special",
+              "Who is it for"
+            ]
+          },
+          "detailed_description": {
+            "type": "rich_text_editor",
+            "label": "Detailed Description",
+            "max_length": 5000,
+            "validation": {
+              "required": true,
+              "min_length": 200
+            },
+            "features": {
+              "formatting": ["bold", "italic", "underline", "lists", "tables"],
+              "sections": true,
+              "image_insertion": true,
+              "link_insertion": true
+            },
+            "section_templates": {
+              "benefits": "Key Benefits & Features",
+              "usage": "How to Use",
+              "storage": "Storage Instructions",
+              "ingredients": "Ingredients/Contents",
+              "nutrition": "Nutritional Information",
+              "certifications": "Quality Certifications",
+              "care_instructions": "Care & Maintenance"
+            },
+            "help_text": "Comprehensive product information for informed buying decisions"
+          },
+          "key_features": {
+            "type": "tag_input",
+            "label": "Key Features",
+            "max_tags": 10,
+            "suggestions": [
+              "organic", "natural", "handmade", "chemical_free", "preservative_free",
+              "farm_fresh", "traditional", "artisanal", "sustainable", "eco_friendly"
+            ],
+            "help_text": "Highlight key features and benefits as tags"
+          },
+          "product_highlights": {
+            "type": "repeater",
+            "label": "Product Highlights",
+            "max_items": 6,
+            "fields": {
+              "icon": {
+                "type": "icon_picker",
+                "label": "Icon",
+                "icon_sets": ["eco", "quality", "shipping", "general"]
+              },
+              "title": {
+                "type": "text",
+                "label": "Highlight Title",
+                "max_length": 30
+              },
+              "description": {
+                "type": "text",
+                "label": "Description",
+                "max_length": 100
+              }
+            },
+            "help_text": "Visual highlights displayed prominently on product page"
+          },
+          "ingredients_nutrition": {
+            "type": "structured_data",
+            "label": "Ingredients & Nutrition",
+            "conditional": "category_requires_nutrition_info",
+            "fields": {
+              "ingredients_list": {
+                "type": "textarea",
+                "label": "Ingredients List",
+                "help_text": "List all ingredients in order of quantity"
+              },
+              "nutritional_info": {
+                "type": "nutrition_table",
+                "label": "Nutritional Information",
+                "per_serving_size": "text",
+                "nutrients": [
+                  {"name": "Energy", "unit": "kcal"},
+                  {"name": "Protein", "unit": "g"},
+                  {"name": "Carbohydrates", "unit": "g"},
+                  {"name": "Fat", "unit": "g"},
+                  {"name": "Fiber", "unit": "g"},
+                  {"name": "Sugar", "unit": "g"},
+                  {"name": "Sodium", "unit": "mg"}
+                ]
+              },
+              "allergen_info": {
+                "type": "multiselect",
+                "label": "Contains Allergens",
+                "options": [
+                  "nuts", "dairy", "eggs", "soy", "wheat", "shellfish", "fish"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "certifications_compliance": {
+        "title": "Certifications & Compliance",
+        "description": "Legal and quality certifications",
+        "order": 8,
+        "fields": {
+          "fssai_license": {
+            "type": "text",
+            "label": "FSSAI License Number",
+            "pattern": "[0-9]{14}",
+            "validation": {
+              "required_if": "category_is_food_product",
+              "pattern": "^[0-9]{14}$"
+            },
+            "help_text": "14-digit FSSAI license number (required for food products)"
+          },
+          "organic_certification": {
+            "type": "file_upload_with_details",
+            "label": "Organic Certification",
+            "conditional": "is_organic_product",
+            "fields": {
+              "certificate_file": {
+                "type": "file_upload",
+                "accept": ".pdf,.jpg,.jpeg,.png",
+                "max_size": "5MB"
+              },
+              "certificate_number": {
+                "type": "text",
+                "label": "Certificate Number"
+              },
+              "issuing_authority": {
+                "type": "select",
+                "label": "Issuing Authority",
+                "options": [
+                  "india_organic", "usda_organic", "eu_organic", "jas_organic", "other"
+                ]
+              },
+              "issue_date": {"type": "date", "label": "Issue Date"},
+              "expiry_date": {"type": "date", "label": "Expiry Date"}
+            }
+          },
+          "quality_certifications": {
+            "type": "multiselect_with_uploads",
+            "label": "Other Quality Certifications",
+            "options": [
+              {"value": "iso_22000", "label": "ISO 22000 (Food Safety)"},
+              {"value": "haccp", "label": "HACCP"},
+              {"value": "gmp", "label": "Good Manufacturing Practice"},
+              {"value": "halal", "label": "Halal Certified"},
+              {"value": "jain_friendly", "label": "Jain Friendly"},
+              {"value": "vegan", "label": "Vegan Certified"},
+              {"value": "fair_trade", "label": "Fair Trade Certified"}
+            ],
+            "file_uploads": true,
+            "help_text": "Upload relevant quality certificates"
+          },
+          "origin_details": {
+            "type": "structured_form",
+            "label": "Product Origin Details",
+            "fields": {
+              "country_of_origin": {
+                "type": "select",
+                "label": "Country of Origin",
+                "options": "countries_list",
+                "default": "india"
+              },
+              "state_of_origin": {
+                "type": "select",
+                "label": "State/Region",
+                "dependent_on": "country_of_origin",
+                "conditional": "country_of_origin === 'india'"
+              },
+              "farm_name": {
+                "type": "text",
+                "label": "Farm/Producer Name",
+                "optional": true
+              },
+              "harvest_season": {
+                "type": "select",
+                "label": "Harvest Season",
+                "options": ["spring", "summer", "monsoon", "winter", "year_round"],
+                "optional": true
+              }
+            }
+          },
+          "expiry_shelf_life": {
+            "type": "expiry_management",
+            "label": "Expiry & Shelf Life",
+            "conditional": "has_expiry_date",
+            "fields": {
+              "shelf_life_duration": {
+                "type": "duration",
+                "label": "Shelf Life",
+                "units": ["days", "weeks", "months", "years"]
+              },
+              "manufacturing_date": {
+                "type": "date",
+                "label": "Manufacturing Date",
+                "default": "today"
+              },
+              "expiry_date": {
+                "type": "date",
+                "label": "Expiry Date",
+                "auto_calculate": true,
+                "based_on": "manufacturing_date + shelf_life"
+              },
+              "best_before": {
+                "type": "date",
+                "label": "Best Before Date",
+                "optional": true
+              }
+            }
+          }
+        }
+      },
+      "seo_optimization": {
+        "title": "SEO & Search Optimization",
+        "description": "Optimize for search engines",
+        "order": 9,
+        "collapsible": true,
+        "fields": {
+          "meta_title": {
+            "type": "text",
+            "label": "SEO Title",
+            "max_length": 60,
+            "validation": {
+              "max_length": 60
+            },
+            "features": {
+              "character_counter": true,
+              "seo_preview": true,
+              "auto_generate": true
+            },
+            "help_text": "Title shown in search results (50-60 characters recommended)"
+          },
+          "meta_description": {
+            "type": "textarea",
+            "label": "SEO Description",
+            "max_length": 160,
+            "validation": {
+              "max_length": 160
+            },
+            "features": {
+              "character_counter": true,
+              "seo_preview": true,
+              "auto_generate": true
+            },
+            "help_text": "Description shown in search results (150-160 characters)"
+          },
+          "search_keywords": {
+            "type": "tag_input",
+            "label": "Search Keywords",
+            "max_keywords": 20,
+            "features": {
+              "keyword_suggestions": true,
+              "search_volume": true,
+              "competition_analysis": true
+            },
+            "help_text": "Keywords customers might use to find your product"
+          },
+          "url_slug": {
+            "type": "text",
+            "label": "Product URL",
+            "auto_generate": true,
+            "validation": {
+              "unique": true,
+              "slug_format": true,
+              "max_length": 100
+            },
+            "preview": "https://greenmagic.com/products/{slug}",
+            "editable": true,
+            "help_text": "Clean URL for your product page"
+          },
+          "structured_data": {
+            "type": "json_preview",
+            "label": "Structured Data Preview",
+            "readonly": true,
+            "auto_generate": true,
+            "schema_type": "Product",
+            "help_text": "Rich snippets data for search engines (auto-generated)"
+          }
+        }
+      }
+    },
+    "formBehavior": {
+      "save_options": {
+        "auto_save": {
+          "enabled": true,
+          "interval": 30000,
+          "fields": "all_except_uploads"
+        },
+        "draft_save": {
+          "enabled": true,
+          "manual_trigger": true,
+          "auto_trigger_on_navigation": true
+        },
+        "validation": {
+          "on_blur": true,
+          "on_submit": true,
+          "real_time": false
+        }
+      },
+      "progressive_disclosure": {
+        "basic_mode": ["basic_information", "pricing_strategy", "inventory_management", "media_gallery"],
+        "advanced_mode": "all_sections",
+        "expert_mode": "all_sections_plus_bulk_operations"
+      },
+      "smart_suggestions": {
+        "category_based_templates": true,
+        "price_recommendations": true,
+        "seo_suggestions": true,
+        "similar_product_analysis": true
+      },
+      "bulk_operations": {
+        "bulk_edit": ["price", "stock", "category", "tags"],
+        "csv_import": true,
+        "excel_template": true,
+        "image_bulk_upload": true
+      }
+    },
+    "validation_engine": {
+      "field_dependencies": {
+        "category_drives_required_fields": true,
+        "product_type_affects_variants": true,
+        "shipping_class_affects_delivery_options": true
+      },
+      "business_rules": {
+        "price_validation": "selling_price <= mrp",
+        "stock_logic": "track_quantity ? stock_quantity >= 0 : no_validation",
+        "variant_validation": "all_variants_must_have_unique_combinations"
+      },
+      "async_validations": {
+        "sku_uniqueness": "check_against_database",
+        "url_slug_availability": "check_against_existing_products",
+        "fssai_license_verification": "validate_with_fssai_api"
+      }
+    }
+  }
+} 

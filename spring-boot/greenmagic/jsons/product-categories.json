@@ -1,0 +1,296 @@
+{
+  "productCategories": {
+    "organic_grains": {
+      "name": "Organic Grains & Cereals",
+      "description": "Organically grown grains and cereals",
+      "subcategories": {
+        "wheat": {
+          "name": "Wheat & Wheat Products",
+          "items": ["whole_wheat", "wheat_flour", "atta", "semolina", "broken_wheat"]
+        },
+        "rice": {
+          "name": "Rice & Rice Products", 
+          "items": ["basmati_rice", "brown_rice", "white_rice", "rice_flour", "poha"]
+        },
+        "corn": {
+          "name": "Corn & Corn Products",
+          "items": ["sweet_corn", "corn_flour", "corn_flakes", "popcorn"]
+        },
+        "millets": {
+          "name": "Millets",
+          "items": ["bajra", "jowar", "ragi", "foxtail_millet", "pearl_millet"]
+        },
+        "oats": {
+          "name": "Oats & Quinoa",
+          "items": ["rolled_oats", "steel_cut_oats", "quinoa", "buckwheat"]
+        }
+      },
+      "hsn_codes": ["1001", "1006", "1005", "1008"],
+      "gst_rate": 0,
+      "mandatory_certifications": ["organic", "fssai"],
+      "seasonal_availability": "year_round",
+      "storage_requirements": "cool_dry_place",
+      "shelf_life": "6-12_months"
+    },
+    "pulses_legumes": {
+      "name": "Pulses & Legumes",
+      "description": "Protein-rich pulses and legumes",
+      "subcategories": {
+        "lentils": {
+          "name": "Lentils (Dal)",
+          "items": ["moong_dal", "masoor_dal", "toor_dal", "chana_dal", "urad_dal"]
+        },
+        "whole_pulses": {
+          "name": "Whole Pulses",
+          "items": ["moong_whole", "chana_whole", "rajma", "kabuli_chana", "black_chana"]
+        },
+        "specialty_beans": {
+          "name": "Specialty Beans",
+          "items": ["soybean", "black_beans", "kidney_beans", "lima_beans"]
+        }
+      },
+      "hsn_codes": ["0713"],
+      "gst_rate": 0,
+      "mandatory_certifications": ["fssai"],
+      "seasonal_availability": "year_round",
+      "storage_requirements": "airtight_containers",
+      "shelf_life": "12-18_months"
+    },
+    "dairy_products": {
+      "name": "Dairy & Milk Products",
+      "description": "Fresh and processed dairy products",
+      "subcategories": {
+        "milk": {
+          "name": "Fresh Milk",
+          "items": ["cow_milk", "buffalo_milk", "goat_milk", "organic_milk"]
+        },
+        "ghee_butter": {
+          "name": "Ghee & Butter",
+          "items": ["desi_ghee", "organic_ghee", "white_butter", "salted_butter"]
+        },
+        "cheese_paneer": {
+          "name": "Cheese & Paneer",
+          "items": ["fresh_paneer", "cottage_cheese", "mozzarella", "cheddar"]
+        },
+        "yogurt_curd": {
+          "name": "Yogurt & Curd",
+          "items": ["fresh_curd", "greek_yogurt", "flavored_yogurt", "probiotic_curd"]
+        }
+      },
+      "hsn_codes": ["0401", "0405", "0406"],
+      "gst_rate": 5,
+      "mandatory_certifications": ["fssai", "agmark"],
+      "seasonal_availability": "year_round",
+      "storage_requirements": "refrigerated",
+      "shelf_life": "3-15_days",
+      "perishable": true
+    },
+    "fresh_vegetables": {
+      "name": "Fresh Vegetables",
+      "description": "Organic and fresh vegetables",
+      "subcategories": {
+        "leafy_greens": {
+          "name": "Leafy Greens",
+          "items": ["spinach", "fenugreek", "coriander", "mint", "lettuce"]
+        },
+        "root_vegetables": {
+          "name": "Root Vegetables",
+          "items": ["potato", "onion", "carrot", "radish", "beetroot"]
+        },
+        "gourds": {
+          "name": "Gourds & Squash",
+          "items": ["bottle_gourd", "bitter_gourd", "ridge_gourd", "pumpkin"]
+        },
+        "seasonal_vegetables": {
+          "name": "Seasonal Vegetables",
+          "items": ["tomato", "cucumber", "capsicum", "brinjal", "okra"]
+        },
+        "exotic_vegetables": {
+          "name": "Exotic Vegetables",
+          "items": ["broccoli", "cabbage", "cauliflower", "zucchini", "asparagus"]
+        }
+      },
+      "hsn_codes": ["0701", "0702", "0703", "0704", "0705"],
+      "gst_rate": 0,
+      "perishable": true,
+      "mandatory_certifications": ["organic"],
+      "seasonal_availability": "varies_by_item",
+      "storage_requirements": "cool_humid_place",
+      "shelf_life": "2-7_days"
+    },
+    "seasonal_fruits": {
+      "name": "Seasonal Fruits",
+      "description": "Fresh seasonal and exotic fruits",
+      "subcategories": {
+        "citrus_fruits": {
+          "name": "Citrus Fruits",
+          "items": ["orange", "lemon", "lime", "grapefruit", "sweet_lime"]
+        },
+        "tropical_fruits": {
+          "name": "Tropical Fruits",
+          "items": ["mango", "pineapple", "banana", "papaya", "guava"]
+        },
+        "berries": {
+          "name": "Berries",
+          "items": ["strawberry", "blueberry", "raspberry", "blackberry"]
+        },
+        "dry_fruits": {
+          "name": "Dry Fruits & Nuts",
+          "items": ["almonds", "cashews", "walnuts", "dates", "raisins"]
+        },
+        "seasonal_fruits": {
+          "name": "Seasonal Fruits",
+          "items": ["apple", "grapes", "pomegranate", "watermelon", "muskmelon"]
+        }
+      },
+      "hsn_codes": ["0801", "0802", "0803", "0804"],
+      "gst_rate": 0,
+      "perishable": true,
+      "mandatory_certifications": ["organic"],
+      "seasonal_availability": "varies_by_season",
+      "storage_requirements": "cool_place",
+      "shelf_life": "3-14_days"
+    },
+    "traditional_products": {
+      "name": "Traditional & Artisanal",
+      "description": "Traditional Indian food products",
+      "subcategories": {
+        "sweeteners": {
+          "name": "Natural Sweeteners",
+          "items": ["jaggery", "organic_honey", "palm_sugar", "coconut_sugar"]
+        },
+        "oils": {
+          "name": "Cooking Oils",
+          "items": ["mustard_oil", "coconut_oil", "sesame_oil", "groundnut_oil"]
+        },
+        "spices": {
+          "name": "Spices & Condiments",
+          "items": ["turmeric", "red_chili", "coriander_seeds", "cumin", "garam_masala"]
+        },
+        "pickles_preserves": {
+          "name": "Pickles & Preserves",
+          "items": ["mango_pickle", "lemon_pickle", "mixed_pickle", "chutneys"]
+        },
+        "herbal_products": {
+          "name": "Herbal & Ayurvedic",
+          "items": ["herbal_tea", "ayurvedic_powders", "medicinal_herbs", "organic_supplements"]
+        }
+      },
+      "hsn_codes": ["1701", "0409", "1507", "0910"],
+      "gst_rate": 5,
+      "mandatory_certifications": ["fssai", "agmark"],
+      "seasonal_availability": "year_round",
+      "storage_requirements": "cool_dry_place",
+      "shelf_life": "6-24_months"
+    },
+    "beverages": {
+      "name": "Beverages",
+      "description": "Healthy and organic beverages",
+      "subcategories": {
+        "herbal_teas": {
+          "name": "Herbal Teas",
+          "items": ["green_tea", "chamomile_tea", "ginger_tea", "tulsi_tea"]
+        },
+        "fresh_juices": {
+          "name": "Fresh Juices",
+          "items": ["orange_juice", "apple_juice", "pomegranate_juice", "mixed_fruit_juice"]
+        },
+        "health_drinks": {
+          "name": "Health Drinks",
+          "items": ["protein_smoothies", "detox_drinks", "energy_drinks", "probiotic_drinks"]
+        }
+      },
+      "hsn_codes": ["2009", "2202"],
+      "gst_rate": 12,
+      "mandatory_certifications": ["fssai"],
+      "perishable": "varies_by_product",
+      "storage_requirements": "cool_place",
+      "shelf_life": "3-12_months"
+    },
+    "personal_care": {
+      "name": "Personal Care & Wellness",
+      "description": "Natural and organic personal care products",
+      "subcategories": {
+        "skincare": {
+          "name": "Skincare",
+          "items": ["face_wash", "moisturizer", "face_mask", "sunscreen"]
+        },
+        "haircare": {
+          "name": "Haircare",
+          "items": ["shampoo", "conditioner", "hair_oil", "hair_mask"]
+        },
+        "oral_care": {
+          "name": "Oral Care",
+          "items": ["toothpaste", "mouthwash", "tongue_cleaner", "dental_floss"]
+        },
+        "wellness": {
+          "name": "Wellness Products",
+          "items": ["essential_oils", "aromatherapy", "yoga_accessories", "meditation_aids"]
+        }
+      },
+      "hsn_codes": ["3304", "3305", "3306"],
+      "gst_rate": 18,
+      "mandatory_certifications": ["fssai", "ayush"],
+      "seasonal_availability": "year_round",
+      "storage_requirements": "cool_dry_place",
+      "shelf_life": "12-36_months"
+    },
+    "home_essentials": {
+      "name": "Home & Kitchen Essentials",
+      "description": "Eco-friendly home and kitchen products",
+      "subcategories": {
+        "kitchen_utensils": {
+          "name": "Kitchen Utensils",
+          "items": ["wooden_spoons", "bamboo_cutting_boards", "steel_containers", "clay_pots"]
+        },
+        "cleaning_products": {
+          "name": "Cleaning Products",
+          "items": ["eco_detergent", "dish_soap", "floor_cleaner", "bathroom_cleaner"]
+        },
+        "storage_solutions": {
+          "name": "Storage Solutions",
+          "items": ["glass_jars", "bamboo_baskets", "cloth_bags", "food_containers"]
+        }
+      },
+      "hsn_codes": ["7323", "9403", "3401"],
+      "gst_rate": 18,
+      "mandatory_certifications": ["bis"],
+      "seasonal_availability": "year_round",
+      "storage_requirements": "normal_conditions",
+      "shelf_life": "12-60_months"
+    }
+  },
+  "categoryConfiguration": {
+    "defaultSettings": {
+      "imageRequirements": {
+        "main_image": "1000x1000px_minimum",
+        "gallery_images": "800x800px_minimum",
+        "supported_formats": ["jpg", "jpeg", "png", "webp"],
+        "max_file_size": "2MB_per_image"
+      },
+      "seoSettings": {
+        "title_length": "50-60_characters",
+        "description_length": "150-160_characters",
+        "keywords_limit": 20
+      },
+      "inventorySettings": {
+        "low_stock_threshold": 10,
+        "out_of_stock_threshold": 0,
+        "restock_notification": true
+      }
+    },
+    "validationRules": {
+      "mandatory_fields": ["product_title", "category", "price", "stock_quantity", "main_image"],
+      "conditional_fields": {
+        "fssai_license": "required_for_food_products",
+        "expiry_date": "required_for_perishable_items",
+        "organic_certification": "required_for_organic_products"
+      }
+    },
+    "automationRules": {
+      "price_validation": "selling_price_must_be_less_than_or_equal_to_mrp",
+      "stock_alerts": "notify_when_stock_below_threshold",
+      "category_specific_validation": "validate_based_on_category_requirements"
+    }
+  }
+} 

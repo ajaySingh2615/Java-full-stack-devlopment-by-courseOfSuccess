@@ -1,0 +1,765 @@
+{
+  "analyticsDashboard": {
+    "salesAnalytics": {
+      "revenueMetrics": {
+        "total_revenue": {
+          "title": "Total Revenue",
+          "description": "Cumulative revenue across all time periods",
+          "calculation": "sum(order_value) where status = 'delivered'",
+          "periods": {
+            "today": {
+              "label": "Today",
+              "query": "date = today",
+              "comparison": "yesterday"
+            },
+            "week": {
+              "label": "This Week",
+              "query": "date >= start_of_week",
+              "comparison": "previous_week"
+            },
+            "month": {
+              "label": "This Month",
+              "query": "date >= start_of_month",
+              "comparison": "previous_month"
+            },
+            "quarter": {
+              "label": "This Quarter",
+              "query": "date >= start_of_quarter",
+              "comparison": "previous_quarter"
+            },
+            "year": {
+              "label": "This Year",
+              "query": "date >= start_of_year",
+              "comparison": "previous_year"
+            }
+          },
+          "visualization": {
+            "type": "line_chart",
+            "time_series": true,
+            "comparison_overlay": true,
+            "trend_line": true
+          },
+          "kpi_card": {
+            "display": true,
+            "growth_indicator": true,
+            "color_coding": true,
+            "goal_tracking": true
+          }
+        },
+        "average_order_value": {
+          "title": "Average Order Value",
+          "description": "Mean order value across different time periods",
+          "calculation": "avg(order_value) where status = 'delivered'",
+          "benchmark": {
+            "industry_average": 1250,
+            "platform_average": "dynamic",
+            "category_average": "dynamic"
+          },
+          "trend_analysis": {
+            "moving_average": "30_day",
+            "seasonal_patterns": true,
+            "anomaly_detection": true
+          },
+          "visualization": {
+            "type": "gauge_chart",
+            "target_value": "industry_benchmark",
+            "color_zones": {
+              "red": "below_50_percent_of_target",
+              "yellow": "50_to_90_percent_of_target",
+              "green": "above_90_percent_of_target"
+            }
+          }
+        },
+        "revenue_by_category": {
+          "title": "Revenue by Product Category",
+          "description": "Revenue breakdown across different product categories",
+          "calculation": "sum(order_value) group_by category",
+          "time_periods": ["week", "month", "quarter", "year"],
+          "metrics": {
+            "absolute_revenue": true,
+            "percentage_contribution": true,
+            "growth_rate": "month_over_month",
+            "trend_direction": true
+          },
+          "visualization": {
+            "type": "pie_chart_with_drill_down",
+            "drill_down_levels": ["category", "subcategory", "product"],
+            "color_scheme": "category_based",
+            "interactive": true
+          },
+          "table_view": {
+            "sortable_columns": true,
+            "export_options": ["csv", "pdf"],
+            "pagination": true
+          }
+        },
+        "seasonal_trends": {
+          "title": "Seasonal Revenue Patterns",
+          "description": "Revenue trends across seasons and festivals",
+          "analysis_types": {
+            "monthly_comparison": "year_over_year",
+            "festival_impact": {
+              "festivals": ["diwali", "holi", "eid", "christmas", "new_year"],
+              "impact_window": "15_days_before_and_after",
+              "baseline_comparison": true
+            },
+            "weather_correlation": {
+              "seasonal_products": true,
+              "weather_data_integration": true,
+              "demand_forecasting": true
+            }
+          },
+          "visualization": {
+            "type": "heatmap_calendar",
+            "color_intensity": "revenue_level",
+            "tooltip_details": true,
+            "zoom_capabilities": true
+          }
+        }
+      },
+      "orderAnalytics": {
+        "order_volume": {
+          "title": "Order Volume Analysis",
+          "metrics": {
+            "total_orders": {
+              "calculation": "count(orders)",
+              "time_periods": "all_standard_periods",
+              "comparison": "previous_period"
+            },
+            "order_frequency": {
+              "calculation": "orders_per_customer",
+              "segmentation": "by_customer_tier",
+              "trends": "monthly"
+            },
+            "peak_analysis": {
+              "hourly_distribution": {
+                "chart_type": "bar_chart",
+                "time_range": "24_hours",
+                "peak_identification": true
+              },
+              "daily_patterns": {
+                "chart_type": "line_chart",
+                "weekly_view": true,
+                "seasonal_adjustment": true
+              }
+            }
+          },
+          "visualization": {
+            "type": "combination_chart",
+            "primary_axis": "order_count",
+            "secondary_axis": "revenue",
+            "time_selector": true
+          }
+        },
+        "order_fulfillment": {
+          "title": "Order Fulfillment Metrics",
+          "key_metrics": {
+            "fulfillment_rate": {
+              "calculation": "delivered_orders / total_orders * 100",
+              "target": 95,
+              "color_coding": true
+            },
+            "average_processing_time": {
+              "calculation": "avg(shipped_date - order_date)",
+              "unit": "hours",
+              "sla_comparison": true
+            },
+            "on_time_delivery": {
+              "calculation": "delivered_on_time / total_delivered * 100",
+              "sla_definition": "promised_delivery_date",
+              "trend_analysis": true
+            },
+            "cancellation_rate": {
+              "calculation": "cancelled_orders / total_orders * 100",
+              "reason_breakdown": true,
+              "improvement_suggestions": true
+            }
+          },
+          "visualization": {
+            "type": "dashboard_cards",
+            "real_time_updates": true,
+            "alert_thresholds": true,
+            "drill_down_capability": true
+          }
+        },
+        "geographic_distribution": {
+          "title": "Geographic Performance",
+          "analysis_levels": {
+            "country_level": {
+              "enabled": true,
+              "default_country": "india"
+            },
+            "state_level": {
+              "enabled": true,
+              "top_performing_states": 10
+            },
+            "city_level": {
+              "enabled": true,
+              "metro_vs_non_metro": true
+            },
+            "pincode_level": {
+              "enabled": true,
+              "delivery_performance": true
+            }
+          },
+          "metrics": {
+            "order_count": true,
+            "revenue": true,
+            "average_order_value": true,
+            "delivery_success_rate": true
+          },
+          "visualization": {
+            "type": "choropleth_map",
+            "color_intensity": "revenue_or_order_count",
+            "interactive_zoom": true,
+            "tooltip_details": true
+          },
+          "expansion_opportunities": {
+            "untapped_markets": true,
+            "growth_potential": true,
+            "competitor_analysis": true
+          }
+        }
+      }
+    },
+    "productPerformance": {
+      "top_performing_products": {
+        "best_sellers": {
+          "ranking_criteria": {
+            "by_quantity": "units_sold",
+            "by_revenue": "total_revenue_generated",
+            "by_profit": "total_profit_margin",
+            "by_growth": "month_over_month_growth"
+          },
+          "time_periods": ["week", "month", "quarter", "year"],
+          "category_wise": true,
+          "visualization": {
+            "type": "leaderboard_table",
+            "top_n": 20,
+            "trend_indicators": true,
+            "performance_badges": true
+          }
+        },
+        "highest_margin_products": {
+          "calculation": "profit_margin_percentage",
+          "minimum_sales_threshold": 10,
+          "opportunity_identification": true,
+          "pricing_optimization_suggestions": true
+        },
+        "fastest_moving_products": {
+          "calculation": "inventory_turnover_rate",
+          "stock_velocity": true,
+          "reorder_recommendations": true,
+          "demand_forecasting": true
+        },
+        "customer_favorites": {
+          "ranking_by": {
+            "rating": "average_customer_rating",
+            "reviews": "review_count",
+            "repeat_purchases": "customer_retention_rate",
+            "recommendations": "referral_rate"
+          },
+          "satisfaction_metrics": true,
+          "quality_indicators": true
+        }
+      },
+      "product_analytics": {
+        "stock_performance": {
+          "metrics": {
+            "stock_turnover": {
+              "calculation": "cogs / average_inventory_value",
+              "industry_benchmark": true,
+              "optimization_suggestions": true
+            },
+            "dead_stock": {
+              "identification": "no_sales_in_90_days",
+              "value_calculation": true,
+              "clearance_recommendations": true
+            },
+            "stockout_frequency": {
+              "calculation": "stockout_days / total_days",
+              "lost_sales_estimation": true,
+              "prevention_strategies": true
+            },
+            "optimal_stock_levels": {
+              "reorder_point_calculation": true,
+              "safety_stock_recommendations": true,
+              "seasonal_adjustments": true
+            }
+          },
+          "visualization": {
+            "type": "inventory_dashboard",
+            "stock_level_indicators": true,
+            "alert_system": true,
+            "action_recommendations": true
+          }
+        },
+        "pricing_analytics": {
+          "price_elasticity": {
+            "demand_sensitivity": "price_change_impact_on_sales",
+            "optimal_price_point": true,
+            "revenue_maximization": true,
+            "competitor_price_comparison": true
+          },
+          "discount_effectiveness": {
+            "discount_impact_analysis": true,
+            "roi_on_discounts": true,
+            "optimal_discount_levels": true,
+            "customer_response_patterns": true
+          },
+          "margin_analysis": {
+            "gross_margin": "by_product_and_category",
+            "net_margin": "after_all_costs",
+            "margin_trends": "over_time",
+            "improvement_opportunities": true
+          },
+          "dynamic_pricing_insights": {
+            "demand_based_pricing": true,
+            "competitor_monitoring": true,
+            "seasonal_pricing": true,
+            "inventory_based_pricing": true
+          }
+        },
+        "quality_metrics": {
+          "return_analysis": {
+            "return_rate": "by_product",
+            "return_reasons": "categorized_analysis",
+            "quality_issues": "identification_and_tracking",
+            "improvement_actions": "suggested_remedies"
+          },
+          "customer_satisfaction": {
+            "product_ratings": "average_and_distribution",
+            "review_sentiment": "positive_negative_neutral",
+            "satisfaction_trends": "over_time",
+            "feature_specific_feedback": true
+          },
+          "quality_score": {
+            "composite_score": "rating_returns_complaints",
+            "benchmark_comparison": true,
+            "improvement_tracking": true,
+            "quality_alerts": true
+          }
+        }
+      }
+    },
+    "customerAnalytics": {
+      "customer_segmentation": {
+        "value_based_segments": {
+          "high_value_customers": {
+            "definition": "top_20_percent_by_revenue",
+            "characteristics": "purchase_behavior_analysis",
+            "retention_strategies": "personalized_recommendations",
+            "lifetime_value": "calculation_and_projection"
+          },
+          "frequent_buyers": {
+            "definition": "purchase_frequency_above_average",
+            "loyalty_indicators": true,
+            "cross_sell_opportunities": true,
+            "referral_potential": true
+          },
+          "new_customers": {
+            "definition": "first_purchase_within_30_days",
+            "onboarding_effectiveness": true,
+            "conversion_tracking": true,
+            "retention_programs": true
+          },
+          "at_risk_customers": {
+            "definition": "no_purchase_in_6_months",
+            "win_back_campaigns": true,
+            "churn_prevention": true,
+            "re_engagement_strategies": true
+          }
+        },
+        "behavioral_segments": {
+          "purchase_patterns": {
+            "seasonal_buyers": "purchase_during_specific_seasons",
+            "bulk_buyers": "large_quantity_purchases",
+            "price_sensitive": "discount_driven_purchases",
+            "premium_buyers": "high_value_product_preference"
+          },
+          "engagement_levels": {
+            "highly_engaged": "regular_interaction_and_purchases",
+            "moderately_engaged": "occasional_interaction",
+            "low_engagement": "minimal_interaction",
+            "dormant": "no_recent_activity"
+          }
+        },
+        "demographic_analysis": {
+          "age_groups": "purchase_behavior_by_age",
+          "location_based": "city_state_regional_preferences",
+          "income_levels": "spending_patterns_analysis",
+          "lifestyle_segments": "product_preference_mapping"
+        }
+      },
+      "customer_behavior": {
+        "purchase_journey": {
+          "discovery_channels": "how_customers_find_products",
+          "browsing_patterns": "product_view_sequences",
+          "decision_factors": "price_reviews_ratings_influence",
+          "conversion_funnels": "visitor_to_buyer_analysis"
+        },
+        "cross_selling_analysis": {
+          "frequently_bought_together": "product_combination_analysis",
+          "complementary_products": "category_cross_selling",
+          "upselling_opportunities": "premium_product_recommendations",
+          "bundle_effectiveness": "package_deal_performance"
+        },
+        "seasonal_preferences": {
+          "product_seasonality": "demand_patterns_by_season",
+          "festival_buying": "purchase_behavior_during_festivals",
+          "weather_influence": "climate_driven_purchases",
+          "calendar_events": "holiday_and_event_impact"
+        },
+        "cart_behavior": {
+          "abandonment_analysis": {
+            "abandonment_rate": "by_stage_and_reason",
+            "recovery_opportunities": "email_sms_campaigns",
+            "friction_points": "checkout_optimization",
+            "timing_analysis": "optimal_reminder_timing"
+          },
+          "cart_value_analysis": {
+            "average_cart_size": "trends_and_patterns",
+            "cart_building_behavior": "item_addition_sequence",
+            "price_sensitivity": "cart_value_vs_conversion",
+            "shipping_threshold_impact": "free_shipping_influence"
+          }
+        }
+      },
+      "customer_satisfaction": {
+        "satisfaction_metrics": {
+          "nps_score": {
+            "calculation": "net_promoter_score",
+            "tracking": "over_time",
+            "segmentation": "by_customer_type",
+            "improvement_actions": "based_on_feedback"
+          },
+          "customer_satisfaction_score": {
+            "csat_measurement": "post_purchase_surveys",
+            "touchpoint_satisfaction": "delivery_support_product",
+            "satisfaction_drivers": "key_factor_analysis",
+            "benchmark_comparison": "industry_standards"
+          },
+          "customer_effort_score": {
+            "ease_of_purchase": "friction_measurement",
+            "support_accessibility": "help_availability",
+            "return_process": "hassle_free_returns",
+            "overall_experience": "effortless_interaction"
+          }
+        },
+        "feedback_analysis": {
+          "review_sentiment": {
+            "sentiment_distribution": "positive_negative_neutral",
+            "sentiment_trends": "over_time_analysis",
+            "keyword_analysis": "frequent_mention_topics",
+            "improvement_areas": "negative_feedback_patterns"
+          },
+          "rating_analysis": {
+            "rating_distribution": "1_to_5_star_breakdown",
+            "rating_trends": "improvement_or_decline",
+            "product_wise_ratings": "individual_product_performance",
+            "category_wise_ratings": "category_performance_comparison"
+          }
+        },
+        "loyalty_metrics": {
+          "repeat_purchase_rate": {
+            "calculation": "customers_with_multiple_orders",
+            "frequency_analysis": "purchase_intervals",
+            "loyalty_progression": "customer_journey_stages",
+            "retention_strategies": "based_on_behavior"
+          },
+          "customer_lifetime_value": {
+            "clv_calculation": "predictive_and_historical",
+            "clv_segments": "high_medium_low_value",
+            "clv_optimization": "strategies_to_increase",
+            "clv_tracking": "changes_over_time"
+          }
+        }
+      }
+    },
+    "financialAnalytics": {
+      "profitability_analysis": {
+        "revenue_streams": {
+          "product_sales": "primary_revenue_source",
+          "shipping_charges": "logistics_revenue",
+          "platform_fees": "if_applicable",
+          "advertising_revenue": "promotional_income"
+        },
+        "cost_structure": {
+          "cost_of_goods_sold": "product_acquisition_costs",
+          "operational_costs": "packaging_handling_storage",
+          "marketing_expenses": "advertising_promotion_costs",
+          "platform_fees": "marketplace_commissions",
+          "logistics_costs": "shipping_and_delivery"
+        },
+        "profitability_metrics": {
+          "gross_profit": {
+            "calculation": "revenue_minus_cogs",
+            "margin_percentage": true,
+            "trends": "monthly_quarterly_yearly",
+            "benchmark_comparison": true
+          },
+          "net_profit": {
+            "calculation": "gross_profit_minus_all_expenses",
+            "margin_percentage": true,
+            "profitability_trends": true,
+            "profit_improvement_opportunities": true
+          },
+          "contribution_margin": {
+            "by_product": "individual_product_profitability",
+            "by_category": "category_wise_contribution",
+            "by_customer": "customer_profitability_analysis",
+            "by_channel": "sales_channel_profitability"
+          }
+        }
+      },
+      "cash_flow_management": {
+        "accounts_receivable": {
+          "pending_payments": "outstanding_customer_payments",
+          "payment_terms": "credit_period_analysis",
+          "collection_efficiency": "payment_collection_rate",
+          "aging_analysis": "overdue_payment_tracking"
+        },
+        "payment_cycle": {
+          "order_to_payment": "payment_realization_time",
+          "platform_settlement": "marketplace_payment_cycles",
+          "cash_conversion_cycle": "working_capital_efficiency",
+          "payment_method_impact": "cod_vs_prepaid_analysis"
+        },
+        "cash_flow_forecasting": {
+          "seasonal_patterns": "cash_flow_seasonality",
+          "growth_projections": "revenue_growth_impact",
+          "working_capital_needs": "inventory_investment_planning",
+          "investment_planning": "expansion_funding_requirements"
+        }
+      },
+      "cost_optimization": {
+        "cost_per_acquisition": {
+          "customer_acquisition_cost": "marketing_spend_efficiency",
+          "channel_wise_cac": "acquisition_channel_comparison",
+          "cac_payback_period": "time_to_recover_acquisition_cost",
+          "cac_to_clv_ratio": "acquisition_investment_efficiency"
+        },
+        "operational_efficiency": {
+          "cost_per_order": "fulfillment_cost_analysis",
+          "inventory_carrying_cost": "storage_and_holding_costs",
+          "return_processing_cost": "reverse_logistics_expenses",
+          "customer_service_cost": "support_cost_per_interaction"
+        }
+      }
+    },
+    "dashboardVisualization": {
+      "executive_summary": {
+        "kpi_cards": {
+          "layout": "responsive_grid",
+          "cards": [
+            {
+              "id": "total_revenue",
+              "title": "Total Revenue",
+              "value_source": "salesAnalytics.revenueMetrics.total_revenue",
+              "comparison": "previous_period",
+              "trend_indicator": true,
+              "color": "green"
+            },
+            {
+              "id": "total_orders",
+              "title": "Total Orders",
+              "value_source": "orderAnalytics.order_volume.total_orders",
+              "comparison": "previous_period",
+              "trend_indicator": true,
+              "color": "blue"
+            },
+            {
+              "id": "average_order_value",
+              "title": "Avg Order Value",
+              "value_source": "salesAnalytics.revenueMetrics.average_order_value",
+              "comparison": "previous_period",
+              "trend_indicator": true,
+              "color": "purple"
+            },
+            {
+              "id": "customer_acquisition",
+              "title": "New Customers",
+              "value_source": "customerAnalytics.customer_segmentation.new_customers",
+              "comparison": "previous_period",
+              "trend_indicator": true,
+              "color": "orange"
+            }
+          ],
+          "interaction": {
+            "clickable": true,
+            "drill_down": true,
+            "tooltip_details": true
+          }
+        },
+        "trend_indicators": {
+          "arrow_style": "up_down_arrows",
+          "percentage_change": true,
+          "color_coding": {
+            "positive": "green",
+            "negative": "red",
+            "neutral": "gray"
+          }
+        },
+        "goal_tracking": {
+          "revenue_targets": "monthly_quarterly_yearly",
+          "growth_targets": "percentage_targets",
+          "performance_against_goals": "visual_progress_bars",
+          "goal_achievement_alerts": true
+        }
+      },
+      "interactive_charts": {
+        "revenue_trend_chart": {
+          "chart_type": "combination_chart",
+          "primary_axis": {
+            "data": "revenue_bars",
+            "color": "blue",
+            "type": "bar"
+          },
+          "secondary_axis": {
+            "data": "order_count_line",
+            "color": "green",
+            "type": "line"
+          },
+          "time_controls": {
+            "date_range_picker": true,
+            "preset_ranges": ["7d", "30d", "90d", "1y"],
+            "custom_range": true
+          },
+          "filters": {
+            "category_filter": "multiselect",
+            "customer_segment": "dropdown",
+            "product_filter": "searchable_multiselect"
+          },
+          "interactions": {
+            "zoom": true,
+            "pan": true,
+            "tooltip": "detailed_breakdown",
+            "drill_down": "daily_hourly_breakdown"
+          }
+        },
+        "product_performance_matrix": {
+          "chart_type": "bubble_chart",
+          "axes": {
+            "x_axis": {
+              "data": "sales_volume",
+              "label": "Sales Volume",
+              "scale": "linear"
+            },
+            "y_axis": {
+              "data": "profit_margin",
+              "label": "Profit Margin %",
+              "scale": "linear"
+            },
+            "bubble_size": {
+              "data": "inventory_value",
+              "label": "Inventory Value"
+            }
+          },
+          "color_coding": {
+            "dimension": "product_category",
+            "color_scheme": "category_colors"
+          },
+          "interactions": {
+            "hover_details": true,
+            "click_to_drill": true,
+            "selection_tools": true
+          }
+        },
+        "geographic_heatmap": {
+          "chart_type": "choropleth_map",
+          "geography": "india_states_and_cities",
+          "data_mapping": {
+            "color_intensity": "order_density_or_revenue",
+            "tooltip_data": ["orders", "revenue", "customers", "avg_order_value"]
+          },
+          "controls": {
+            "zoom_levels": ["country", "state", "city"],
+            "metric_selector": "dropdown",
+            "time_period_selector": true
+          },
+          "overlays": {
+            "delivery_zones": true,
+            "competitor_presence": true,
+            "demographic_data": true
+          }
+        }
+      },
+      "performance_tables": {
+        "top_products_table": {
+          "columns": [
+            {"field": "product_name", "label": "Product", "sortable": true, "searchable": true},
+            {"field": "units_sold", "label": "Units Sold", "sortable": true, "format": "number"},
+            {"field": "revenue", "label": "Revenue", "sortable": true, "format": "currency"},
+            {"field": "profit_margin", "label": "Margin %", "sortable": true, "format": "percentage"},
+            {"field": "growth_rate", "label": "Growth", "sortable": true, "format": "percentage_with_trend"}
+          ],
+          "features": {
+            "sorting": "multi_column_sorting",
+            "pagination": "server_side",
+            "export_options": ["excel", "pdf", "csv"],
+            "row_actions": ["view_details", "edit_product", "view_analytics"]
+          },
+          "styling": {
+            "alternating_rows": true,
+            "hover_highlight": true,
+            "conditional_formatting": "based_on_performance"
+          }
+        },
+        "customer_insights_table": {
+          "columns": [
+            {"field": "customer_name", "label": "Customer", "sortable": true},
+            {"field": "total_orders", "label": "Orders", "sortable": true},
+            {"field": "lifetime_value", "label": "LTV", "sortable": true, "format": "currency"},
+            {"field": "last_order_date", "label": "Last Order", "sortable": true, "format": "date"},
+            {"field": "customer_tier", "label": "Tier", "sortable": true, "format": "badge"}
+          ],
+          "search_functionality": {
+            "global_search": "customer_name_email_phone",
+            "column_filters": true,
+            "advanced_search": true
+          },
+          "pagination": {
+            "type": "server_side_pagination",
+            "page_sizes": [25, 50, 100],
+            "total_count_display": true
+          }
+        }
+      },
+      "real_time_updates": {
+        "websocket_connection": true,
+        "update_frequency": 30000,
+        "notification_system": {
+          "new_orders": true,
+          "goal_achievements": true,
+          "anomaly_alerts": true,
+          "performance_milestones": true
+        },
+        "data_refresh": {
+          "automatic": true,
+          "manual_refresh": true,
+          "last_updated_timestamp": true
+        }
+      },
+      "customization_options": {
+        "dashboard_layout": {
+          "drag_and_drop": true,
+          "widget_resizing": true,
+          "custom_arrangements": true,
+          "saved_layouts": true
+        },
+        "widget_configuration": {
+          "chart_type_selection": true,
+          "color_scheme_customization": true,
+          "data_source_selection": true,
+          "filter_presets": true
+        },
+        "user_preferences": {
+          "default_time_periods": true,
+          "favorite_metrics": true,
+          "alert_preferences": true,
+          "export_formats": true
+        }
+      }
+    }
+  }
+} 

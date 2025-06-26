@@ -27,6 +27,8 @@ import Unauthorized from './pages/Unauthorized';
 
 // Import Phase 1 Vendor Components
 import VendorProducts from './pages/vendor/VendorProducts';
+import ProductAdd from './pages/vendor/ProductAdd';
+import ProductVariants from './pages/vendor/ProductVariants';
 import VendorOrders from './pages/vendor/VendorOrders';
 import VendorAnalytics from './pages/vendor/VendorAnalytics';
 import VendorCustomers from './pages/vendor/VendorCustomers';
@@ -89,6 +91,24 @@ function App() {
               <Route path="/vendor/products" element={
                 <ProtectedRoute requireVendor={true} requireCompleteVendorProfile={true}>
                   <VendorProducts />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/vendor/products/add" element={
+                <ProtectedRoute requireVendor={true} requireCompleteVendorProfile={true}>
+                  <ProductAdd />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/vendor/products/edit/:id" element={
+                <ProtectedRoute requireVendor={true} requireCompleteVendorProfile={true}>
+                  <ProductAdd />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/vendor/products/:productId/variants" element={
+                <ProtectedRoute requireVendor={true} requireCompleteVendorProfile={true}>
+                  <ProductVariants />
                 </ProtectedRoute>
               } />
               

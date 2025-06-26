@@ -17,7 +17,8 @@ import {
   Upload,
   Grid,
   List,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Tag
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -34,8 +35,23 @@ const VendorProducts = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid', 'list', or 'table'
   const [selectedProducts, setSelectedProducts] = useState([]);
+  
+  // Phase 2 Advanced Features
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showBulkActions, setShowBulkActions] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState('desc');
+  
+  // Bulk actions state
+  const [bulkOperation, setBulkOperation] = useState({
+    type: '',
+    data: {}
+  });
   
   // Mock data for Phase 1 - replace with API calls later
   const mockProducts = [
@@ -99,12 +115,47 @@ const VendorProducts = () => {
     fetchProducts();
   }, []);
 
-  // Filter products based on search and status
+  // Enhanced filtering with Phase 2 features
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         product.sku.toLowerCase().includes(searchQuery.toLowerCase());
+                         product.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         product.category.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = filterStatus === 'all' || product.status === filterStatus;
-    return matchesSearch && matchesStatus;
+    const matchesCategory = filterCategory === 'all' || product.category === filterCategory;
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
+
+  // Enhanced sorting
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    let aValue, bValue;
+    
+    switch (sortBy) {
+      case 'name':
+        aValue = a.name.toLowerCase();
+        bValue = b.name.toLowerCase();
+        break;
+      case 'price':
+        aValue = a.discountPrice || a.price;
+        bValue = b.discountPrice || b.price;
+        break;
+      case 'stock':
+        aValue = a.stock;
+        bValue = b.stock;
+        break;
+      case 'created_at':
+        aValue = new Date(a.createdAt);
+        bValue = new Date(b.createdAt);
+        break;
+      default:
+        aValue = a.createdAt;
+        bValue = b.createdAt;
+    }
+    
+    if (sortOrder === 'asc') {
+      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+    } else {
+      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+    }
   });
 
   // Get status badge component
@@ -158,10 +209,133 @@ const VendorProducts = () => {
 
   // Handle select all products
   const handleSelectAll = () => {
-    if (selectedProducts.length === filteredProducts.length) {
+    if (selectedProducts.length === sortedProducts.length) {
       setSelectedProducts([]);
     } else {
-      setSelectedProducts(filteredProducts.map(p => p.id));
+      setSelectedProducts(sortedProducts.map(p => p.id));
+    }
+  };
+
+  // Phase 2 Enhanced Functions
+  const handleBulkStatusChange = (newStatus) => {
+    const updatedProducts = products.map(product => 
+      selectedProducts.includes(product.id) 
+        ? { ...product, status: newStatus, updatedAt: new Date().toISOString() }
+        : product
+    );
+    setProducts(updatedProducts);
+    setSelectedProducts([]);
+  };
+
+  const handleBulkPriceUpdate = (updateType, value) => {
+    const updatedProducts = products.map(product => {
+      if (!selectedProducts.includes(product.id)) return product;
+      
+      let newPrice = product.price;
+      switch (updateType) {
+        case 'percentage_increase':
+          newPrice = Math.round(product.price * (1 + value / 100));
+          break;
+        case 'percentage_decrease':
+          newPrice = Math.round(product.price * (1 - value / 100));
+          break;
+        case 'fixed_increase':
+          newPrice = product.price + value;
+          break;
+        case 'fixed_decrease':
+          newPrice = Math.max(1, product.price - value);
+          break;
+      }
+      
+      return { 
+        ...product, 
+        price: newPrice,
+        discountPrice: product.discountPrice ? Math.round(newPrice * 0.9) : null,
+        updatedAt: new Date().toISOString()
+      };
+    });
+    setProducts(updatedProducts);
+    setSelectedProducts([]);
+  };
+
+  const handleBulkStockUpdate = (updateType, value) => {
+    const updatedProducts = products.map(product => {
+      if (!selectedProducts.includes(product.id)) return product;
+      
+      let newStock = product.stock;
+      switch (updateType) {
+        case 'set':
+          newStock = value;
+          break;
+        case 'add':
+          newStock = product.stock + value;
+          break;
+        case 'subtract':
+          newStock = Math.max(0, product.stock - value);
+          break;
+      }
+      
+      // Auto-update status based on stock
+      let newStatus = product.status;
+      if (newStock === 0) {
+        newStatus = 'OUT_OF_STOCK';
+      } else if (newStock <= 5) {
+        newStatus = 'LOW_STOCK';
+      } else if (product.status === 'OUT_OF_STOCK' || product.status === 'LOW_STOCK') {
+        newStatus = 'ACTIVE';
+      }
+      
+      return { 
+        ...product, 
+        stock: newStock,
+        status: newStatus,
+        updatedAt: new Date().toISOString()
+      };
+    });
+    setProducts(updatedProducts);
+    setSelectedProducts([]);
+  };
+
+  const handleExport = (format = 'csv') => {
+    const exportData = selectedProducts.length > 0 
+      ? products.filter(p => selectedProducts.includes(p.id))
+      : sortedProducts;
+    
+    console.log(`Exporting ${exportData.length} products as ${format}:`, exportData);
+    
+    // Simulate export
+    const fileName = `products_export_${new Date().toISOString().split('T')[0]}.${format}`;
+    alert(`Export started: ${fileName}\n${exportData.length} products will be exported.`);
+  };
+
+  const handleImport = (file) => {
+    console.log('Importing products from file:', file);
+    // Simulate import
+    alert('Import functionality will be implemented with file upload and CSV parsing.');
+  };
+
+  const handleDuplicateProducts = () => {
+    const duplicatedProducts = products
+      .filter(p => selectedProducts.includes(p.id))
+      .map(product => ({
+        ...product,
+        id: Date.now() + Math.random(),
+        name: `${product.name} - Copy`,
+        sku: `${product.sku}-COPY`,
+        status: 'INACTIVE',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }));
+    
+    setProducts([...products, ...duplicatedProducts]);
+    setSelectedProducts([]);
+  };
+
+  const handleDeleteProducts = () => {
+    if (window.confirm(`Are you sure you want to delete ${selectedProducts.length} product(s)?`)) {
+      const updatedProducts = products.filter(p => !selectedProducts.includes(p.id));
+      setProducts(updatedProducts);
+      setSelectedProducts([]);
     }
   };
 
@@ -259,61 +433,169 @@ const VendorProducts = () => {
           </div>
         </div>
 
-        {/* Filters and Search */}
+        {/* Enhanced Filters and Search - Phase 2 */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-            <div className="flex-1 max-w-lg">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search products by name or SKU..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                />
+          <div className="flex flex-col space-y-4">
+            {/* Primary Controls */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+              <div className="flex-1 max-w-lg">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search products by name, SKU, or category..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                {/* Quick Filters */}
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                >
+                  <option value="all">All Status</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                  <option value="LOW_STOCK">Low Stock</option>
+                  <option value="OUT_OF_STOCK">Out of Stock</option>
+                </select>
+                
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                >
+                  <option value="all">All Categories</option>
+                  <option value="Organic Grains">Organic Grains</option>
+                  <option value="Traditional Products">Traditional Products</option>
+                  <option value="Fresh Vegetables">Fresh Vegetables</option>
+                  <option value="Seasonal Fruits">Seasonal Fruits</option>
+                </select>
+
+                {/* Sort Controls */}
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                >
+                  <option value="created_at">Sort by Created</option>
+                  <option value="name">Sort by Name</option>
+                  <option value="price">Sort by Price</option>
+                  <option value="stock">Sort by Stock</option>
+                </select>
+                
+                <button
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  className="p-2 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50"
+                  title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                </button>
+                
+                {/* View Mode */}
+                <div className="flex items-center space-x-1 border border-gray-300 rounded-md">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 rounded-l-md ${viewMode === 'grid' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  >
+                    <Grid className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 ${viewMode === 'list' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={`p-2 rounded-r-md ${viewMode === 'table' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  >
+                    <Package className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
-            
-            <div className="flex items-center space-x-4">
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="block w-32 px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="all">All Status</option>
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
-                <option value="LOW_STOCK">Low Stock</option>
-                <option value="OUT_OF_STOCK">Out of Stock</option>
-              </select>
-              
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  <Grid className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  <List className="w-4 h-4" />
-                </button>
+
+            {/* Bulk Actions Bar */}
+            {selectedProducts.length > 0 && (
+              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm font-medium text-blue-900">
+                    {selectedProducts.length} product{selectedProducts.length > 1 ? 's' : ''} selected
+                  </span>
+                  <button
+                    onClick={handleSelectAll}
+                    className="text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    {selectedProducts.length === sortedProducts.length ? 'Deselect All' : 'Select All'}
+                  </button>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  {/* Quick Bulk Actions */}
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handleBulkStatusChange(e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="px-2 py-1 border border-blue-300 rounded text-sm"
+                  >
+                    <option value="">Change Status</option>
+                    <option value="ACTIVE">Set Active</option>
+                    <option value="INACTIVE">Set Inactive</option>
+                  </select>
+                  
+                  <button
+                    onClick={handleDuplicateProducts}
+                    className="px-3 py-1 border border-blue-300 text-blue-700 rounded-md text-sm hover:bg-blue-100"
+                  >
+                    Duplicate
+                  </button>
+                  
+                  <button
+                    onClick={() => handleExport('csv')}
+                    className="px-3 py-1 border border-blue-300 text-blue-700 rounded-md text-sm hover:bg-blue-100"
+                  >
+                    Export Selected
+                  </button>
+                  
+                  <button
+                    onClick={handleDeleteProducts}
+                    className="px-3 py-1 border border-red-300 text-red-700 rounded-md text-sm hover:bg-red-100"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
+            )}
+
+            {/* Results Summary */}
+            <div className="flex items-center justify-between text-sm text-gray-500">
+              <span>
+                Showing {sortedProducts.length} of {products.length} products
+              </span>
+              <span>
+                {selectedProducts.length > 0 && `${selectedProducts.length} selected`}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Products List */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          {filteredProducts.length === 0 ? (
+          {sortedProducts.length === 0 ? (
             <div className="text-center py-12">
               <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
               <p className="text-gray-500 mb-6">
-                {searchQuery || filterStatus !== 'all' 
+                {searchQuery || filterStatus !== 'all' || filterCategory !== 'all'
                   ? 'Try adjusting your search or filters'
                   : 'Get started by adding your first product'
                 }
@@ -359,7 +641,7 @@ const VendorProducts = () => {
                 <div className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={selectedProducts.length === filteredProducts.length}
+                    checked={selectedProducts.length === sortedProducts.length}
                     onChange={handleSelectAll}
                     className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                   />
@@ -369,7 +651,7 @@ const VendorProducts = () => {
 
               {/* Products Table */}
               <div className="divide-y divide-gray-200">
-                {filteredProducts.map((product) => (
+                {sortedProducts.map((product) => (
                   <div key={product.id} className="px-6 py-4 hover:bg-gray-50">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
@@ -417,13 +699,34 @@ const VendorProducts = () => {
                         </div>
                         
                         <div className="flex items-center space-x-2">
-                          <button className="text-gray-400 hover:text-gray-600">
+                          <Link
+                            to={`/vendor/products/preview/${product.id}`}
+                            className="text-gray-400 hover:text-gray-600"
+                            title="Preview Product"
+                          >
                             <Eye className="w-4 h-4" />
-                          </button>
-                          <button className="text-gray-400 hover:text-gray-600">
+                          </Link>
+                          <Link
+                            to={`/vendor/products/edit/${product.id}`}
+                            className="text-gray-400 hover:text-gray-600"
+                            title="Edit Product"
+                          >
                             <Edit className="w-4 h-4" />
-                          </button>
-                          <button className="text-gray-400 hover:text-red-600">
+                          </Link>
+                          {product.productType === 'variable' && (
+                            <Link
+                              to={`/vendor/products/${product.id}/variants`}
+                              className="text-blue-400 hover:text-blue-600"
+                              title="Manage Variants"
+                            >
+                              <Tag className="w-4 h-4" />
+                            </Link>
+                          )}
+                          <button 
+                            onClick={() => handleDeleteProducts()}
+                            className="text-gray-400 hover:text-red-600"
+                            title="Delete Product"
+                          >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>

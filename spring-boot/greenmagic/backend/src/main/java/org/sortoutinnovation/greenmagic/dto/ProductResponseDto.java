@@ -21,28 +21,21 @@ public class ProductResponseDto {
     private Integer productId;
     private String sku;
     private String name;
-    private String slug;
+    private String urlSlug;
     private String description;
     private String shortDescription;
-    private String ingredients;
+    private String ingredientsList;
     private String brand;
     private BigDecimal price;
-    private BigDecimal regularPrice;
+    private BigDecimal mrp;
+    private BigDecimal costPrice;
     private Integer quantity;
     private String imageUrl;
     private List<Object> galleryImages;
-    private BigDecimal rating;
-    private Integer reviewCount;
-    private String tags;
+    private String deliveryTimeEstimate;
     private Boolean freeShipping;
-    private String shippingTime;
-    private Boolean ecoFriendly;
-    private String ecoFriendlyDetails;
     private Boolean isReturnable;
     private Boolean isCodAvailable;
-    private Boolean isFeatured;
-    private Boolean isBestSeller;
-    private Boolean isNewArrival;
     private Product.ProductStatus status;
     private String metaTitle;
     private String metaDescription;
@@ -53,29 +46,26 @@ public class ProductResponseDto {
     private LocalDateTime createdAt;
 
     // Constructor for minimal product info (for listings)
-    public ProductResponseDto(Integer productId, String name, String slug, BigDecimal price, String imageUrl, BigDecimal rating, Integer reviewCount, Boolean isFeatured) {
+    public ProductResponseDto(Integer productId, String name, String urlSlug, BigDecimal price, String imageUrl) {
         this.productId = productId;
         this.name = name;
-        this.slug = slug;
+        this.urlSlug = urlSlug;
         this.price = price;
         this.imageUrl = imageUrl;
-        this.rating = rating;
-        this.reviewCount = reviewCount;
-        this.isFeatured = isFeatured;
     }
 
     // Constructor for detailed product info
-    public ProductResponseDto(Integer productId, String sku, String name, String slug, String description, String shortDescription, 
-                             BigDecimal price, BigDecimal regularPrice, Integer quantity, String imageUrl, String brand, 
+    public ProductResponseDto(Integer productId, String sku, String name, String urlSlug, String description, String shortDescription, 
+                             BigDecimal price, BigDecimal mrp, Integer quantity, String imageUrl, String brand, 
                              String categoryName, Product.ProductStatus status) {
         this.productId = productId;
         this.sku = sku;
         this.name = name;
-        this.slug = slug;
+        this.urlSlug = urlSlug;
         this.description = description;
         this.shortDescription = shortDescription;
         this.price = price;
-        this.regularPrice = regularPrice;
+        this.mrp = mrp;
         this.quantity = quantity;
         this.imageUrl = imageUrl;
         this.brand = brand;

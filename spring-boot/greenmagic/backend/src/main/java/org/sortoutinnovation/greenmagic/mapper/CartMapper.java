@@ -72,9 +72,8 @@ public class CartMapper {
             dto.setProductName(cartItem.getProduct().getName());
             dto.setProductImage(cartItem.getProduct().getImageUrl());
             dto.setProductPrice(cartItem.getProduct().getPrice());
-            dto.setRegularPrice(cartItem.getProduct().getRegularPrice());
+            dto.setRegularPrice(cartItem.getProduct().getMrp());
             dto.setBrand(cartItem.getProduct().getBrand());
-            dto.setIsFeatured(cartItem.getProduct().getIsFeatured());
             
             // Calculate item total
             BigDecimal itemTotal = cartItem.getProduct().getPrice()

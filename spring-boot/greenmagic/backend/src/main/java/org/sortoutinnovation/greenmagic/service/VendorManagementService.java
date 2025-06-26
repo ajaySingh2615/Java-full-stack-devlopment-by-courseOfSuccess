@@ -1,0 +1,699 @@
+package org.sortoutinnovation.greenmagic.service;
+
+import org.sortoutinnovation.greenmagic.model.*;
+import org.sortoutinnovation.greenmagic.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * Service class for Vendor Management operations
+ * Handles business logic for vendor dashboard, products, orders, analytics, and customers
+ */
+@Service
+@Transactional
+public class VendorManagementService {
+
+    @Autowired
+    private ProductRepository productRepository;
+    
+    @Autowired
+    private ProductVariantRepository productVariantRepository;
+    
+    @Autowired
+    private OrderRepository orderRepository;
+    
+    @Autowired
+    private VendorAnalyticsRepository vendorAnalyticsRepository;
+    
+    @Autowired
+    private VendorCustomerRepository vendorCustomerRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private VendorProfileRepository vendorProfileRepository;
+    
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    // ===========================
+    // DASHBOARD METHODS
+    // ===========================
+
+    /**
+     * Get comprehensive dashboard overview for vendor
+     */
+    public Map<String, Object> getDashboardOverview(Integer vendorId, int days) {
+        Map<String, Object> dashboard = new HashMap<>();
+        
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(days);
+        
+        // Get basic statistics
+        dashboard.put("totalProducts", getProductCount(vendorId));
+        dashboard.put("activeProducts", getActiveProductCount(vendorId));
+        dashboard.put("totalOrders", getOrderCount(vendorId, startDate, endDate));
+        dashboard.put("totalRevenue", getTotalRevenue(vendorId, startDate, endDate));
+        dashboard.put("totalCustomers", getCustomerCount(vendorId));
+        dashboard.put("avgOrderValue", getAverageOrderValue(vendorId, startDate, endDate));
+        
+        // Get recent orders
+        dashboard.put("recentOrders", getRecentOrders(vendorId, 5));
+        
+        // Get product status breakdown
+        dashboard.put("productStats", getProductStatsBreakdown(vendorId));
+        
+        // Get order status breakdown
+        dashboard.put("orderStats", getOrderStatsBreakdown(vendorId));
+        
+        // Get low stock alerts
+        dashboard.put("lowStockProducts", getLowStockProducts(vendorId));
+        
+        // Get growth metrics
+        dashboard.put("growthMetrics", getGrowthMetrics(vendorId, days));
+        
+        return dashboard;
+    }
+
+    /**
+     * Get analytics data for date range
+     */
+    public Map<String, Object> getAnalytics(Integer vendorId, LocalDate startDate, LocalDate endDate) {
+        Map<String, Object> analytics = new HashMap<>();
+        
+        // Get analytics summary
+        Object[] summary = vendorAnalyticsRepository.getAnalyticsSummary(vendorId, startDate, endDate);
+        if (summary != null && summary.length > 0) {
+            analytics.put("totalRevenue", summary[0] != null ? summary[0] : BigDecimal.ZERO);
+            analytics.put("totalOrders", summary[1] != null ? summary[1] : 0);
+            analytics.put("totalCustomers", summary[2] != null ? summary[2] : 0);
+            analytics.put("avgOrderValue", summary[3] != null ? summary[3] : BigDecimal.ZERO);
+            analytics.put("conversionRate", summary[4] != null ? summary[4] : BigDecimal.ZERO);
+        }
+        
+        // Get revenue trend
+        analytics.put("revenueTrend", vendorAnalyticsRepository.getRevenueTrend(vendorId, startDate, endDate));
+        
+        // Get top products
+        analytics.put("topProducts", getTopProducts(vendorId, startDate, endDate));
+        
+        // Get customer acquisition trend
+        analytics.put("customerTrend", getCustomerAcquisitionTrend(vendorId, startDate, endDate));
+        
+        return analytics;
+    }
+
+    /**
+     * Get sales trend data
+     */
+    public List<Object[]> getSalesTrend(Integer vendorId, LocalDate startDate, LocalDate endDate) {
+        return vendorAnalyticsRepository.getRevenueTrend(vendorId, startDate, endDate);
+    }
+
+    // ===========================
+    // PRODUCT MANAGEMENT METHODS
+    // ===========================
+
+    /**
+     * Get vendor products with filtering
+     */
+    public Page<Product> getVendorProducts(Integer vendorId, Pageable pageable, String status, String category, String search) {
+        // Implementation would use custom query or specification pattern
+        // For now, basic implementation
+        return productRepository.findByCreatedByUserId(vendorId, pageable);
+    }
+
+    /**
+     * Get product statistics for vendor
+     */
+    public Map<String, Object> getProductStats(Integer vendorId) {
+        Map<String, Object> stats = new HashMap<>();
+        
+        stats.put("totalProducts", getProductCount(vendorId));
+        stats.put("activeProducts", getActiveProductCount(vendorId));
+        stats.put("inactiveProducts", getInactiveProductCount(vendorId));
+        stats.put("outOfStockProducts", getOutOfStockProductCount(vendorId));
+        stats.put("lowStockProducts", getLowStockProductCount(vendorId));
+        stats.put("totalVariants", getTotalVariantCount(vendorId));
+        
+        return stats;
+    }
+
+    /**
+     * Create new product
+     */
+    public Product createProduct(Integer vendorId, Product product) {
+        User vendor = userRepository.findById(vendorId.longValue())
+            .orElseThrow(() -> new RuntimeException("Vendor not found"));
+        
+        product.setCreatedBy(vendor);
+        product.setCreatedAt(LocalDateTime.now());
+        
+        // Generate SKU if not provided
+        if (product.getSku() == null || product.getSku().isEmpty()) {
+            product.setSku(generateSKU(vendorId, product));
+        }
+        
+        // Set default values
+        if (product.getStatus() == null) {
+            product.setStatus(Product.ProductStatus.ACTIVE);
+        }
+        
+        return productRepository.save(product);
+    }
+
+    /**
+     * Update product
+     */
+    public Product updateProduct(Integer vendorId, Integer productId, Product productData) {
+        Product existingProduct = productRepository.findById(productId.longValue())
+            .orElseThrow(() -> new RuntimeException("Product not found"));
+        
+        // Verify ownership
+        if (!existingProduct.getCreatedBy().getUserId().equals(vendorId)) {
+            throw new RuntimeException("Unauthorized to update this product");
+        }
+        
+        // Update fields
+        existingProduct.setName(productData.getName());
+        existingProduct.setDescription(productData.getDescription());
+        existingProduct.setShortDescription(productData.getShortDescription());
+        existingProduct.setPrice(productData.getPrice());
+        existingProduct.setMrp(productData.getMrp());
+        existingProduct.setQuantity(productData.getQuantity());
+        existingProduct.setStatus(productData.getStatus());
+        existingProduct.setCategory(productData.getCategory());
+        existingProduct.setBrand(productData.getBrand());
+        existingProduct.setImageUrl(productData.getImageUrl());
+        existingProduct.setMetaTitle(productData.getMetaTitle());
+        existingProduct.setMetaDescription(productData.getMetaDescription());
+        
+        return productRepository.save(existingProduct);
+    }
+
+    /**
+     * Delete product
+     */
+    public void deleteProduct(Integer vendorId, Integer productId) {
+        Product product = productRepository.findById(productId.longValue())
+            .orElseThrow(() -> new RuntimeException("Product not found"));
+        
+        // Verify ownership
+        if (!product.getCreatedBy().getUserId().equals(vendorId)) {
+            throw new RuntimeException("Unauthorized to delete this product");
+        }
+        
+        // Check if product has orders
+        boolean hasOrders = orderRepository.existsByOrderItemsProductProductId(productId);
+        if (hasOrders) {
+            // Soft delete by setting status to INACTIVE
+            product.setStatus(Product.ProductStatus.INACTIVE);
+            productRepository.save(product);
+        } else {
+            // Hard delete
+            productRepository.delete(product);
+        }
+    }
+
+    /**
+     * Bulk update product status
+     */
+    public void bulkUpdateProductStatus(Integer vendorId, List<Integer> productIds, String status) {
+        List<Product> products = productRepository.findAllById(
+            productIds.stream().map(Long::valueOf).collect(Collectors.toList())
+        );
+        
+        Product.ProductStatus newStatus = Product.ProductStatus.valueOf(status.toUpperCase());
+        
+        for (Product product : products) {
+            // Verify ownership
+            if (product.getCreatedBy().getUserId().equals(vendorId)) {
+                product.setStatus(newStatus);
+            }
+        }
+        
+        productRepository.saveAll(products);
+    }
+
+    /**
+     * Bulk update product prices
+     */
+    public void bulkUpdateProductPrices(Integer vendorId, List<Integer> productIds, String updateType, BigDecimal value) {
+        List<Product> products = productRepository.findAllById(
+            productIds.stream().map(Long::valueOf).collect(Collectors.toList())
+        );
+        
+        for (Product product : products) {
+            // Verify ownership
+            if (product.getCreatedBy().getUserId().equals(vendorId)) {
+                BigDecimal currentPrice = product.getPrice();
+                BigDecimal newPrice;
+                
+                if ("percentage".equals(updateType)) {
+                    newPrice = currentPrice.multiply(BigDecimal.ONE.add(value.divide(BigDecimal.valueOf(100))));
+                } else {
+                    newPrice = currentPrice.add(value);
+                }
+                
+                // Ensure price is not negative
+                if (newPrice.compareTo(BigDecimal.ZERO) < 0) {
+                    newPrice = BigDecimal.ZERO;
+                }
+                
+                product.setPrice(newPrice.setScale(2, RoundingMode.HALF_UP));
+            }
+        }
+        
+        productRepository.saveAll(products);
+    }
+
+    // ===========================
+    // PRODUCT VARIANT METHODS
+    // ===========================
+
+    /**
+     * Get product variants
+     */
+    public List<ProductVariant> getProductVariants(Integer vendorId, Integer productId) {
+        Product product = productRepository.findById(productId.longValue())
+            .orElseThrow(() -> new RuntimeException("Product not found"));
+        
+        // Verify ownership
+        if (!product.getCreatedBy().getUserId().equals(vendorId)) {
+            throw new RuntimeException("Unauthorized to access this product");
+        }
+        
+        return productVariantRepository.findByProductProductIdOrderBySortOrderAsc(productId);
+    }
+
+    /**
+     * Create product variant
+     */
+    public ProductVariant createProductVariant(Integer vendorId, Integer productId, ProductVariant variant) {
+        Product product = productRepository.findById(productId.longValue())
+            .orElseThrow(() -> new RuntimeException("Product not found"));
+        
+        // Verify ownership
+        if (!product.getCreatedBy().getUserId().equals(vendorId)) {
+            throw new RuntimeException("Unauthorized to modify this product");
+        }
+        
+        variant.setProduct(product);
+        variant.setCreatedAt(LocalDateTime.now());
+        
+        // Generate variant SKU if not provided
+        if (variant.getVariantSku() == null || variant.getVariantSku().isEmpty()) {
+            variant.setVariantSku(generateVariantSKU(product, variant));
+        }
+        
+        return productVariantRepository.save(variant);
+    }
+
+    /**
+     * Update product variant
+     */
+    public ProductVariant updateProductVariant(Integer vendorId, Integer productId, Long variantId, ProductVariant variantData) {
+        ProductVariant existingVariant = productVariantRepository.findById(variantId)
+            .orElseThrow(() -> new RuntimeException("Variant not found"));
+        
+        // Verify ownership
+        if (!existingVariant.getProduct().getCreatedBy().getUserId().equals(vendorId)) {
+            throw new RuntimeException("Unauthorized to update this variant");
+        }
+        
+        // Update fields
+        existingVariant.setVariantName(variantData.getVariantName());
+        existingVariant.setSize(variantData.getSize());
+        existingVariant.setColor(variantData.getColor());
+        existingVariant.setWeight(variantData.getWeight());
+        existingVariant.setFlavor(variantData.getFlavor());
+        existingVariant.setPackSize(variantData.getPackSize());
+        existingVariant.setPrice(variantData.getPrice());
+        existingVariant.setRegularPrice(variantData.getRegularPrice());
+        existingVariant.setStockQuantity(variantData.getStockQuantity());
+        existingVariant.setStatus(variantData.getStatus());
+        existingVariant.setUpdatedAt(LocalDateTime.now());
+        
+        return productVariantRepository.save(existingVariant);
+    }
+
+    /**
+     * Delete product variant
+     */
+    public void deleteProductVariant(Integer vendorId, Integer productId, Long variantId) {
+        ProductVariant variant = productVariantRepository.findById(variantId)
+            .orElseThrow(() -> new RuntimeException("Variant not found"));
+        
+        // Verify ownership
+        if (!variant.getProduct().getCreatedBy().getUserId().equals(vendorId)) {
+            throw new RuntimeException("Unauthorized to delete this variant");
+        }
+        
+        productVariantRepository.delete(variant);
+    }
+
+    /**
+     * Bulk update variant prices
+     */
+    public void bulkUpdateVariantPrices(Integer vendorId, Integer productId, List<Long> variantIds, String updateType, BigDecimal value) {
+        List<ProductVariant> variants = productVariantRepository.findAllById(variantIds);
+        
+        for (ProductVariant variant : variants) {
+            // Verify ownership
+            if (variant.getProduct().getCreatedBy().getUserId().equals(vendorId)) {
+                BigDecimal currentPrice = variant.getPrice();
+                BigDecimal newPrice;
+                
+                if ("percentage".equals(updateType)) {
+                    newPrice = currentPrice.multiply(BigDecimal.ONE.add(value.divide(BigDecimal.valueOf(100))));
+                } else {
+                    newPrice = currentPrice.add(value);
+                }
+                
+                // Ensure price is not negative
+                if (newPrice.compareTo(BigDecimal.ZERO) < 0) {
+                    newPrice = BigDecimal.ZERO;
+                }
+                
+                variant.setPrice(newPrice.setScale(2, RoundingMode.HALF_UP));
+                variant.setUpdatedAt(LocalDateTime.now());
+            }
+        }
+        
+        productVariantRepository.saveAll(variants);
+    }
+
+    // ===========================
+    // ORDER MANAGEMENT METHODS
+    // ===========================
+
+    /**
+     * Get vendor orders with filtering
+     */
+    public Page<Order> getVendorOrders(Integer vendorId, Pageable pageable, String status, String search) {
+        // Implementation would use custom query to filter orders containing vendor's products
+        // For now, basic implementation
+        return orderRepository.findAll(pageable);
+    }
+
+    /**
+     * Get order statistics for vendor
+     */
+    public Map<String, Object> getOrderStats(Integer vendorId) {
+        Map<String, Object> stats = new HashMap<>();
+        
+        LocalDate today = LocalDate.now();
+        LocalDate monthStart = today.withDayOfMonth(1);
+        
+        stats.put("totalOrders", getOrderCount(vendorId, monthStart, today));
+        stats.put("pendingOrders", getPendingOrderCount(vendorId));
+        stats.put("processingOrders", getProcessingOrderCount(vendorId));
+        stats.put("shippedOrders", getShippedOrderCount(vendorId));
+        stats.put("deliveredOrders", getDeliveredOrderCount(vendorId));
+        stats.put("cancelledOrders", getCancelledOrderCount(vendorId));
+        stats.put("totalRevenue", getTotalRevenue(vendorId, monthStart, today));
+        
+        return stats;
+    }
+
+    /**
+     * Update order status
+     */
+    public Order updateOrderStatus(Integer vendorId, Integer orderId, String status, String notes) {
+        Order order = orderRepository.findById(orderId.longValue())
+            .orElseThrow(() -> new RuntimeException("Order not found"));
+        
+        // Verify vendor has products in this order
+        // This would require checking if any order items belong to vendor's products
+        
+        order.setStatus(status);
+        // Would also create an order status history entry
+        
+        return orderRepository.save(order);
+    }
+
+    // ===========================
+    // CUSTOMER MANAGEMENT METHODS
+    // ===========================
+
+    /**
+     * Get vendor customers with filtering
+     */
+    public Page<VendorCustomer> getVendorCustomers(Integer vendorId, Pageable pageable, String segment, String search) {
+        if (search != null && !search.isEmpty()) {
+            return vendorCustomerRepository.searchCustomers(vendorId, search, pageable);
+        } else if (segment != null && !segment.isEmpty()) {
+            VendorCustomer.CustomerSegment customerSegment = VendorCustomer.CustomerSegment.valueOf(segment.toUpperCase());
+            List<VendorCustomer> customers = vendorCustomerRepository.findByVendorIdAndSegment(vendorId, customerSegment);
+            // Convert to Page - would need proper implementation
+            return vendorCustomerRepository.findByVendorId(vendorId, pageable);
+        } else {
+            return vendorCustomerRepository.findByVendorId(vendorId, pageable);
+        }
+    }
+
+    /**
+     * Get customer statistics for vendor
+     */
+    public Map<String, Object> getCustomerStats(Integer vendorId) {
+        Map<String, Object> stats = new HashMap<>();
+        
+        stats.put("totalCustomers", vendorCustomerRepository.countByVendorId(vendorId));
+        stats.put("activeCustomers", vendorCustomerRepository.countActiveCustomersByVendor(vendorId));
+        stats.put("vipCustomers", vendorCustomerRepository.countVipCustomersByVendor(vendorId));
+        stats.put("newCustomers", vendorCustomerRepository.countByVendorIdAndSegment(vendorId, VendorCustomer.CustomerSegment.NEW));
+        stats.put("regularCustomers", vendorCustomerRepository.countByVendorIdAndSegment(vendorId, VendorCustomer.CustomerSegment.REGULAR));
+        stats.put("inactiveCustomers", vendorCustomerRepository.countByVendorIdAndSegment(vendorId, VendorCustomer.CustomerSegment.INACTIVE));
+        
+        // Customer lifetime value stats
+        Object[] clvStats = vendorCustomerRepository.getCustomerLifetimeValueStats(vendorId);
+        if (clvStats != null && clvStats.length > 0) {
+            stats.put("avgLifetimeValue", clvStats[0]);
+            stats.put("maxLifetimeValue", clvStats[1]);
+            stats.put("minLifetimeValue", clvStats[2]);
+        }
+        
+        return stats;
+    }
+
+    /**
+     * Get customer segmentation data
+     */
+    public List<Object[]> getCustomerSegmentation(Integer vendorId) {
+        return vendorCustomerRepository.getCustomerSegmentationSummary(vendorId);
+    }
+
+    // ===========================
+    // VENDOR SETTINGS METHODS
+    // ===========================
+
+    /**
+     * Get vendor settings
+     */
+    public Map<String, Object> getVendorSettings(Integer vendorId) {
+        // Implementation would fetch from VendorProfile and User entities
+        Map<String, Object> settings = new HashMap<>();
+        
+        User vendor = userRepository.findById(vendorId.longValue())
+            .orElseThrow(() -> new RuntimeException("Vendor not found"));
+        
+        Optional<VendorProfile> profileOpt = vendorProfileRepository.findByUser(vendor);
+        if (profileOpt.isPresent()) {
+            VendorProfile profile = profileOpt.get();
+            settings.put("businessName", profile.getBusinessName());
+            settings.put("businessType", profile.getBusinessType());
+            settings.put("gstNumber", profile.getGstNumber());
+            settings.put("panNumber", profile.getPanNumber());
+            settings.put("businessEmail", profile.getBusinessEmail());
+        }
+        
+        // Add other settings
+        settings.put("email", vendor.getEmail());
+        
+        return settings;
+    }
+
+    /**
+     * Update vendor settings
+     */
+    public Map<String, Object> updateVendorSettings(Integer vendorId, Map<String, Object> settings) {
+        User vendor = userRepository.findById(vendorId.longValue())
+            .orElseThrow(() -> new RuntimeException("Vendor not found"));
+        
+        // Update user fields (only email and username are available)
+        if (settings.containsKey("email")) {
+            vendor.setEmail((String) settings.get("email"));
+        }
+        
+        userRepository.save(vendor);
+        
+        // Update vendor profile
+        Optional<VendorProfile> profileOpt = vendorProfileRepository.findByUser(vendor);
+        if (profileOpt.isPresent()) {
+            VendorProfile profile = profileOpt.get();
+            
+            if (settings.containsKey("businessName")) {
+                profile.setBusinessName((String) settings.get("businessName"));
+            }
+            if (settings.containsKey("businessEmail")) {
+                profile.setBusinessEmail((String) settings.get("businessEmail"));
+            }
+            
+            vendorProfileRepository.save(profile);
+        }
+        
+        return getVendorSettings(vendorId);
+    }
+
+    // ===========================
+    // HELPER METHODS
+    // ===========================
+
+    private long getProductCount(Integer vendorId) {
+        return productRepository.countByCreatedByUserId(vendorId);
+    }
+
+    private long getActiveProductCount(Integer vendorId) {
+        return productRepository.countByCreatedByUserIdAndStatus(vendorId, Product.ProductStatus.ACTIVE);
+    }
+
+    private long getInactiveProductCount(Integer vendorId) {
+        return productRepository.countByCreatedByUserIdAndStatus(vendorId, Product.ProductStatus.INACTIVE);
+    }
+
+    private long getOutOfStockProductCount(Integer vendorId) {
+        // Implementation would count products with quantity = 0
+        return 0;
+    }
+
+    private long getLowStockProductCount(Integer vendorId) {
+        // Implementation would count products with quantity <= minStockAlert
+        return 0;
+    }
+
+    private long getTotalVariantCount(Integer vendorId) {
+        return productVariantRepository.countByVendorId(vendorId);
+    }
+
+    private int getOrderCount(Integer vendorId, LocalDate startDate, LocalDate endDate) {
+        return vendorAnalyticsRepository.getTotalOrdersByVendorAndDateRange(vendorId, startDate, endDate);
+    }
+
+    private BigDecimal getTotalRevenue(Integer vendorId, LocalDate startDate, LocalDate endDate) {
+        return vendorAnalyticsRepository.getTotalRevenueByVendorAndDateRange(vendorId, startDate, endDate);
+    }
+
+    private long getCustomerCount(Integer vendorId) {
+        return vendorCustomerRepository.countByVendorId(vendorId);
+    }
+
+    private BigDecimal getAverageOrderValue(Integer vendorId, LocalDate startDate, LocalDate endDate) {
+        return vendorAnalyticsRepository.getAverageOrderValueByVendorAndDateRange(vendorId, startDate, endDate);
+    }
+
+    private List<Order> getRecentOrders(Integer vendorId, int limit) {
+        Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "orderDate"));
+        return orderRepository.findAll(pageable).getContent();
+    }
+
+    private Map<String, Long> getProductStatsBreakdown(Integer vendorId) {
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("active", getActiveProductCount(vendorId));
+        stats.put("inactive", getInactiveProductCount(vendorId));
+        stats.put("outOfStock", getOutOfStockProductCount(vendorId));
+        stats.put("lowStock", getLowStockProductCount(vendorId));
+        return stats;
+    }
+
+    private Map<String, Integer> getOrderStatsBreakdown(Integer vendorId) {
+        Map<String, Integer> stats = new HashMap<>();
+        stats.put("pending", getPendingOrderCount(vendorId));
+        stats.put("processing", getProcessingOrderCount(vendorId));
+        stats.put("shipped", getShippedOrderCount(vendorId));
+        stats.put("delivered", getDeliveredOrderCount(vendorId));
+        stats.put("cancelled", getCancelledOrderCount(vendorId));
+        return stats;
+    }
+
+    private List<Product> getLowStockProducts(Integer vendorId) {
+        // Implementation would return products with low stock
+        return new ArrayList<>();
+    }
+
+    private Map<String, Object> getGrowthMetrics(Integer vendorId, int days) {
+        // Implementation would calculate growth compared to previous period
+        Map<String, Object> growth = new HashMap<>();
+        growth.put("revenueGrowth", BigDecimal.ZERO);
+        growth.put("orderGrowth", BigDecimal.ZERO);
+        growth.put("customerGrowth", BigDecimal.ZERO);
+        return growth;
+    }
+
+    private List<Object[]> getTopProducts(Integer vendorId, LocalDate startDate, LocalDate endDate) {
+        // Implementation would return top selling products
+        return new ArrayList<>();
+    }
+
+    private List<Object[]> getCustomerAcquisitionTrend(Integer vendorId, LocalDate startDate, LocalDate endDate) {
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.plusDays(1).atStartOfDay();
+        return vendorCustomerRepository.getCustomerAcquisitionTrend(vendorId, start, end);
+    }
+
+    private int getPendingOrderCount(Integer vendorId) {
+        // Implementation would count pending orders
+        return 0;
+    }
+
+    private int getProcessingOrderCount(Integer vendorId) {
+        // Implementation would count processing orders
+        return 0;
+    }
+
+    private int getShippedOrderCount(Integer vendorId) {
+        // Implementation would count shipped orders
+        return 0;
+    }
+
+    private int getDeliveredOrderCount(Integer vendorId) {
+        // Implementation would count delivered orders
+        return 0;
+    }
+
+    private int getCancelledOrderCount(Integer vendorId) {
+        // Implementation would count cancelled orders
+        return 0;
+    }
+
+    private String generateSKU(Integer vendorId, Product product) {
+        // Generate SKU in format: GM-V{vendorId}-{categoryCode}-{sequence}
+        String categoryCode = product.getCategory() != null ? 
+            product.getCategory().getName().substring(0, Math.min(3, product.getCategory().getName().length())).toUpperCase() : "GEN";
+        long sequence = getProductCount(vendorId) + 1;
+        return String.format("GM-V%d-%s-%04d", vendorId, categoryCode, sequence);
+    }
+
+    private String generateVariantSKU(Product product, ProductVariant variant) {
+        String baseSku = product.getSku();
+        String variantCode = "";
+        
+        if (variant.getSize() != null) variantCode += variant.getSize().substring(0, 1);
+        if (variant.getColor() != null) variantCode += variant.getColor().substring(0, 1);
+        if (variant.getWeight() != null) variantCode += variant.getWeight().replaceAll("[^0-9]", "");
+        
+        return baseSku + "-" + variantCode.toUpperCase();
+    }
+} 

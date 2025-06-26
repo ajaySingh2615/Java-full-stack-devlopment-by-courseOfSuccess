@@ -40,9 +40,9 @@ public class ProductService {
             product.setStatus(Product.ProductStatus.ACTIVE);
         }
 
-        // Generate slug from name if not provided
-        if (product.getSlug() == null || product.getSlug().isEmpty()) {
-            product.setSlug(generateSlug(product.getName()));
+        // Generate URL slug from name if not provided
+        if (product.getUrlSlug() == null || product.getUrlSlug().isEmpty()) {
+            product.setUrlSlug(generateSlug(product.getName()));
         }
 
         return productRepository.save(product);
@@ -83,15 +83,15 @@ public class ProductService {
     }
 
     /**
-     * Get product by slug
-     * @param slug product slug
+     * Get product by URL slug
+     * @param urlSlug product URL slug
      * @return Product
      * @throws RuntimeException if product not found
      */
     @Transactional(readOnly = true)
-    public Product getProductBySlug(String slug) {
-        return productRepository.findBySlug(slug)
-            .orElseThrow(() -> new RuntimeException("Product not found with slug: " + slug));
+    public Product getProductByUrlSlug(String urlSlug) {
+        return productRepository.findByUrlSlug(urlSlug)
+            .orElseThrow(() -> new RuntimeException("Product not found with URL slug: " + urlSlug));
     }
 
     /**
@@ -117,23 +117,23 @@ public class ProductService {
     }
 
     /**
-     * Get featured products
+     * Get featured products (replaced with products in stock)
      * @param pageable pagination information
      * @return Page<Product>
      */
     @Transactional(readOnly = true)
     public Page<Product> getFeaturedProducts(Pageable pageable) {
-        return productRepository.findFeaturedProducts(pageable);
+        return productRepository.findProductsInStock(pageable);
     }
 
     /**
-     * Get products on sale
+     * Get products on sale (replaced with products in stock)
      * @param pageable pagination information
      * @return Page<Product>
      */
     @Transactional(readOnly = true)
     public Page<Product> getProductsOnSale(Pageable pageable) {
-        return productRepository.findBestSellerProducts(pageable);
+        return productRepository.findProductsInStock(pageable);
     }
 
     /**
@@ -206,8 +206,8 @@ public class ProductService {
         if (updatedProduct.getPrice() != null) {
             existingProduct.setPrice(updatedProduct.getPrice());
         }
-        if (updatedProduct.getRegularPrice() != null) {
-            existingProduct.setRegularPrice(updatedProduct.getRegularPrice());
+        if (updatedProduct.getMrp() != null) {
+            existingProduct.setMrp(updatedProduct.getMrp());
         }
         if (updatedProduct.getSku() != null) {
             existingProduct.setSku(updatedProduct.getSku());
@@ -227,9 +227,8 @@ public class ProductService {
         if (updatedProduct.getImageUrl() != null) {
             existingProduct.setImageUrl(updatedProduct.getImageUrl());
         }
-        if (updatedProduct.getIsFeatured() != null) {
-            existingProduct.setIsFeatured(updatedProduct.getIsFeatured());
-        }
+        // Note: isFeatured removed as it's business logic, not product data
+        // Use separate business logic service for featured product management
         if (updatedProduct.getStatus() != null) {
             existingProduct.setStatus(updatedProduct.getStatus());
         }

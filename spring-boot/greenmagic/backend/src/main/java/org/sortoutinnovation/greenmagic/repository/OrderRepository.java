@@ -140,4 +140,118 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @return Optional<Order>
      */
     Optional<Order> findByRazorpayPaymentId(String razorpayPaymentId);
+    
+    // ===========================
+    // VENDOR-SPECIFIC METHODS
+    // ===========================
+    
+    /**
+     * Find orders containing products from a specific vendor
+     */
+    @Query("SELECT DISTINCT o FROM Order o " +
+           "JOIN o.orderItems oi " +
+           "WHERE oi.product.createdBy.userId = :vendorId " +
+           "ORDER BY o.orderDate DESC")
+    Page<Order> findOrdersByVendor(@Param("vendorId") Integer vendorId, Pageable pageable);
+    
+    /**
+     * Find orders by vendor and status
+     */
+    @Query("SELECT DISTINCT o FROM Order o " +
+           "JOIN o.orderItems oi " +
+           "WHERE oi.product.createdBy.userId = :vendorId " +
+           "AND o.status = :status " +
+           "ORDER BY o.orderDate DESC")
+    Page<Order> findOrdersByVendorAndStatus(@Param("vendorId") Integer vendorId, 
+                                           @Param("status") String status, 
+                                           Pageable pageable);
+    
+    /**
+     * Find orders by vendor with search
+     */
+    @Query("SELECT DISTINCT o FROM Order o " +
+           "JOIN o.orderItems oi " +
+           "WHERE oi.product.createdBy.userId = :vendorId " +
+           "AND (:search IS NULL OR " +
+           "CAST(o.orderId AS string) LIKE CONCAT('%', :search, '%') OR " +
+           "LOWER(o.user.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(o.user.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+           "ORDER BY o.orderDate DESC")
+    Page<Order> findOrdersByVendorWithSearch(@Param("vendorId") Integer vendorId,
+                                            @Param("search") String search,
+                                            Pageable pageable);
+    
+    /**
+     * Count orders by vendor
+     */
+    @Query("SELECT COUNT(DISTINCT o) FROM Order o " +
+           "JOIN o.orderItems oi " +
+           "WHERE oi.product.createdBy.userId = :vendorId")
+    long countOrdersByVendor(@Param("vendorId") Integer vendorId);
+    
+    /**
+     * Count orders by vendor and status
+     */
+    @Query("SELECT COUNT(DISTINCT o) FROM Order o " +
+           "JOIN o.orderItems oi " +
+           "WHERE oi.product.createdBy.userId = :vendorId " +
+           "AND o.status = :status")
+    long countOrdersByVendorAndStatus(@Param("vendorId") Integer vendorId, @Param("status") String status);
+    
+    /**
+     * Calculate total revenue for vendor
+     */
+    @Query("SELECT COALESCE(SUM(oi.price * oi.quantity), 0) FROM OrderItem oi " +
+           "WHERE oi.product.createdBy.userId = :vendorId " +
+           "AND oi.order.paymentStatus = 'COMPLETED'")
+    BigDecimal calculateVendorRevenue(@Param("vendorId") Integer vendorId);
+    
+    /**
+     * Calculate vendor revenue by date range
+     */
+    @Query("SELECT COALESCE(SUM(oi.price * oi.quantity), 0) FROM OrderItem oi " +
+           "WHERE oi.product.createdBy.userId = :vendorId " +
+           "AND oi.order.paymentStatus = 'COMPLETED' " +
+           "AND oi.order.orderDate BETWEEN :startDate AND :endDate")
+    BigDecimal calculateVendorRevenueByDateRange(@Param("vendorId") Integer vendorId,
+                                                @Param("startDate") LocalDateTime startDate,
+                                                @Param("endDate") LocalDateTime endDate);
+    
+    /**
+     * Get vendor order statistics by date range
+     */
+    @Query("SELECT " +
+           "COUNT(DISTINCT o) as totalOrders, " +
+           "COALESCE(SUM(oi.price * oi.quantity), 0) as totalRevenue, " +
+           "COALESCE(AVG(oi.price * oi.quantity), 0) as avgOrderValue " +
+           "FROM Order o " +
+           "JOIN o.orderItems oi " +
+           "WHERE oi.product.createdBy.userId = :vendorId " +
+           "AND o.orderDate BETWEEN :startDate AND :endDate " +
+           "AND o.paymentStatus = 'COMPLETED'")
+    Object[] getVendorOrderStatistics(@Param("vendorId") Integer vendorId,
+                                     @Param("startDate") LocalDateTime startDate,
+                                     @Param("endDate") LocalDateTime endDate);
+    
+    /**
+     * Get recent orders for vendor
+     */
+    @Query("SELECT DISTINCT o FROM Order o " +
+           "JOIN o.orderItems oi " +
+           "WHERE oi.product.createdBy.userId = :vendorId " +
+           "ORDER BY o.orderDate DESC")
+    List<Order> findRecentOrdersByVendor(@Param("vendorId") Integer vendorId, Pageable pageable);
+    
+    /**
+     * Check if order contains vendor's products
+     */
+    @Query("SELECT COUNT(oi) > 0 FROM OrderItem oi " +
+           "WHERE oi.order.orderId = :orderId " +
+           "AND oi.product.createdBy.userId = :vendorId")
+    boolean isOrderFromVendor(@Param("orderId") Integer orderId, @Param("vendorId") Integer vendorId);
+    
+    /**
+     * Check if product has any orders
+     */
+    boolean existsByOrderItemsProductProductId(Integer productId);
 } 

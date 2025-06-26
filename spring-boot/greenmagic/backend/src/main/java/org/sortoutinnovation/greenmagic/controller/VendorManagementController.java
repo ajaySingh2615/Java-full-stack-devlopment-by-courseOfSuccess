@@ -1,0 +1,504 @@
+package org.sortoutinnovation.greenmagic.controller;
+
+import org.sortoutinnovation.greenmagic.dto.ApiResponseDto;
+import org.sortoutinnovation.greenmagic.model.*;
+import org.sortoutinnovation.greenmagic.service.VendorManagementService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * REST Controller for Vendor Management operations
+ * Provides APIs for vendor dashboard, product management, orders, analytics, and customer management
+ */
+@RestController
+@RequestMapping("/api/vendor")
+@Validated
+@CrossOrigin(origins = "*")
+@PreAuthorize("hasRole('VENDOR')")
+public class VendorManagementController {
+
+    @Autowired
+    private VendorManagementService vendorManagementService;
+
+    // ===========================
+    // VENDOR DASHBOARD ANALYTICS
+    // ===========================
+
+    /**
+     * Get vendor dashboard overview
+     * GET /api/vendor/dashboard
+     */
+    @GetMapping("/dashboard")
+    public ResponseEntity<ApiResponseDto<Map<String, Object>>> getDashboardOverview(
+            @RequestParam Integer vendorId,
+            @RequestParam(defaultValue = "30") int days) {
+        try {
+            Map<String, Object> dashboard = vendorManagementService.getDashboardOverview(vendorId, days);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Dashboard data retrieved successfully", dashboard));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve dashboard data: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get vendor analytics for date range
+     * GET /api/vendor/analytics
+     */
+    @GetMapping("/analytics")
+    public ResponseEntity<ApiResponseDto<Map<String, Object>>> getAnalytics(
+            @RequestParam Integer vendorId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        try {
+            Map<String, Object> analytics = vendorManagementService.getAnalytics(vendorId, startDate, endDate);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Analytics retrieved successfully", analytics));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve analytics: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get sales trend data
+     * GET /api/vendor/analytics/sales-trend
+     */
+    @GetMapping("/analytics/sales-trend")
+    public ResponseEntity<ApiResponseDto<List<Object[]>>> getSalesTrend(
+            @RequestParam Integer vendorId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        try {
+            List<Object[]> trend = vendorManagementService.getSalesTrend(vendorId, startDate, endDate);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Sales trend retrieved successfully", trend));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve sales trend: " + e.getMessage(), null));
+        }
+    }
+
+    // ===========================
+    // PRODUCT MANAGEMENT
+    // ===========================
+
+    /**
+     * Get vendor products with filtering and pagination
+     * GET /api/vendor/products
+     */
+    @GetMapping("/products")
+    public ResponseEntity<ApiResponseDto<Page<Product>>> getVendorProducts(
+            @RequestParam Integer vendorId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String search) {
+        try {
+            Sort sort = Sort.by(sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
+            Pageable pageable = PageRequest.of(page, size, sort);
+            
+            Page<Product> products = vendorManagementService.getVendorProducts(vendorId, pageable, status, category, search);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Products retrieved successfully", products));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve products: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get product statistics for vendor
+     * GET /api/vendor/products/stats
+     */
+    @GetMapping("/products/stats")
+    public ResponseEntity<ApiResponseDto<Map<String, Object>>> getProductStats(@RequestParam Integer vendorId) {
+        try {
+            Map<String, Object> stats = vendorManagementService.getProductStats(vendorId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product statistics retrieved successfully", stats));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve product statistics: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Create new product
+     * POST /api/vendor/products
+     */
+    @PostMapping("/products")
+    public ResponseEntity<ApiResponseDto<Product>> createProduct(
+            @RequestParam Integer vendorId,
+            @Valid @RequestBody Product product) {
+        try {
+            Product createdProduct = vendorManagementService.createProduct(vendorId, product);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponseDto<>(true, "Product created successfully", createdProduct));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(new ApiResponseDto<>(false, e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to create product: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Update product
+     * PUT /api/vendor/products/{productId}
+     */
+    @PutMapping("/products/{productId}")
+    public ResponseEntity<ApiResponseDto<Product>> updateProduct(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId,
+            @Valid @RequestBody Product product) {
+        try {
+            Product updatedProduct = vendorManagementService.updateProduct(vendorId, productId, product);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product updated successfully", updatedProduct));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(new ApiResponseDto<>(false, e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to update product: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Delete product
+     * DELETE /api/vendor/products/{productId}
+     */
+    @DeleteMapping("/products/{productId}")
+    public ResponseEntity<ApiResponseDto<Void>> deleteProduct(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId) {
+        try {
+            vendorManagementService.deleteProduct(vendorId, productId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product deleted successfully", null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(new ApiResponseDto<>(false, e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to delete product: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Bulk update product status
+     * POST /api/vendor/products/bulk-status
+     */
+    @PostMapping("/products/bulk-status")
+    public ResponseEntity<ApiResponseDto<String>> bulkUpdateProductStatus(
+            @RequestParam Integer vendorId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<Integer> productIds = (List<Integer>) request.get("productIds");
+            String status = (String) request.get("status");
+            
+            vendorManagementService.bulkUpdateProductStatus(vendorId, productIds, status);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Products status updated successfully", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to update product status: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Bulk update product prices
+     * POST /api/vendor/products/bulk-price
+     */
+    @PostMapping("/products/bulk-price")
+    public ResponseEntity<ApiResponseDto<String>> bulkUpdateProductPrices(
+            @RequestParam Integer vendorId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<Integer> productIds = (List<Integer>) request.get("productIds");
+            String updateType = (String) request.get("updateType"); // "percentage" or "fixed"
+            BigDecimal value = new BigDecimal(request.get("value").toString());
+            
+            vendorManagementService.bulkUpdateProductPrices(vendorId, productIds, updateType, value);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product prices updated successfully", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to update product prices: " + e.getMessage(), null));
+        }
+    }
+
+    // ===========================
+    // PRODUCT VARIANTS
+    // ===========================
+
+    /**
+     * Get product variants
+     * GET /api/vendor/products/{productId}/variants
+     */
+    @GetMapping("/products/{productId}/variants")
+    public ResponseEntity<ApiResponseDto<List<ProductVariant>>> getProductVariants(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId) {
+        try {
+            List<ProductVariant> variants = vendorManagementService.getProductVariants(vendorId, productId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product variants retrieved successfully", variants));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve product variants: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Create product variant
+     * POST /api/vendor/products/{productId}/variants
+     */
+    @PostMapping("/products/{productId}/variants")
+    public ResponseEntity<ApiResponseDto<ProductVariant>> createProductVariant(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId,
+            @Valid @RequestBody ProductVariant variant) {
+        try {
+            ProductVariant createdVariant = vendorManagementService.createProductVariant(vendorId, productId, variant);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponseDto<>(true, "Product variant created successfully", createdVariant));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to create product variant: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Update product variant
+     * PUT /api/vendor/products/{productId}/variants/{variantId}
+     */
+    @PutMapping("/products/{productId}/variants/{variantId}")
+    public ResponseEntity<ApiResponseDto<ProductVariant>> updateProductVariant(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId,
+            @PathVariable Long variantId,
+            @Valid @RequestBody ProductVariant variant) {
+        try {
+            ProductVariant updatedVariant = vendorManagementService.updateProductVariant(vendorId, productId, variantId, variant);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product variant updated successfully", updatedVariant));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to update product variant: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Delete product variant
+     * DELETE /api/vendor/products/{productId}/variants/{variantId}
+     */
+    @DeleteMapping("/products/{productId}/variants/{variantId}")
+    public ResponseEntity<ApiResponseDto<Void>> deleteProductVariant(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId,
+            @PathVariable Long variantId) {
+        try {
+            vendorManagementService.deleteProductVariant(vendorId, productId, variantId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product variant deleted successfully", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to delete product variant: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Bulk update variant prices
+     * POST /api/vendor/products/{productId}/variants/bulk-price
+     */
+    @PostMapping("/products/{productId}/variants/bulk-price")
+    public ResponseEntity<ApiResponseDto<String>> bulkUpdateVariantPrices(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<Long> variantIds = (List<Long>) request.get("variantIds");
+            String updateType = (String) request.get("updateType");
+            BigDecimal value = new BigDecimal(request.get("value").toString());
+            
+            vendorManagementService.bulkUpdateVariantPrices(vendorId, productId, variantIds, updateType, value);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Variant prices updated successfully", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to update variant prices: " + e.getMessage(), null));
+        }
+    }
+
+    // ===========================
+    // ORDER MANAGEMENT
+    // ===========================
+
+    /**
+     * Get vendor orders with filtering and pagination
+     * GET /api/vendor/orders
+     */
+    @GetMapping("/orders")
+    public ResponseEntity<ApiResponseDto<Page<Order>>> getVendorOrders(
+            @RequestParam Integer vendorId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "orderDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search) {
+        try {
+            Sort sort = Sort.by(sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
+            Pageable pageable = PageRequest.of(page, size, sort);
+            
+            Page<Order> orders = vendorManagementService.getVendorOrders(vendorId, pageable, status, search);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Orders retrieved successfully", orders));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve orders: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get order statistics for vendor
+     * GET /api/vendor/orders/stats
+     */
+    @GetMapping("/orders/stats")
+    public ResponseEntity<ApiResponseDto<Map<String, Object>>> getOrderStats(@RequestParam Integer vendorId) {
+        try {
+            Map<String, Object> stats = vendorManagementService.getOrderStats(vendorId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Order statistics retrieved successfully", stats));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve order statistics: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Update order status
+     * PUT /api/vendor/orders/{orderId}/status
+     */
+    @PutMapping("/orders/{orderId}/status")
+    public ResponseEntity<ApiResponseDto<Order>> updateOrderStatus(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer orderId,
+            @RequestBody Map<String, String> request) {
+        try {
+            String status = request.get("status");
+            String notes = request.get("notes");
+            
+            Order updatedOrder = vendorManagementService.updateOrderStatus(vendorId, orderId, status, notes);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Order status updated successfully", updatedOrder));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to update order status: " + e.getMessage(), null));
+        }
+    }
+
+    // ===========================
+    // CUSTOMER MANAGEMENT
+    // ===========================
+
+    /**
+     * Get vendor customers with filtering and pagination
+     * GET /api/vendor/customers
+     */
+    @GetMapping("/customers")
+    public ResponseEntity<ApiResponseDto<Page<VendorCustomer>>> getVendorCustomers(
+            @RequestParam Integer vendorId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "lastOrderDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) String segment,
+            @RequestParam(required = false) String search) {
+        try {
+            Sort sort = Sort.by(sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
+            Pageable pageable = PageRequest.of(page, size, sort);
+            
+            Page<VendorCustomer> customers = vendorManagementService.getVendorCustomers(vendorId, pageable, segment, search);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Customers retrieved successfully", customers));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve customers: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get customer statistics for vendor
+     * GET /api/vendor/customers/stats
+     */
+    @GetMapping("/customers/stats")
+    public ResponseEntity<ApiResponseDto<Map<String, Object>>> getCustomerStats(@RequestParam Integer vendorId) {
+        try {
+            Map<String, Object> stats = vendorManagementService.getCustomerStats(vendorId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Customer statistics retrieved successfully", stats));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve customer statistics: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get customer segmentation data
+     * GET /api/vendor/customers/segmentation
+     */
+    @GetMapping("/customers/segmentation")
+    public ResponseEntity<ApiResponseDto<List<Object[]>>> getCustomerSegmentation(@RequestParam Integer vendorId) {
+        try {
+            List<Object[]> segmentation = vendorManagementService.getCustomerSegmentation(vendorId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Customer segmentation retrieved successfully", segmentation));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve customer segmentation: " + e.getMessage(), null));
+        }
+    }
+
+    // ===========================
+    // VENDOR SETTINGS
+    // ===========================
+
+    /**
+     * Get vendor settings
+     * GET /api/vendor/settings
+     */
+    @GetMapping("/settings")
+    public ResponseEntity<ApiResponseDto<Map<String, Object>>> getVendorSettings(@RequestParam Integer vendorId) {
+        try {
+            Map<String, Object> settings = vendorManagementService.getVendorSettings(vendorId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Vendor settings retrieved successfully", settings));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve vendor settings: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Update vendor settings
+     * PUT /api/vendor/settings
+     */
+    @PutMapping("/settings")
+    public ResponseEntity<ApiResponseDto<Map<String, Object>>> updateVendorSettings(
+            @RequestParam Integer vendorId,
+            @RequestBody Map<String, Object> settings) {
+        try {
+            Map<String, Object> updatedSettings = vendorManagementService.updateVendorSettings(vendorId, settings);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Vendor settings updated successfully", updatedSettings));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to update vendor settings: " + e.getMessage(), null));
+        }
+    }
+} 

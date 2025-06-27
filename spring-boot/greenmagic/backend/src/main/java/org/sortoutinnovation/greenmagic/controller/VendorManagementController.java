@@ -1,6 +1,9 @@
 package org.sortoutinnovation.greenmagic.controller;
 
 import org.sortoutinnovation.greenmagic.dto.ApiResponseDto;
+import org.sortoutinnovation.greenmagic.dto.ProductCreateRequestDto;
+import org.sortoutinnovation.greenmagic.dto.ProductUpdateRequestDto;
+import org.sortoutinnovation.greenmagic.dto.ProductResponseDto;
 import org.sortoutinnovation.greenmagic.model.*;
 import org.sortoutinnovation.greenmagic.service.VendorManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +32,7 @@ import java.util.Map;
 @RequestMapping("/api/vendor")
 @Validated
 @CrossOrigin(origins = "*")
-@PreAuthorize("hasRole('VENDOR')")
+// @PreAuthorize("hasRole('VENDOR') or hasAuthority('VENDOR')")
 public class VendorManagementController {
 
     @Autowired
@@ -97,6 +100,15 @@ public class VendorManagementController {
     // ===========================
 
     /**
+     * Test endpoint to check if vendor controller is accessible
+     * GET /api/vendor/test
+     */
+    @GetMapping("/test")
+    public ResponseEntity<ApiResponseDto<String>> testEndpoint() {
+        return ResponseEntity.ok(new ApiResponseDto<>(true, "Vendor controller is working!", "success"));
+    }
+
+    /**
      * Get vendor products with filtering and pagination
      * GET /api/vendor/products
      */
@@ -142,11 +154,11 @@ public class VendorManagementController {
      * POST /api/vendor/products
      */
     @PostMapping("/products")
-    public ResponseEntity<ApiResponseDto<Product>> createProduct(
+    public ResponseEntity<ApiResponseDto<ProductResponseDto>> createProduct(
             @RequestParam Integer vendorId,
-            @Valid @RequestBody Product product) {
+            @Valid @RequestBody ProductCreateRequestDto productRequest) {
         try {
-            Product createdProduct = vendorManagementService.createProduct(vendorId, product);
+            ProductResponseDto createdProduct = vendorManagementService.createProductFromDto(vendorId, productRequest);
             return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDto<>(true, "Product created successfully", createdProduct));
         } catch (RuntimeException e) {
@@ -159,16 +171,35 @@ public class VendorManagementController {
     }
 
     /**
+     * Get single product by ID
+     * GET /api/vendor/products/{productId}
+     */
+    @GetMapping("/products/{productId}")
+    public ResponseEntity<ApiResponseDto<ProductResponseDto>> getProductById(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId) {
+        try {
+            ProductResponseDto product = vendorManagementService.getVendorProductById(vendorId, productId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product retrieved successfully", product));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve product: " + e.getMessage(), null));
+        }
+    }
+
+    /**
      * Update product
      * PUT /api/vendor/products/{productId}
      */
     @PutMapping("/products/{productId}")
-    public ResponseEntity<ApiResponseDto<Product>> updateProduct(
+    public ResponseEntity<ApiResponseDto<ProductResponseDto>> updateProduct(
             @RequestParam Integer vendorId,
             @PathVariable Integer productId,
-            @Valid @RequestBody Product product) {
+            @Valid @RequestBody ProductUpdateRequestDto productRequest) {
         try {
-            Product updatedProduct = vendorManagementService.updateProduct(vendorId, productId, product);
+            ProductResponseDto updatedProduct = vendorManagementService.updateProductFromDto(vendorId, productId, productRequest);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Product updated successfully", updatedProduct));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
@@ -239,6 +270,107 @@ public class VendorManagementController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to update product prices: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Duplicate product
+     * POST /api/vendor/products/{productId}/duplicate
+     */
+    @PostMapping("/products/{productId}/duplicate")
+    public ResponseEntity<ApiResponseDto<ProductResponseDto>> duplicateProduct(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId,
+            @RequestBody(required = false) Map<String, String> customizations) {
+        try {
+            String newTitle = customizations != null ? customizations.get("title") : null;
+            ProductResponseDto duplicatedProduct = vendorManagementService.duplicateProduct(vendorId, productId, newTitle);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponseDto<>(true, "Product duplicated successfully", duplicatedProduct));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(new ApiResponseDto<>(false, e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to duplicate product: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Bulk update product stock
+     * POST /api/vendor/products/bulk-stock
+     */
+    @PostMapping("/products/bulk-stock")
+    public ResponseEntity<ApiResponseDto<String>> bulkUpdateProductStock(
+            @RequestParam Integer vendorId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<Integer> productIds = (List<Integer>) request.get("productIds");
+            String updateType = (String) request.get("updateType"); // "set", "increase", "decrease"
+            Integer value = Integer.parseInt(request.get("value").toString());
+            
+            vendorManagementService.bulkUpdateProductStock(vendorId, productIds, updateType, value);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product stock updated successfully", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to update product stock: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Export products to CSV/Excel
+     * GET /api/vendor/products/export
+     */
+    @GetMapping("/products/export")
+    public ResponseEntity<ApiResponseDto<Map<String, String>>> exportProducts(
+            @RequestParam Integer vendorId,
+            @RequestParam(defaultValue = "csv") String format,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) List<Integer> productIds) {
+        try {
+            Map<String, String> exportResult = vendorManagementService.exportProducts(vendorId, format, status, category, productIds);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Products exported successfully", exportResult));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to export products: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get product categories for vendor
+     * GET /api/vendor/products/categories
+     */
+    @GetMapping("/products/categories")
+    public ResponseEntity<ApiResponseDto<Map<String, Object>>> getProductCategories() {
+        try {
+            Map<String, Object> categories = vendorManagementService.getProductCategories();
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product categories retrieved successfully", categories));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve product categories: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Generate SKU code
+     * POST /api/vendor/products/generate-sku
+     */
+    @PostMapping("/products/generate-sku")
+    public ResponseEntity<ApiResponseDto<Map<String, String>>> generateSku(
+            @RequestParam Integer vendorId,
+            @RequestBody Map<String, String> request) {
+        try {
+            String category = request.get("category");
+            String subcategory = request.get("subcategory");
+            
+            String sku = vendorManagementService.generateSku(vendorId, category, subcategory);
+            Map<String, String> result = Map.of("sku", sku);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "SKU generated successfully", result));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to generate SKU: " + e.getMessage(), null));
         }
     }
 

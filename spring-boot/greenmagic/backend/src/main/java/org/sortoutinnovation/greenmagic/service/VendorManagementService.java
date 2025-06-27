@@ -1,5 +1,9 @@
 package org.sortoutinnovation.greenmagic.service;
 
+import org.sortoutinnovation.greenmagic.dto.ProductCreateRequestDto;
+import org.sortoutinnovation.greenmagic.dto.ProductUpdateRequestDto;
+import org.sortoutinnovation.greenmagic.dto.ProductResponseDto;
+import org.sortoutinnovation.greenmagic.mapper.ProductMapper;
 import org.sortoutinnovation.greenmagic.model.*;
 import org.sortoutinnovation.greenmagic.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +52,9 @@ public class VendorManagementService {
     
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private ProductMapper productMapper;
 
     // ===========================
     // DASHBOARD METHODS
@@ -695,5 +702,291 @@ public class VendorManagementService {
         if (variant.getWeight() != null) variantCode += variant.getWeight().replaceAll("[^0-9]", "");
         
         return baseSku + "-" + variantCode.toUpperCase();
+    }
+
+    // ===========================
+    // NEW DTO-BASED METHODS
+    // ===========================
+
+    /**
+     * Create product from DTO
+     */
+    public ProductResponseDto createProductFromDto(Integer vendorId, ProductCreateRequestDto request) {
+        User vendor = userRepository.findById(vendorId.longValue())
+            .orElseThrow(() -> new RuntimeException("Vendor not found"));
+        
+        Product product = new Product();
+        mapDtoToProduct(request, product);
+        product.setCreatedBy(vendor);
+        product.setCreatedAt(LocalDateTime.now());
+        
+        // Generate SKU if not provided
+        if (product.getSku() == null || product.getSku().isEmpty()) {
+            product.setSku(generateSkuFromDto(vendorId, request.getProductTitle(), request.getCategoryId()));
+        }
+        
+        Product savedProduct = productRepository.save(product);
+        return productMapper.toDto(savedProduct);
+    }
+
+    /**
+     * Get vendor product by ID as DTO
+     */
+    public ProductResponseDto getVendorProductById(Integer vendorId, Integer productId) {
+        Product product = productRepository.findById(productId.longValue())
+            .orElseThrow(() -> new RuntimeException("Product not found"));
+        
+        // Verify ownership
+        if (!product.getCreatedBy().getUserId().equals(vendorId)) {
+            throw new RuntimeException("Unauthorized to access this product");
+        }
+        
+        return productMapper.toDto(product);
+    }
+
+    /**
+     * Update product from DTO
+     */
+    public ProductResponseDto updateProductFromDto(Integer vendorId, Integer productId, ProductUpdateRequestDto request) {
+        Product existingProduct = productRepository.findById(productId.longValue())
+            .orElseThrow(() -> new RuntimeException("Product not found"));
+        
+        // Verify ownership
+        if (!existingProduct.getCreatedBy().getUserId().equals(vendorId)) {
+            throw new RuntimeException("Unauthorized to update this product");
+        }
+        
+        mapUpdateDtoToProduct(request, existingProduct);
+        // Note: Product model doesn't have updatedAt field, relying on JPA @LastModifiedDate if needed
+        
+        Product savedProduct = productRepository.save(existingProduct);
+        return productMapper.toDto(savedProduct);
+    }
+
+    /**
+     * Duplicate product
+     */
+    public ProductResponseDto duplicateProduct(Integer vendorId, Integer productId, String newTitle) {
+        Product originalProduct = productRepository.findById(productId.longValue())
+            .orElseThrow(() -> new RuntimeException("Product not found"));
+        
+        // Verify ownership
+        if (!originalProduct.getCreatedBy().getUserId().equals(vendorId)) {
+            throw new RuntimeException("Unauthorized to duplicate this product");
+        }
+        
+        Product duplicatedProduct = new Product();
+        copyProductFields(originalProduct, duplicatedProduct);
+        
+        // Set new title and SKU
+        duplicatedProduct.setName(newTitle != null ? newTitle : originalProduct.getName() + " - Copy");
+        duplicatedProduct.setSku(generateSkuFromProduct(vendorId, duplicatedProduct));
+        duplicatedProduct.setCreatedAt(LocalDateTime.now());
+        
+        Product savedProduct = productRepository.save(duplicatedProduct);
+        return productMapper.toDto(savedProduct);
+    }
+
+    /**
+     * Bulk update product stock
+     */
+    public void bulkUpdateProductStock(Integer vendorId, List<Integer> productIds, String updateType, Integer value) {
+        List<Product> products = productRepository.findAllById(productIds.stream().map(Long::valueOf).collect(Collectors.toList()));
+        
+        for (Product product : products) {
+            // Verify ownership
+            if (product.getCreatedBy().getUserId().equals(vendorId)) {
+                Integer currentStock = product.getQuantity();
+                Integer newStock;
+                
+                switch (updateType) {
+                    case "set":
+                        newStock = value;
+                        break;
+                    case "increase":
+                        newStock = currentStock + value;
+                        break;
+                    case "decrease":
+                        newStock = Math.max(0, currentStock - value);
+                        break;
+                    default:
+                        throw new RuntimeException("Invalid update type: " + updateType);
+                }
+                
+                product.setQuantity(newStock);
+            }
+        }
+        
+        productRepository.saveAll(products);
+    }
+
+    /**
+     * Export products
+     */
+    public Map<String, String> exportProducts(Integer vendorId, String format, String status, String category, List<Integer> productIds) {
+        // This would generate CSV/Excel file and return download URL
+        // For now, return mock response
+        Map<String, String> result = new HashMap<>();
+        result.put("downloadUrl", "/api/vendor/products/download/export_" + System.currentTimeMillis() + "." + format);
+        result.put("fileName", "products_export_" + System.currentTimeMillis() + "." + format);
+        result.put("format", format);
+        result.put("recordCount", String.valueOf(getProductCount(vendorId)));
+        return result;
+    }
+
+    /**
+     * Get product categories
+     */
+    public Map<String, Object> getProductCategories() {
+        // This would return the product categories structure from product-categories.json
+        Map<String, Object> categories = new HashMap<>();
+        
+        Map<String, Object> organicGrains = new HashMap<>();
+        organicGrains.put("name", "Organic Grains & Cereals");
+        Map<String, Object> subcategories = new HashMap<>();
+        subcategories.put("wheat", Map.of("name", "Wheat & Wheat Products", "hsn", "1001", "gst", 0));
+        subcategories.put("rice", Map.of("name", "Rice & Rice Products", "hsn", "1006", "gst", 0));
+        subcategories.put("corn", Map.of("name", "Corn & Corn Products", "hsn", "1005", "gst", 0));
+        organicGrains.put("subcategories", subcategories);
+        
+        Map<String, Object> pulses = new HashMap<>();
+        pulses.put("name", "Pulses & Legumes");
+        Map<String, Object> pulseSubcategories = new HashMap<>();
+        pulseSubcategories.put("lentils", Map.of("name", "Lentils (Dal)", "hsn", "0713", "gst", 0));
+        pulseSubcategories.put("whole_pulses", Map.of("name", "Whole Pulses", "hsn", "0713", "gst", 0));
+        pulses.put("subcategories", pulseSubcategories);
+        
+        categories.put("organic_grains", organicGrains);
+        categories.put("pulses_legumes", pulses);
+        
+        return categories;
+    }
+
+    /**
+     * Generate SKU
+     */
+    public String generateSku(Integer vendorId, String category, String subcategory) {
+        String categoryCode = category != null ? category.substring(0, Math.min(2, category.length())).toUpperCase() : "GM";
+        String vendorCode = String.format("%03d", vendorId);
+        String productNumber = String.format("%04d", (int) (Math.random() * 9999) + 1);
+        
+        return "GM" + categoryCode + vendorCode + productNumber;
+    }
+
+    // Helper methods for DTO mapping
+    private void mapDtoToProduct(ProductCreateRequestDto dto, Product product) {
+        product.setName(dto.getProductTitle());
+        product.setSku(dto.getSkuCode());
+        product.setDescription(dto.getFullDescription());
+        product.setShortDescription(dto.getShortDescription());
+        product.setMrp(dto.getMrp());
+        product.setPrice(dto.getSellingPrice());
+        product.setCostPrice(dto.getCostPrice());
+        product.setQuantity(dto.getStockQuantity());
+        product.setBrand(dto.getBrandName());
+        product.setIngredientsList(dto.getIngredientsList());
+        product.setWeightForShipping(dto.getWeight());
+        product.setDeliveryTimeEstimate(dto.getDeliveryTimeEstimate());
+        product.setUrlSlug(dto.getUrlSlug());
+        product.setMetaTitle(dto.getMetaTitle());
+        product.setMetaDescription(dto.getMetaDescription());
+        
+        // Set category if provided
+        if (dto.getCategoryId() != null) {
+            Category category = categoryRepository.findById(dto.getCategoryId().longValue()).orElse(null);
+            product.setCategory(category);
+        }
+        
+        // Set status
+        if (dto.getStatus() != null) {
+            try {
+                product.setStatus(Product.ProductStatus.valueOf(dto.getStatus()));
+            } catch (IllegalArgumentException e) {
+                product.setStatus(Product.ProductStatus.DRAFT);
+            }
+        } else {
+            product.setStatus(Product.ProductStatus.DRAFT);
+        }
+    }
+
+    private void mapUpdateDtoToProduct(ProductUpdateRequestDto dto, Product product) {
+        if (dto.getProductTitle() != null) product.setName(dto.getProductTitle());
+        if (dto.getSkuCode() != null) product.setSku(dto.getSkuCode());
+        if (dto.getFullDescription() != null) product.setDescription(dto.getFullDescription());
+        if (dto.getShortDescription() != null) product.setShortDescription(dto.getShortDescription());
+        if (dto.getMrp() != null) product.setMrp(dto.getMrp());
+        if (dto.getSellingPrice() != null) product.setPrice(dto.getSellingPrice());
+        if (dto.getCostPrice() != null) product.setCostPrice(dto.getCostPrice());
+        if (dto.getStockQuantity() != null) product.setQuantity(dto.getStockQuantity());
+        if (dto.getBrandName() != null) product.setBrand(dto.getBrandName());
+        if (dto.getIngredientsList() != null) product.setIngredientsList(dto.getIngredientsList());
+        if (dto.getWeight() != null) product.setWeightForShipping(dto.getWeight());
+        if (dto.getDeliveryTimeEstimate() != null) product.setDeliveryTimeEstimate(dto.getDeliveryTimeEstimate());
+        if (dto.getUrlSlug() != null) product.setUrlSlug(dto.getUrlSlug());
+        if (dto.getMetaTitle() != null) product.setMetaTitle(dto.getMetaTitle());
+        if (dto.getMetaDescription() != null) product.setMetaDescription(dto.getMetaDescription());
+        
+        // Update category if provided
+        if (dto.getCategoryId() != null) {
+            Category category = categoryRepository.findById(dto.getCategoryId().longValue()).orElse(null);
+            product.setCategory(category);
+        }
+        
+        // Update status
+        if (dto.getStatus() != null) {
+            try {
+                product.setStatus(Product.ProductStatus.valueOf(dto.getStatus()));
+            } catch (IllegalArgumentException e) {
+                // Keep existing status if invalid
+            }
+        }
+    }
+
+    private void copyProductFields(Product source, Product target) {
+        target.setName(source.getName());
+        target.setDescription(source.getDescription());
+        target.setShortDescription(source.getShortDescription());
+        target.setMrp(source.getMrp());
+        target.setPrice(source.getPrice());
+        target.setCostPrice(source.getCostPrice());
+        target.setQuantity(source.getQuantity());
+        target.setBrand(source.getBrand());
+        target.setIngredientsList(source.getIngredientsList());
+        target.setWeightForShipping(source.getWeightForShipping());
+        target.setDeliveryTimeEstimate(source.getDeliveryTimeEstimate());
+        target.setImageUrl(source.getImageUrl());
+        target.setVideoUrl(source.getVideoUrl());
+        target.setMetaTitle(source.getMetaTitle());
+        target.setMetaDescription(source.getMetaDescription());
+        target.setCategory(source.getCategory());
+        target.setCreatedBy(source.getCreatedBy());
+        target.setStatus(Product.ProductStatus.DRAFT); // New product starts as draft
+    }
+
+    private String generateSkuFromDto(Integer vendorId, String productTitle, Integer categoryId) {
+        String categoryCode = "GM";
+        if (categoryId != null) {
+            Category category = categoryRepository.findById(categoryId.longValue()).orElse(null);
+            if (category != null && category.getName() != null) {
+                categoryCode = category.getName().substring(0, Math.min(2, category.getName().length())).toUpperCase();
+            }
+        }
+        
+        String vendorCode = String.format("%03d", vendorId);
+        String productNumber = String.format("%04d", (int) (Math.random() * 9999) + 1);
+        
+        return "GM" + categoryCode + vendorCode + productNumber;
+    }
+
+    private String generateSkuFromProduct(Integer vendorId, Product product) {
+        String categoryCode = "GM";
+        if (product.getCategory() != null && product.getCategory().getName() != null) {
+            categoryCode = product.getCategory().getName().substring(0, Math.min(2, product.getCategory().getName().length())).toUpperCase();
+        }
+        
+        String vendorCode = String.format("%03d", vendorId);
+        String productNumber = String.format("%04d", (int) (Math.random() * 9999) + 1);
+        
+        return "GM" + categoryCode + vendorCode + productNumber;
     }
 } 

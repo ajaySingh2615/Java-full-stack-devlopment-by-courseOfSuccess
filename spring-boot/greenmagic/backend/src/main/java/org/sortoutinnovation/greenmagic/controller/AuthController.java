@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  * Handles user login and authentication endpoints
  */
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
 public class AuthController {
 
@@ -309,8 +309,8 @@ public class AuthController {
     }
 
     /**
-     * Debug endpoint to check current user authentication status
-     * @return current user authentication info
+     * Get current authenticated user info
+     * @return current user information
      */
     @GetMapping("/debug/current-user")
     public ResponseEntity<?> getCurrentUser() {
@@ -318,23 +318,26 @@ public class AuthController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             
             if (authentication == null || !authentication.isAuthenticated()) {
-                return ResponseEntity.ok(Map.of(
-                    "message", "No authentication found",
-                    "authenticated", false
+                return ResponseEntity.status(401).body(Map.of(
+                    "error", "Not authenticated",
+                    "message", "No authentication found in security context"
                 ));
             }
             
-            return ResponseEntity.ok(Map.of(
-                "message", "Authentication found",
-                "authenticated", true,
-                "principal", authentication.getPrincipal(),
-                "authorities", authentication.getAuthorities()
-            ));
+            String username = authentication.getName();
+            String authorities = authentication.getAuthorities().toString();
             
+            return ResponseEntity.ok(Map.of(
+                "message", "User is authenticated",
+                "username", username,
+                "authorities", authorities,
+                "authenticated", authentication.isAuthenticated(),
+                "principal", authentication.getPrincipal()
+            ));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of(
-                "error", e.getMessage(),
-                "message", "Error checking authentication"
+                "error", "Error checking authentication",
+                "message", e.getMessage()
             ));
         }
     }

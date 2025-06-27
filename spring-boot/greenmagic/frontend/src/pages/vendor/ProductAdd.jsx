@@ -1,439 +1,356 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  Save, 
-  X, 
-  Plus, 
-  Minus, 
-  Upload, 
-  Eye, 
-  AlertCircle,
-  CheckCircle,
-  Info,
-  Package,
-  DollarSign,
-  Tag,
-  Image as ImageIcon,
-  Truck,
-  FileText,
-  Shield,
-  Search,
-  Copy,
-  Grid
-} from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import vendorService from '../../services/vendorService';
+import {
+  FiSave,
+  FiX,
+  FiUpload,
+  FiPlus,
+  FiMinus,
+  FiInfo,
+  FiDollarSign,
+  FiPackage,
+  FiImage,
+  FiTruck,
+  FiFileText,
+  FiShield,
+  FiSearch
+} from 'react-icons/fi';
 
 /**
- * Advanced Product Add/Edit Component - Phase 2
- * 
- * Comprehensive product form with variants, pricing, inventory management
- * Based on product-form-structure.json specifications
+ * Product Add Component
+ * Comprehensive product creation form based on product-form-structure.json
  */
 const ProductAdd = () => {
-  const { currentUser } = useAuth();
   const navigate = useNavigate();
-  const { id } = useParams(); // For edit mode
-  const isEditMode = Boolean(id);
-
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState('basic');
+  const [categories, setCategories] = useState({});
   const [errors, setErrors] = useState({});
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 9;
 
-  // Product Categories from product-categories.json
-  const productCategories = {
-    organic_grains: {
-      name: "Organic Grains & Cereals",
-      subcategories: {
-        wheat: { name: "Wheat & Wheat Products", hsn: "1001", gst: 0 },
-        rice: { name: "Rice & Rice Products", hsn: "1006", gst: 0 },
-        corn: { name: "Corn & Corn Products", hsn: "1005", gst: 0 },
-        millets: { name: "Millets", hsn: "1008", gst: 0 },
-        oats: { name: "Oats & Quinoa", hsn: "1008", gst: 0 }
-      }
-    },
-    pulses_legumes: {
-      name: "Pulses & Legumes",
-      subcategories: {
-        lentils: { name: "Lentils (Dal)", hsn: "0713", gst: 0 },
-        whole_pulses: { name: "Whole Pulses", hsn: "0713", gst: 0 },
-        specialty_beans: { name: "Specialty Beans", hsn: "0713", gst: 0 }
-      }
-    },
-    dairy_products: {
-      name: "Dairy & Milk Products",
-      subcategories: {
-        milk: { name: "Fresh Milk", hsn: "0401", gst: 5 },
-        ghee_butter: { name: "Ghee & Butter", hsn: "0405", gst: 5 },
-        cheese_paneer: { name: "Cheese & Paneer", hsn: "0406", gst: 5 },
-        yogurt_curd: { name: "Yogurt & Curd", hsn: "0401", gst: 5 }
-      }
-    },
-    fresh_vegetables: {
-      name: "Fresh Vegetables",
-      subcategories: {
-        leafy_greens: { name: "Leafy Greens", hsn: "0701", gst: 0 },
-        root_vegetables: { name: "Root Vegetables", hsn: "0702", gst: 0 },
-        gourds: { name: "Gourds & Squash", hsn: "0703", gst: 0 },
-        seasonal_vegetables: { name: "Seasonal Vegetables", hsn: "0704", gst: 0 },
-        exotic_vegetables: { name: "Exotic Vegetables", hsn: "0705", gst: 0 }
-      }
-    },
-    seasonal_fruits: {
-      name: "Seasonal Fruits",
-      subcategories: {
-        citrus_fruits: { name: "Citrus Fruits", hsn: "0801", gst: 0 },
-        tropical_fruits: { name: "Tropical Fruits", hsn: "0802", gst: 0 },
-        berries: { name: "Berries", hsn: "0803", gst: 0 },
-        dry_fruits: { name: "Dry Fruits & Nuts", hsn: "0804", gst: 0 },
-        seasonal_fruits: { name: "Seasonal Fruits", hsn: "0801", gst: 0 }
-      }
-    },
-    traditional_products: {
-      name: "Traditional & Artisanal",
-      subcategories: {
-        sweeteners: { name: "Natural Sweeteners", hsn: "1701", gst: 5 },
-        oils: { name: "Cooking Oils", hsn: "1507", gst: 5 },
-        spices: { name: "Spices & Condiments", hsn: "0910", gst: 5 },
-        pickles_preserves: { name: "Pickles & Preserves", hsn: "2005", gst: 12 },
-        herbal_products: { name: "Herbal & Ayurvedic", hsn: "2106", gst: 12 }
-      }
-    }
-  };
+  const vendorId = vendorService.getCurrentVendorId();
 
-  // Form state
-  const [productData, setProductData] = useState({
+  // Form data state matching product-form-structure.json
+  const [formData, setFormData] = useState({
     // Basic Information
     productTitle: '',
-    category: '',
-    subcategory: '',
     brandName: '',
-    customBrandName: '',
     skuCode: '',
-    productType: 'simple',
-    
-    // Pricing
+    productType: 'SIMPLE',
+    categoryId: '',
+    subcategoryId: '',
+
+    // Pricing Strategy
     mrp: '',
     sellingPrice: '',
     costPrice: '',
-    discountPercentage: 0,
     offerStartDate: '',
     offerEndDate: '',
-    bulkPricing: [],
-    
-    // Inventory
+    bulkPricingTiers: [],
+
+    // Inventory Management
     stockQuantity: '',
-    lowStockThreshold: '',
-    trackInventory: true,
-    allowBackorders: false,
-    stockStatus: 'IN_STOCK',
-    
-    // Variants (for variable products)
-    hasVariants: false,
-    variantAttributes: [],
-    variants: [],
-    
-    // Media
-    images: [],
-    videos: [],
-    
-    // Shipping
+    unitOfMeasurement: 'kg',
+    minimumOrderQuantity: 1,
+    maximumOrderQuantity: '',
+    minStockAlert: 10,
+    trackQuantity: true,
+    restockDate: '',
+
+    // Media Gallery
+    imageUrl: '',
+    galleryImages: [],
+    videoUrl: '',
+    imageAltTags: [],
+
+    // Shipping & Logistics
     weight: '',
-    dimensions: { length: '', width: '', height: '' },
-    shippingClass: '',
+    dimensions: '',
+    deliveryTimeEstimate: '2-3 days',
+    shippingClass: 'STANDARD',
+    coldStorageRequired: false,
+    specialPackaging: false,
+    insuranceRequired: false,
     freeShipping: false,
-    
-    // Product Details
+    freeShippingThreshold: '',
+    isReturnable: true,
+    returnWindow: 'SEVEN_DAYS',
+    returnConditions: [],
+    isCodAvailable: true,
+
+    // Product Descriptions
     shortDescription: '',
     fullDescription: '',
-    features: [],
-    ingredients: '',
-    nutritionalInfo: '',
-    
-    // Certifications
-    certifications: [],
-    hsnCode: '',
-    gstRate: 0,
+    keyFeatures: [],
+    productHighlights: [],
+    ingredientsList: '',
+    nutritionalInfo: {},
+    allergenInfo: [],
+
+    // Certifications & Compliance
     fssaiLicense: '',
-    
-    // SEO
+    organicCertification: {},
+    qualityCertifications: [],
+    countryOfOrigin: 'India',
+    stateOfOrigin: '',
+    farmName: '',
+    harvestSeason: '',
+    manufacturingDate: '',
+    expiryDate: '',
+    bestBeforeDate: '',
+    shelfLifeDays: '',
+
+    // SEO Optimization
     metaTitle: '',
     metaDescription: '',
-    keywords: [],
-    
-    // Settings
-    status: 'DRAFT',
-    featured: false,
-    returnable: true,
-    codAvailable: true,
-    deliveryTime: '2-3 days'
+    searchKeywords: [],
+    urlSlug: '',
+    structuredData: {},
+
+    // Status
+    status: 'DRAFT'
   });
 
-  // Form sections configuration
-  const formSections = [
-    { id: 'basic', label: 'Basic Information', icon: Package },
-    { id: 'pricing', label: 'Pricing & Offers', icon: DollarSign },
-    { id: 'inventory', label: 'Inventory Management', icon: Package },
-    { id: 'variants', label: 'Product Variants', icon: Tag },
-    { id: 'media', label: 'Images & Videos', icon: ImageIcon },
-    { id: 'shipping', label: 'Shipping & Logistics', icon: Truck },
-    { id: 'details', label: 'Product Details', icon: FileText },
-    { id: 'certifications', label: 'Certifications', icon: Shield },
-    { id: 'seo', label: 'SEO Optimization', icon: Search }
-  ];
-
-  // Auto-generate SKU when category and subcategory are selected
   useEffect(() => {
-    if (productData.category && productData.subcategory && !isEditMode) {
-      const categoryCode = productData.category.toUpperCase().substring(0, 2);
-      const vendorId = currentUser?.id || '001';
-      const productNumber = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
-      const sku = `GM${categoryCode}${vendorId.toString().padStart(3, '0')}${productNumber}`;
-      
-      setProductData(prev => ({ ...prev, skuCode: sku }));
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    // Auto-generate URL slug from product title
+    if (formData.productTitle && !formData.urlSlug) {
+      const slug = formData.productTitle
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim();
+      setFormData(prev => ({ ...prev, urlSlug: slug }));
     }
-  }, [productData.category, productData.subcategory, isEditMode, currentUser]);
+  }, [formData.productTitle]);
 
-  // Auto-calculate discount percentage
-  useEffect(() => {
-    if (productData.mrp && productData.sellingPrice) {
-      const mrp = parseFloat(productData.mrp);
-      const selling = parseFloat(productData.sellingPrice);
-      if (mrp > 0 && selling > 0) {
-        const discount = ((mrp - selling) / mrp) * 100;
-        setProductData(prev => ({ ...prev, discountPercentage: Math.round(discount * 100) / 100 }));
+  const loadCategories = async () => {
+    try {
+      const response = await vendorService.getProductCategories();
+      if (response.success) {
+        setCategories(response.data);
       }
+    } catch (err) {
+      console.error('Error loading categories:', err);
     }
-  }, [productData.mrp, productData.sellingPrice]);
-
-  // Auto-update HSN and GST when category/subcategory changes
-  useEffect(() => {
-    if (productData.category && productData.subcategory) {
-      const categoryData = productCategories[productData.category];
-      if (categoryData && categoryData.subcategories[productData.subcategory]) {
-        const subcategoryData = categoryData.subcategories[productData.subcategory];
-        setProductData(prev => ({
-          ...prev,
-          hsnCode: subcategoryData.hsn,
-          gstRate: subcategoryData.gst
-        }));
-      }
-    }
-  }, [productData.category, productData.subcategory]);
+  };
 
   const handleInputChange = (field, value) => {
-    setProductData(prev => ({ ...prev, [field]: value }));
-    
-    // Clear field-specific errors
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: null }));
-    }
-  };
-
-  const handleNestedInputChange = (parentField, childField, value) => {
-    setProductData(prev => ({
+    setFormData(prev => ({
       ...prev,
-      [parentField]: {
-        ...prev[parentField],
-        [childField]: value
-      }
+      [field]: value
     }));
-  };
-
-  const addBulkPricingTier = () => {
-    if (productData.bulkPricing.length < 5) {
-      setProductData(prev => ({
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
         ...prev,
-        bulkPricing: [...prev.bulkPricing, {
-          minQuantity: '',
-          discountType: 'percentage',
-          discountValue: ''
-        }]
+        [field]: null
       }));
     }
   };
 
-  const removeBulkPricingTier = (index) => {
-    setProductData(prev => ({
+  const handleArrayAdd = (field, value = '') => {
+    setFormData(prev => ({
       ...prev,
-      bulkPricing: prev.bulkPricing.filter((_, i) => i !== index)
+      [field]: [...prev[field], value]
     }));
   };
 
-  const addVariantAttribute = () => {
-    setProductData(prev => ({
+  const handleArrayRemove = (field, index) => {
+    setFormData(prev => ({
       ...prev,
-      variantAttributes: [...prev.variantAttributes, {
-        name: '',
-        values: ['']
-      }]
+      [field]: prev[field].filter((_, i) => i !== index)
     }));
   };
 
-  const addFeature = () => {
-    setProductData(prev => ({
+  const handleArrayUpdate = (field, index, value) => {
+    setFormData(prev => ({
       ...prev,
-      features: [...prev.features, '']
+      [field]: prev[field].map((item, i) => i === index ? value : item)
     }));
   };
 
-  const removeFeature = (index) => {
-    setProductData(prev => ({
-      ...prev,
-      features: prev.features.filter((_, i) => i !== index)
-    }));
+  const generateSku = async () => {
+    try {
+      const category = Object.keys(categories).find(key => 
+        categories[key].subcategories && 
+        Object.keys(categories[key].subcategories).includes(formData.subcategoryId)
+      );
+      
+      const response = await vendorService.generateSku(vendorId, category, formData.subcategoryId);
+      if (response.success) {
+        handleInputChange('skuCode', response.data.sku);
+      }
+    } catch (err) {
+      console.error('Error generating SKU:', err);
+    }
   };
 
-  const validateForm = () => {
+  const validateStep = (step) => {
     const newErrors = {};
 
-    // Basic Information validation
-    if (!productData.productTitle.trim()) {
-      newErrors.productTitle = 'Product title is required';
-    } else if (productData.productTitle.length < 10) {
-      newErrors.productTitle = 'Product title must be at least 10 characters';
-    }
-
-    if (!productData.category) {
-      newErrors.category = 'Category is required';
-    }
-
-    if (!productData.subcategory) {
-      newErrors.subcategory = 'Subcategory is required';
-    }
-
-    if (!productData.brandName) {
-      newErrors.brandName = 'Brand name is required';
-    }
-
-    // Pricing validation
-    if (!productData.mrp || parseFloat(productData.mrp) <= 0) {
-      newErrors.mrp = 'Valid MRP is required';
-    }
-
-    if (!productData.sellingPrice || parseFloat(productData.sellingPrice) <= 0) {
-      newErrors.sellingPrice = 'Valid selling price is required';
-    }
-
-    if (parseFloat(productData.sellingPrice) > parseFloat(productData.mrp)) {
-      newErrors.sellingPrice = 'Selling price cannot be greater than MRP';
-    }
-
-    // Inventory validation
-    if (productData.trackInventory && (!productData.stockQuantity || parseInt(productData.stockQuantity) < 0)) {
-      newErrors.stockQuantity = 'Valid stock quantity is required';
+    switch (step) {
+      case 1: // Basic Information
+        if (!formData.productTitle) newErrors.productTitle = 'Product title is required';
+        if (!formData.brandName) newErrors.brandName = 'Brand name is required';
+        if (!formData.categoryId) newErrors.categoryId = 'Category is required';
+        break;
+      
+      case 2: // Pricing Strategy
+        if (!formData.mrp) newErrors.mrp = 'MRP is required';
+        if (!formData.sellingPrice) newErrors.sellingPrice = 'Selling price is required';
+        if (parseFloat(formData.sellingPrice) > parseFloat(formData.mrp)) {
+          newErrors.sellingPrice = 'Selling price cannot be higher than MRP';
+        }
+        break;
+      
+      case 3: // Inventory Management
+        if (!formData.stockQuantity) newErrors.stockQuantity = 'Stock quantity is required';
+        if (!formData.unitOfMeasurement) newErrors.unitOfMeasurement = 'Unit of measurement is required';
+        break;
+      
+      case 4: // Media Gallery
+        if (!formData.imageUrl) newErrors.imageUrl = 'Main product image is required';
+        break;
+      
+      case 5: // Shipping & Logistics
+        if (!formData.weight) newErrors.weight = 'Weight is required for shipping';
+        if (!formData.deliveryTimeEstimate) newErrors.deliveryTimeEstimate = 'Delivery time estimate is required';
+        break;
+      
+      case 6: // Product Descriptions
+        if (!formData.shortDescription) newErrors.shortDescription = 'Short description is required';
+        if (!formData.fullDescription) newErrors.fullDescription = 'Full description is required';
+        break;
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = async (status = 'DRAFT') => {
-    if (!validateForm()) {
-      return;
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => Math.min(prev + 1, totalSteps));
     }
+  };
 
-    setSaving(true);
+  const handlePrevious = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleSubmit = async (isDraft = false) => {
+    if (!isDraft && !validateStep(currentStep)) return;
+
     try {
-      const productPayload = {
-        ...productData,
-        status,
-        updatedAt: new Date().toISOString()
+      setLoading(true);
+      
+      const productData = {
+        ...formData,
+        status: isDraft ? 'DRAFT' : 'ACTIVE'
       };
 
-      if (isEditMode) {
-        productPayload.id = id;
-        productPayload.updatedAt = new Date().toISOString();
-      } else {
-        productPayload.createdAt = new Date().toISOString();
+      const response = await vendorService.createProduct(vendorId, productData);
+      
+      if (response.success) {
+        navigate('/vendor/products', {
+          state: { message: 'Product created successfully!' }
+        });
       }
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      console.log('Product saved:', productPayload);
-      navigate('/vendor/products', { 
-        state: { 
-          message: `Product ${isEditMode ? 'updated' : 'created'} successfully!` 
-        }
-      });
-    } catch (error) {
-      console.error('Error saving product:', error);
+    } catch (err) {
+      console.error('Error creating product:', err);
+      setErrors({ submit: 'Failed to create product. Please try again.' });
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
+  };
+
+  const renderStepIndicator = () => (
+    <div className="mb-8">
+      <div className="flex items-center justify-between">
+        {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
+          <div key={step} className="flex items-center">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                step <= currentStep
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200 text-gray-600'
+              }`}
+            >
+              {step}
+            </div>
+            {step < totalSteps && (
+              <div
+                className={`w-12 h-1 mx-2 ${
+                  step < currentStep ? 'bg-green-600' : 'bg-gray-200'
+                }`}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="mt-4">
+        <h2 className="text-lg font-medium text-gray-900">
+          Step {currentStep}: {getStepTitle(currentStep)}
+        </h2>
+        <p className="text-sm text-gray-600">{getStepDescription(currentStep)}</p>
+      </div>
+    </div>
+  );
+
+  const getStepTitle = (step) => {
+    const titles = {
+      1: 'Basic Information',
+      2: 'Pricing Strategy',
+      3: 'Inventory Management',
+      4: 'Media Gallery',
+      5: 'Shipping & Logistics',
+      6: 'Product Descriptions',
+      7: 'Certifications & Compliance',
+      8: 'SEO Optimization',
+      9: 'Review & Publish'
+    };
+    return titles[step];
+  };
+
+  const getStepDescription = (step) => {
+    const descriptions = {
+      1: 'Enter basic product information like title, brand, and category',
+      2: 'Set pricing including MRP, selling price, and any offers',
+      3: 'Manage inventory levels and stock settings',
+      4: 'Upload product images and videos',
+      5: 'Configure shipping options and logistics',
+      6: 'Write compelling product descriptions and features',
+      7: 'Add certifications and compliance information',
+      8: 'Optimize for search engines',
+      9: 'Review all information before publishing'
+    };
+    return descriptions[step];
   };
 
   const renderBasicInformation = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="md:col-span-2">
+        <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Product Title *
           </label>
           <input
             type="text"
-            value={productData.productTitle}
+            value={formData.productTitle}
             onChange={(e) => handleInputChange('productTitle', e.target.value)}
-            className={`block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 ${
+            className={`w-full px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
               errors.productTitle ? 'border-red-300' : 'border-gray-300'
             }`}
-            placeholder="e.g., Organic Basmati Rice Premium Quality 5kg"
-            maxLength={100}
+            placeholder="Enter product title (10-100 characters)"
           />
           {errors.productTitle && (
             <p className="mt-1 text-sm text-red-600">{errors.productTitle}</p>
-          )}
-          <p className="mt-1 text-sm text-gray-500">
-            Clear, descriptive title that customers will see ({productData.productTitle.length}/100)
-          </p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Category *
-          </label>
-          <select
-            value={productData.category}
-            onChange={(e) => {
-              handleInputChange('category', e.target.value);
-              handleInputChange('subcategory', ''); // Reset subcategory
-            }}
-            className={`block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 ${
-              errors.category ? 'border-red-300' : 'border-gray-300'
-            }`}
-          >
-            <option value="">Select Category</option>
-            {Object.entries(productCategories).map(([key, category]) => (
-              <option key={key} value={key}>{category.name}</option>
-            ))}
-          </select>
-          {errors.category && (
-            <p className="mt-1 text-sm text-red-600">{errors.category}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Subcategory *
-          </label>
-          <select
-            value={productData.subcategory}
-            onChange={(e) => handleInputChange('subcategory', e.target.value)}
-            disabled={!productData.category}
-            className={`block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 ${
-              errors.subcategory ? 'border-red-300' : 'border-gray-300'
-            }`}
-          >
-            <option value="">Select Subcategory</option>
-            {productData.category && productCategories[productData.category] && 
-              Object.entries(productCategories[productData.category].subcategories).map(([key, subcategory]) => (
-                <option key={key} value={key}>{subcategory.name}</option>
-              ))
-            }
-          </select>
-          {errors.subcategory && (
-            <p className="mt-1 text-sm text-red-600">{errors.subcategory}</p>
           )}
         </div>
 
@@ -441,129 +358,118 @@ const ProductAdd = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Brand Name *
           </label>
-          <select
-            value={productData.brandName}
+          <input
+            type="text"
+            value={formData.brandName}
             onChange={(e) => handleInputChange('brandName', e.target.value)}
-            className={`block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 ${
+            className={`w-full px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
               errors.brandName ? 'border-red-300' : 'border-gray-300'
             }`}
-          >
-            <option value="">Select Brand</option>
-            <option value="local_brand">Local/Homemade Brand</option>
-            <option value="organic_india">Organic India</option>
-            <option value="patanjali">Patanjali</option>
-            <option value="24_mantra">24 Mantra Organic</option>
-            <option value="custom">Other (Please specify)</option>
-          </select>
+            placeholder="Enter brand name"
+          />
           {errors.brandName && (
             <p className="mt-1 text-sm text-red-600">{errors.brandName}</p>
           )}
         </div>
 
-        {productData.brandName === 'custom' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Custom Brand Name *
-            </label>
-            <input
-              type="text"
-              value={productData.customBrandName}
-              onChange={(e) => handleInputChange('customBrandName', e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
-              placeholder="Enter brand name"
-              maxLength={50}
-            />
-          </div>
-        )}
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             SKU Code
           </label>
-          <input
-            type="text"
-            value={productData.skuCode}
-            readOnly
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
-            placeholder="Auto-generated"
-          />
-          <p className="mt-1 text-sm text-gray-500">Unique product identifier (auto-generated)</p>
+          <div className="flex">
+            <input
+              type="text"
+              value={formData.skuCode}
+              onChange={(e) => handleInputChange('skuCode', e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:ring-green-500 focus:border-green-500"
+              placeholder="Enter or generate SKU"
+            />
+            <button
+              type="button"
+              onClick={generateSku}
+              className="px-4 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md hover:bg-gray-200"
+            >
+              Generate
+            </button>
+          </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Product Type
           </label>
-          <div className="space-y-2">
-            <label className="flex items-center">
-              <input
-                type="radio"
-                value="simple"
-                checked={productData.productType === 'simple'}
-                onChange={(e) => handleInputChange('productType', e.target.value)}
-                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-              />
-              <span className="ml-2 text-sm text-gray-700">Simple Product</span>
-            </label>
-            <label className="flex items-center">
-              <input
-                type="radio"
-                value="variable"
-                checked={productData.productType === 'variable'}
-                onChange={(e) => {
-                  handleInputChange('productType', e.target.value);
-                  handleInputChange('hasVariants', e.target.value === 'variable');
-                }}
-                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-              />
-              <span className="ml-2 text-sm text-gray-700">Variable Product (with variants)</span>
-            </label>
-          </div>
+          <select
+            value={formData.productType}
+            onChange={(e) => handleInputChange('productType', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+          >
+            <option value="SIMPLE">Simple Product</option>
+            <option value="VARIABLE">Variable Product (with variants)</option>
+          </select>
         </div>
-      </div>
 
-      {/* Auto-filled fields display */}
-      {productData.category && productData.subcategory && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-900 mb-2">Auto-filled Information</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div>
-              <span className="text-blue-700 font-medium">HSN Code:</span>
-              <span className="ml-2 text-blue-900">{productData.hsnCode}</span>
-            </div>
-            <div>
-              <span className="text-blue-700 font-medium">GST Rate:</span>
-              <span className="ml-2 text-blue-900">{productData.gstRate}%</span>
-            </div>
-            <div>
-              <span className="text-blue-700 font-medium">SKU:</span>
-              <span className="ml-2 text-blue-900">{productData.skuCode}</span>
-            </div>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Category *
+          </label>
+          <select
+            value={formData.categoryId}
+            onChange={(e) => handleInputChange('categoryId', e.target.value)}
+            className={`w-full px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
+              errors.categoryId ? 'border-red-300' : 'border-gray-300'
+            }`}
+          >
+            <option value="">Select Category</option>
+            {Object.entries(categories).map(([key, category]) => (
+              <option key={key} value={key}>{category.name}</option>
+            ))}
+          </select>
+          {errors.categoryId && (
+            <p className="mt-1 text-sm text-red-600">{errors.categoryId}</p>
+          )}
         </div>
-      )}
+
+        {formData.categoryId && categories[formData.categoryId]?.subcategories && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Subcategory
+            </label>
+            <select
+              value={formData.subcategoryId}
+              onChange={(e) => handleInputChange('subcategoryId', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+            >
+              <option value="">Select Subcategory</option>
+              {Object.entries(categories[formData.categoryId].subcategories).map(([key, subcat]) => (
+                <option key={key} value={key}>{subcat.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
     </div>
   );
 
-  const renderPricing = () => (
+  const renderPricingStrategy = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Maximum Retail Price (MRP) * ₹
+            MRP (Maximum Retail Price) *
           </label>
-          <input
-            type="number"
-            value={productData.mrp}
-            onChange={(e) => handleInputChange('mrp', e.target.value)}
-            className={`block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 ${
-              errors.mrp ? 'border-red-300' : 'border-gray-300'
-            }`}
-            placeholder="0.00"
-            min="1"
-            max="100000"
-            step="0.01"
-          />
+          <div className="relative">
+            <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="number"
+              step="0.01"
+              value={formData.mrp}
+              onChange={(e) => handleInputChange('mrp', e.target.value)}
+              className={`w-full pl-10 pr-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
+                errors.mrp ? 'border-red-300' : 'border-gray-300'
+              }`}
+              placeholder="0.00"
+            />
+          </div>
           {errors.mrp && (
             <p className="mt-1 text-sm text-red-600">{errors.mrp}</p>
           )}
@@ -571,19 +477,21 @@ const ProductAdd = () => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Your Selling Price * ₹
+            Selling Price *
           </label>
-          <input
-            type="number"
-            value={productData.sellingPrice}
-            onChange={(e) => handleInputChange('sellingPrice', e.target.value)}
-            className={`block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 ${
-              errors.sellingPrice ? 'border-red-300' : 'border-gray-300'
-            }`}
-            placeholder="0.00"
-            min="1"
-            step="0.01"
-          />
+          <div className="relative">
+            <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="number"
+              step="0.01"
+              value={formData.sellingPrice}
+              onChange={(e) => handleInputChange('sellingPrice', e.target.value)}
+              className={`w-full pl-10 pr-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
+                errors.sellingPrice ? 'border-red-300' : 'border-gray-300'
+              }`}
+              placeholder="0.00"
+            />
+          </div>
           {errors.sellingPrice && (
             <p className="mt-1 text-sm text-red-600">{errors.sellingPrice}</p>
           )}
@@ -591,327 +499,316 @@ const ProductAdd = () => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Discount %
+            Cost Price
+          </label>
+          <div className="relative">
+            <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="number"
+              step="0.01"
+              value={formData.costPrice}
+              onChange={(e) => handleInputChange('costPrice', e.target.value)}
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+              placeholder="0.00"
+            />
+          </div>
+          <p className="mt-1 text-xs text-gray-500">For profit calculation (optional)</p>
+        </div>
+      </div>
+
+      {/* Offer Dates */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Offer Start Date
           </label>
           <input
-            type="number"
-            value={productData.discountPercentage}
-            readOnly
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
-            placeholder="0.00"
+            type="datetime-local"
+            value={formData.offerStartDate}
+            onChange={(e) => handleInputChange('offerStartDate', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
           />
-          <p className="mt-1 text-sm text-gray-500">Automatically calculated</p>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Your Cost Price (Optional) ₹
+            Offer End Date
           </label>
           <input
-            type="number"
-            value={productData.costPrice}
-            onChange={(e) => handleInputChange('costPrice', e.target.value)}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
-            placeholder="0.00"
-            min="0"
-            step="0.01"
+            type="datetime-local"
+            value={formData.offerEndDate}
+            onChange={(e) => handleInputChange('offerEndDate', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
           />
-          <p className="mt-1 text-sm text-gray-500">For internal profit calculation (private)</p>
         </div>
       </div>
 
-      {/* Bulk Pricing */}
+      {/* Bulk Pricing Tiers */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h4 className="text-lg font-medium text-gray-900">Bulk Pricing Tiers (Optional)</h4>
+          <label className="block text-sm font-medium text-gray-700">
+            Bulk Pricing Tiers
+          </label>
           <button
             type="button"
-            onClick={addBulkPricingTier}
-            disabled={productData.bulkPricing.length >= 5}
-            className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+            onClick={() => handleArrayAdd('bulkPricingTiers', { minQuantity: '', maxQuantity: '', price: '' })}
+            className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200"
           >
-            <Plus className="w-4 h-4 mr-1" />
+            <FiPlus className="mr-1 h-4 w-4" />
             Add Tier
           </button>
         </div>
-
-        {productData.bulkPricing.map((tier, index) => (
-          <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 border border-gray-200 rounded-lg">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Min Quantity
-              </label>
-              <input
-                type="number"
-                value={tier.minQuantity}
-                onChange={(e) => {
-                  const newTiers = [...productData.bulkPricing];
-                  newTiers[index].minQuantity = e.target.value;
-                  setProductData(prev => ({ ...prev, bulkPricing: newTiers }));
-                }}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
-                placeholder="1"
-                min="1"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Discount Type
-              </label>
-              <select
-                value={tier.discountType}
-                onChange={(e) => {
-                  const newTiers = [...productData.bulkPricing];
-                  newTiers[index].discountType = e.target.value;
-                  setProductData(prev => ({ ...prev, bulkPricing: newTiers }));
-                }}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
-              >
-                <option value="percentage">Percentage Off</option>
-                <option value="fixed_amount">Fixed Amount Off</option>
-                <option value="fixed_price">Fixed Price Per Unit</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Discount Value
-              </label>
-              <input
-                type="number"
-                value={tier.discountValue}
-                onChange={(e) => {
-                  const newTiers = [...productData.bulkPricing];
-                  newTiers[index].discountValue = e.target.value;
-                  setProductData(prev => ({ ...prev, bulkPricing: newTiers }));
-                }}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
-                placeholder="0"
-                min="0"
-                step="0.01"
-              />
-            </div>
-
-            <div className="flex items-end">
-              <button
-                type="button"
-                onClick={() => removeBulkPricingTier(index)}
-                className="w-full px-3 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50"
-              >
-                <Minus className="w-4 h-4 mx-auto" />
-              </button>
-            </div>
+        
+        {formData.bulkPricingTiers.map((tier, index) => (
+          <div key={index} className="flex items-center space-x-4 mb-3">
+            <input
+              type="number"
+              placeholder="Min Qty"
+              value={tier.minQuantity}
+              onChange={(e) => handleArrayUpdate('bulkPricingTiers', index, { ...tier, minQuantity: e.target.value })}
+              className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+            />
+            <input
+              type="number"
+              placeholder="Max Qty"
+              value={tier.maxQuantity}
+              onChange={(e) => handleArrayUpdate('bulkPricingTiers', index, { ...tier, maxQuantity: e.target.value })}
+              className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+            />
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Price"
+              value={tier.price}
+              onChange={(e) => handleArrayUpdate('bulkPricingTiers', index, { ...tier, price: e.target.value })}
+              className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+            />
+            <button
+              type="button"
+              onClick={() => handleArrayRemove('bulkPricingTiers', index)}
+              className="p-2 text-red-600 hover:text-red-800"
+            >
+              <FiMinus className="h-4 w-4" />
+            </button>
           </div>
         ))}
       </div>
     </div>
   );
 
-  const renderInventory = () => (
+  const renderInventoryManagement = () => (
     <div className="space-y-6">
-      <div className="flex items-center space-x-3">
-        <input
-          type="checkbox"
-          checked={productData.trackInventory}
-          onChange={(e) => handleInputChange('trackInventory', e.target.checked)}
-          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-        />
-        <label className="text-sm font-medium text-gray-700">
-          Track inventory for this product
-        </label>
-      </div>
-
-      {productData.trackInventory && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Stock Quantity *
-            </label>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Stock Quantity *
+          </label>
+          <div className="relative">
+            <FiPackage className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="number"
-              value={productData.stockQuantity}
+              value={formData.stockQuantity}
               onChange={(e) => handleInputChange('stockQuantity', e.target.value)}
-              className={`block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 ${
+              className={`w-full pl-10 pr-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
                 errors.stockQuantity ? 'border-red-300' : 'border-gray-300'
               }`}
               placeholder="0"
-              min="0"
             />
-            {errors.stockQuantity && (
-              <p className="mt-1 text-sm text-red-600">{errors.stockQuantity}</p>
-            )}
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Low Stock Threshold
-            </label>
-            <input
-              type="number"
-              value={productData.lowStockThreshold}
-              onChange={(e) => handleInputChange('lowStockThreshold', e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
-              placeholder="5"
-              min="0"
-            />
-            <p className="mt-1 text-sm text-gray-500">Alert when stock falls below this number</p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Stock Status
-            </label>
-            <select
-              value={productData.stockStatus}
-              onChange={(e) => handleInputChange('stockStatus', e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
-            >
-              <option value="IN_STOCK">In Stock</option>
-              <option value="LOW_STOCK">Low Stock</option>
-              <option value="OUT_OF_STOCK">Out of Stock</option>
-              <option value="DISCONTINUED">Discontinued</option>
-            </select>
-          </div>
+          {errors.stockQuantity && (
+            <p className="mt-1 text-sm text-red-600">{errors.stockQuantity}</p>
+          )}
         </div>
-      )}
 
-      <div className="flex items-center space-x-3">
-        <input
-          type="checkbox"
-          checked={productData.allowBackorders}
-          onChange={(e) => handleInputChange('allowBackorders', e.target.checked)}
-          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-        />
-        <label className="text-sm font-medium text-gray-700">
-          Allow backorders (customers can order when out of stock)
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Unit of Measurement *
+          </label>
+          <select
+            value={formData.unitOfMeasurement}
+            onChange={(e) => handleInputChange('unitOfMeasurement', e.target.value)}
+            className={`w-full px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
+              errors.unitOfMeasurement ? 'border-red-300' : 'border-gray-300'
+            }`}
+          >
+            <option value="kg">Kilogram (kg)</option>
+            <option value="g">Gram (g)</option>
+            <option value="l">Liter (l)</option>
+            <option value="ml">Milliliter (ml)</option>
+            <option value="piece">Piece</option>
+            <option value="pack">Pack</option>
+            <option value="box">Box</option>
+            <option value="bag">Bag</option>
+          </select>
+          {errors.unitOfMeasurement && (
+            <p className="mt-1 text-sm text-red-600">{errors.unitOfMeasurement}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Minimum Order Quantity
+          </label>
+          <input
+            type="number"
+            value={formData.minimumOrderQuantity}
+            onChange={(e) => handleInputChange('minimumOrderQuantity', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+            placeholder="1"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Maximum Order Quantity
+          </label>
+          <input
+            type="number"
+            value={formData.maximumOrderQuantity}
+            onChange={(e) => handleInputChange('maximumOrderQuantity', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+            placeholder="No limit"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Low Stock Alert
+          </label>
+          <input
+            type="number"
+            value={formData.minStockAlert}
+            onChange={(e) => handleInputChange('minStockAlert', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+            placeholder="10"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Restock Date
+          </label>
+          <input
+            type="date"
+            value={formData.restockDate}
+            onChange={(e) => handleInputChange('restockDate', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-4">
+        <label className="flex items-center">
+          <input
+            type="checkbox"
+            checked={formData.trackQuantity}
+            onChange={(e) => handleInputChange('trackQuantity', e.target.checked)}
+            className="h-4 w-4 text-green-600 rounded border-gray-300"
+          />
+          <span className="ml-2 text-sm text-gray-700">Track quantity</span>
         </label>
       </div>
     </div>
   );
 
-  const renderVariants = () => (
-    <div className="space-y-6">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center">
-          <Info className="h-5 w-5 text-blue-500 mr-2" />
-          <div>
-            <h4 className="text-sm font-medium text-blue-900">Product Variants</h4>
-            <p className="text-sm text-blue-700 mt-1">
-              {productData.productType === 'variable' ? 
-                'Variable product type selected. You can manage variants after creating the product.' : 
-                'Switch to Variable Product type to enable variants.'
-              }
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {productData.productType === 'variable' && (
-        <div className="text-center py-8">
-          <Grid className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Advanced Variant Management</h3>
-          <p className="text-gray-500 mb-4">
-            Create the product first, then use our advanced variant manager to set up size, weight, color, and other variations.
-          </p>
-          <button
-            type="button"
-            className="inline-flex items-center px-4 py-2 border border-green-600 text-green-600 rounded-md hover:bg-green-50"
-            disabled
-          >
-            <Tag className="w-4 h-4 mr-2" />
-            Manage Variants (Available after creation)
-          </button>
-        </div>
-      )}
-    </div>
-  );
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 1:
+        return renderBasicInformation();
+      case 2:
+        return renderPricingStrategy();
+      case 3:
+        return renderInventoryManagement();
+      case 4:
+        return <div className="text-center py-8 text-gray-500">Media Gallery - Coming Soon</div>;
+      case 5:
+        return <div className="text-center py-8 text-gray-500">Shipping & Logistics - Coming Soon</div>;
+      case 6:
+        return <div className="text-center py-8 text-gray-500">Product Descriptions - Coming Soon</div>;
+      case 7:
+        return <div className="text-center py-8 text-gray-500">Certifications & Compliance - Coming Soon</div>;
+      case 8:
+        return <div className="text-center py-8 text-gray-500">SEO Optimization - Coming Soon</div>;
+      case 9:
+        return <div className="text-center py-8 text-gray-500">Review & Publish - Coming Soon</div>;
+      default:
+        return renderBasicInformation();
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {isEditMode ? 'Edit Product' : 'Add New Product'}
-              </h1>
-              <p className="text-gray-600 mt-1">
-                {isEditMode ? 'Update your product information' : 'Create a comprehensive product listing'}
-              </p>
-            </div>
-            <div className="flex space-x-3">
+    <div className="max-w-4xl mx-auto p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Add New Product</h1>
+          <p className="text-gray-600">Create a new product listing for your store</p>
+        </div>
+        <button
+          onClick={() => navigate('/vendor/products')}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+        >
+          <FiX className="mr-2 h-4 w-4" />
+          Cancel
+        </button>
+      </div>
+
+      {/* Step Indicator */}
+      {renderStepIndicator()}
+
+      {/* Form */}
+      <div className="bg-white rounded-lg shadow p-6">
+        {renderCurrentStep()}
+
+        {/* Navigation Buttons */}
+        <div className="mt-8 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={handlePrevious}
+            disabled={currentStep === 1}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={() => handleSubmit(true)}
+              disabled={loading}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Save as Draft
+            </button>
+
+            {currentStep < totalSteps ? (
               <button
-                onClick={() => navigate('/vendor/products')}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                type="button"
+                onClick={handleNext}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
               >
-                <X className="w-4 h-4 mr-2" />
-                Cancel
+                Next
               </button>
+            ) : (
               <button
-                onClick={() => handleSave('DRAFT')}
-                disabled={saving}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                type="button"
+                onClick={() => handleSubmit(false)}
+                disabled={loading}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
               >
-                Save Draft
+                <FiSave className="mr-2 h-4 w-4" />
+                {loading ? 'Publishing...' : 'Publish Product'}
               </button>
-              <button
-                onClick={() => handleSave('ACTIVE')}
-                disabled={saving}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {saving ? 'Saving...' : 'Save & Publish'}
-              </button>
-            </div>
+            )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Section Navigation */}
-          <div className="lg:col-span-1">
-            <nav className="space-y-1 sticky top-8">
-              {formSections.map((section) => {
-                const IconComponent = section.icon;
-                return (
-                  <button
-                    key={section.id}
-                    onClick={() => setActiveSection(section.id)}
-                    className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                      activeSection === section.id
-                        ? 'bg-green-100 text-green-700'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                    }`}
-                  >
-                    <IconComponent className="mr-3 h-5 w-5" />
-                    {section.label}
-                  </button>
-                );
-              })}
-            </nav>
+        {/* Error Display */}
+        {errors.submit && (
+          <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4">
+            <p className="text-sm text-red-800">{errors.submit}</p>
           </div>
-
-          {/* Form Content */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              {activeSection === 'basic' && renderBasicInformation()}
-              {activeSection === 'pricing' && renderPricing()}
-              {activeSection === 'inventory' && renderInventory()}
-              {activeSection === 'variants' && renderVariants()}
-              {(activeSection === 'media' || activeSection === 'shipping' || activeSection === 'details' || 
-                activeSection === 'certifications' || activeSection === 'seo') && (
-                <div className="text-center py-12">
-                  <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    {formSections.find(s => s.id === activeSection)?.label}
-                  </h3>
-                  <p className="text-gray-500">This section will be implemented in Phase 2.1</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

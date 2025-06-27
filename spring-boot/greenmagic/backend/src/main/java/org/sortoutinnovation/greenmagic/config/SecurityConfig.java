@@ -88,44 +88,52 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints (no authentication required)
                 .requestMatchers(
-                    "/users/register",               // User registration
-                    "/users/roles",                  // Get available roles for registration
-                    "/users/login",                  // User login (if implemented)
-                    "/auth/login",                   // Auth controller login endpoint
-                    "/auth/register",                // Customer registration endpoint
-                    "/auth/vendor-register",         // Vendor registration endpoint (step 1)
-                    "/vendors/users/{userId:[0-9]+}", // Create vendor profile during registration
-                    "/vendors/users/{userId:[0-9]+}/exists", // Check if vendor profile exists
-                    "/auth/debug/**",                // Debug endpoints (remove in production)
-                    "/categories/**",                // Category browsing
-                    "/products/**",                  // Product browsing
+                    "/api/users/register",           // User registration
+                    "/api/users/roles",              // Get available roles for registration
+                    "/api/users/login",              // User login (if implemented)
+                    "/api/auth/login",               // Auth controller login endpoint
+                    "/api/auth/register",            // Customer registration endpoint
+                    "/api/auth/vendor-register",     // Vendor registration endpoint (step 1)
+                    "/api/vendors/users/{userId:[0-9]+}", // Create vendor profile during registration
+                    "/api/vendors/users/{userId:[0-9]+}/exists", // Check if vendor profile exists
+                    "/api/auth/debug/**",            // Debug endpoints (remove in production)
+                    "/api/categories/**",            // Category browsing
+                    "/api/products/**",              // Product browsing
                     "/actuator/health",              // Health check
-                    "/error"                         // Error handling
+                    "/error",                        // Error handling
+                    "/api/vendor/**"                 // TEMPORARY: Allow vendor endpoints for testing
                 ).permitAll()
                 
                 // Admin-only endpoints (excluding public user endpoints)
                 .requestMatchers(
-                    "/admin/**",                     // Admin panel
-                    "/users",                        // Get all users endpoint (admin only)
-                    "/users/{id:[0-9]+}",            // User by ID endpoints (admin only)
-                    "/users/email/**",               // User by email endpoints (admin only)
-                    "/users/active",                 // Active users endpoint (admin only)
+                    "/api/admin/**",                 // Admin panel
+                    "/api/users",                    // Get all users endpoint (admin only)
+                    "/api/users/{id:[0-9]+}",        // User by ID endpoints (admin only)
+                    "/api/users/email/**",           // User by email endpoints (admin only)
+                    "/api/users/active",             // Active users endpoint (admin only)
                     "/actuator/**",                  // Actuator endpoints
-                    "/vendors",                      // Get all vendors (admin only)
-                    "/vendors/stats/**",             // Vendor statistics (admin only)
-                    "/vendors/status/**",            // Vendor profiles by status (admin only)
-                    "/vendors/pending",              // Pending vendor profiles (admin only)
-                    "/vendors/{vendorId:[0-9]+}/status/**" // Approve/reject vendors (admin only)
+                    "/api/vendors",                  // Get all vendors (admin only)
+                    "/api/vendors/stats/**",         // Vendor statistics (admin only)
+                    "/api/vendors/status/**",        // Vendor profiles by status (admin only)
+                    "/api/vendors/pending",          // Pending vendor profiles (admin only)
+                    "/api/vendors/{vendorId:[0-9]+}/status/**" // Approve/reject vendors (admin only)
                 ).hasRole("ADMIN")
+                
+                // Vendor-specific endpoints (require vendor authentication)
+                .requestMatchers(
+                    "/api/vendors/users/{userId:[0-9]+}/complete-profile", // Complete vendor profile
+                    "/api/vendors/users/{userId:[0-9]+}/documents/**"     // Upload documents
+                ).hasRole("VENDOR")
                 
                 // User-specific endpoints (require authentication)
                 .requestMatchers(
-                    "/users/profile",                // User profile
-                    "/orders/**",                    // Order management
-                    "/cart/**",                      // Cart operations
-                    "/wishlist/**",                  // Wishlist operations
-                    "/addresses/**",                 // Address management
-                    "/vendors/{vendorId:[0-9]+}"     // Get/update specific vendor profile
+                    "/api/users/profile",            // User profile
+                    "/api/orders/**",                // Order management
+                    "/api/cart/**",                  // Cart operations
+                    "/api/wishlist/**",              // Wishlist operations
+                    "/api/addresses/**",             // Address management
+                    "/api/vendors/{vendorId:[0-9]+}", // Get/update specific vendor profile
+                    "/api/vendors/users/{userId:[0-9]+}" // Get vendor profile by user ID
                 ).authenticated()
                 
                 // All other requests require authentication

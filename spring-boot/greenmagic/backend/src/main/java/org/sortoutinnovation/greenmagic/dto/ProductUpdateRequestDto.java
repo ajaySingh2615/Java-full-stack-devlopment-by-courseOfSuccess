@@ -1,37 +1,32 @@
 package org.sortoutinnovation.greenmagic.dto;
 
-import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.sortoutinnovation.greenmagic.model.Product;
-
+import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 /**
- * DTO for creating new products via vendor dashboard
+ * DTO for updating existing products via vendor dashboard
  * Based on product-form-structure.json specifications
+ * Most fields are optional for partial updates
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductCreateRequestDto {
+public class ProductUpdateRequestDto {
 
     // Basic Information
-    @NotBlank(message = "Product title is required")
     @Size(min = 10, max = 100, message = "Product title must be between 10 and 100 characters")
     @Pattern(regexp = "^[a-zA-Z0-9\\s\\-\\.\\(\\)]+$", message = "Product title contains invalid characters")
     private String productTitle;
 
-    @NotNull(message = "Category is required")
     private Integer categoryId;
-
     private String subcategory;
 
-    @NotBlank(message = "Brand name is required")
     @Size(max = 50, message = "Brand name cannot exceed 50 characters")
     private String brandName;
 
@@ -40,17 +35,14 @@ public class ProductCreateRequestDto {
     @Pattern(regexp = "^GM[A-Z]{2}[0-9]{3}[0-9]{4}$", message = "Invalid SKU format")
     private String skuCode;
 
-    @NotNull(message = "Product type is required")
     @Pattern(regexp = "^(simple|variable)$", message = "Product type must be 'simple' or 'variable'")
-    private String productType = "simple";
+    private String productType;
 
     // Pricing Strategy
-    @NotNull(message = "MRP is required")
     @DecimalMin(value = "1.0", message = "MRP must be at least ₹1")
     @DecimalMax(value = "100000.0", message = "MRP cannot exceed ₹100,000")
     private BigDecimal mrp;
 
-    @NotNull(message = "Selling price is required")
     @DecimalMin(value = "1.0", message = "Selling price must be at least ₹1")
     private BigDecimal sellingPrice;
 
@@ -64,18 +56,17 @@ public class ProductCreateRequestDto {
     private List<BulkPricingTier> bulkPricing;
 
     // Inventory Management
-    @NotNull(message = "Stock quantity is required")
     @Min(value = 0, message = "Stock quantity cannot be negative")
     private Integer stockQuantity;
 
     @Min(value = 0, message = "Low stock threshold cannot be negative")
-    private Integer lowStockThreshold = 5;
+    private Integer lowStockThreshold;
 
-    private Boolean trackInventory = true;
-    private Boolean allowBackorders = false;
+    private Boolean trackInventory;
+    private Boolean allowBackorders;
 
     // Product Variants (for variable products)
-    private Boolean hasVariants = false;
+    private Boolean hasVariants;
     private List<String> variantAttributes;
     private List<ProductVariantDto> variants;
 
@@ -87,7 +78,7 @@ public class ProductCreateRequestDto {
     private BigDecimal weight;
     private ProductDimensions dimensions;
     private String shippingClass;
-    private Boolean freeShipping = false;
+    private Boolean freeShipping;
 
     // Product Descriptions
     @Size(max = 200, message = "Short description cannot exceed 200 characters")
@@ -118,14 +109,14 @@ public class ProductCreateRequestDto {
 
     // Product Settings
     @Pattern(regexp = "^(DRAFT|ACTIVE|INACTIVE)$", message = "Invalid status")
-    private String status = "DRAFT";
+    private String status;
 
-    private Boolean featured = false;
-    private Boolean returnable = true;
-    private Boolean codAvailable = true;
-    private String deliveryTimeEstimate = "2-3 days";
+    private Boolean featured;
+    private Boolean returnable;
+    private Boolean codAvailable;
+    private String deliveryTimeEstimate;
 
-    // Nested DTOs
+    // Nested DTOs (same as in ProductCreateRequestDto)
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

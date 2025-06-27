@@ -85,6 +85,7 @@ const VendorDashboard = () => {
   const fetchVendorProfile = async () => {
     try {
       setLoading(true);
+      setError(null); // Clear previous errors
       const userId = currentUser.userId || currentUser.id || currentUser._id;
       
       if (!userId) {
@@ -93,56 +94,26 @@ const VendorDashboard = () => {
       
       const response = await vendorService.getVendorProfileByUserId(userId);
       
-      if (response.success && response.data) {
-        let profileData = response.data.data;
+      // Handle different response structures
+      if (response && response.success) {
+        let profileData = response.data;
         
-        // If the data contains a nested vendor profile object, use that instead
-        if (response.data.data && response.data.data.vendorProfile) {
-          profileData = response.data.data.vendorProfile;
-        }
-        
-        setVendorProfile(profileData);
-        
-        // Update the auth context with the fresh status from the database
-        const authStatus = getVendorStatus();
-        
-        // Only update if the API status is different and seems more recent
-        // Priority: If auth context has APPROVED but API has PENDING, trust auth context
-        if (profileData.status && profileData.status !== authStatus) {
-          // If auth context has APPROVED but API returns PENDING, it might be stale data
-          if (authStatus === 'APPROVED' && profileData.status === 'PENDING') {
-            // Update the profile data to use the auth context status
-            profileData.status = authStatus;
-            setVendorProfile(profileData);
-          } else {
-            // For other cases, trust the API and update auth context
-            const previousStatus = authStatus;
-            updateVendorStatus(profileData.status);
-            
-            // Show notification for status change
-            if (previousStatus === 'PENDING' && profileData.status === 'APPROVED') {
-              setStatusChangeNotification({
-                type: 'success',
-                message: 'Congratulations! Your vendor application has been approved!'
-              });
-            } else if (previousStatus === 'PENDING' && profileData.status === 'REJECTED') {
-              setStatusChangeNotification({
-                type: 'error',
-                message: 'Your vendor application has been rejected. Please check the details below.'
-              });
-            }
-            
-            // Clear notification after 5 seconds
-            setTimeout(() => {
-              setStatusChangeNotification(null);
-            }, 5000);
-          }
+        // If the data contains a nested vendor profile object
+        if (profileData && typeof profileData === 'object') {
+          setVendorProfile(profileData);
+        } else {
+          throw new Error("Invalid profile data structure");
         }
       } else {
-        setError('Failed to fetch vendor profile');
+        // Handle case where profile doesn't exist yet
+        if (response && !response.success && response.message) {
+          setError(response.message);
+        } else {
+          setError("Failed to load vendor profile");
+        }
       }
     } catch (err) {
-      setError(err.message || 'An error occurred while fetching vendor profile');
+      setError(err.message || "Failed to load vendor profile");
     } finally {
       setLoading(false);
     }
@@ -239,9 +210,47 @@ const VendorDashboard = () => {
             </div>
             <div className="flex items-center space-x-4">
               {vendorProfile && getStatusBadge(vendorProfile.status)}
+              <button 
+                onClick={fetchVendorProfile} 
+                disabled={loading}
+                className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm flex items-center"
+              >
+                <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+                {loading ? 'Loading...' : 'Refresh'}
+              </button>
             </div>
           </div>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+            <div className="flex items-start">
+              <XCircle className="h-6 w-6 text-red-400 mr-4 mt-1" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Dashboard</h3>
+                <p className="text-red-700 mb-4">{error}</p>
+                <div className="flex space-x-3">
+                  <button 
+                    onClick={fetchVendorProfile} 
+                    disabled={loading}
+                    className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {loading ? 'Retrying...' : 'Retry'}
+                  </button>
+                  <Link 
+                    to="/vendor-registration" 
+                    className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                  >
+                    Complete Profile
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+
 
         {/* Status Change Notification */}
         {statusChangeNotification && (
@@ -267,6 +276,41 @@ const VendorDashboard = () => {
               >
                 ×
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* No Profile Found - Fallback */}
+        {!loading && !error && !vendorProfile && isVendorProfileComplete() && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+            <div className="flex items-start">
+              <AlertTriangle className="h-6 w-6 text-yellow-400 mr-4 mt-1" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-yellow-800 mb-2">Vendor Profile Not Found</h3>
+                <p className="text-yellow-700 mb-4">
+                  Your vendor profile could not be loaded. This might be because:
+                </p>
+                <ul className="text-yellow-700 mb-4 list-disc list-inside space-y-1">
+                  <li>Your vendor profile is still being created</li>
+                  <li>There's a temporary issue with our servers</li>
+                  <li>Your vendor registration needs to be completed</li>
+                </ul>
+                <div className="flex space-x-3">
+                  <button 
+                    onClick={fetchVendorProfile} 
+                    disabled={loading}
+                    className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 disabled:opacity-50"
+                  >
+                    {loading ? 'Retrying...' : 'Try Again'}
+                  </button>
+                  <Link 
+                    to="/vendor-registration" 
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                  >
+                    Complete Registration
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -309,29 +353,6 @@ const VendorDashboard = () => {
                 >
                   Start Selling
                 </Link>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {vendorProfile && vendorProfile.status === 'REJECTED' && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
-            <div className="flex items-start">
-              <XCircle className="h-6 w-6 text-red-400 mr-4 mt-1" />
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-red-800 mb-2">Application Rejected</h3>
-                <p className="text-red-700 mb-2">
-                  <strong>Reason:</strong> {vendorProfile.rejectionReason || 'No specific reason provided'}
-                </p>
-                <p className="text-red-700 mb-4">
-                  Please contact our support team at support@greenmagic.com for assistance.
-                </p>
-                <a 
-                  href="mailto:support@greenmagic.com" 
-                  className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 inline-block"
-                >
-                  Contact Support
-                </a>
               </div>
             </div>
           </div>
@@ -407,149 +428,6 @@ const VendorDashboard = () => {
                   {vendorProfile.addressLine2 && <p>{vendorProfile.addressLine2}</p>}
                   <p>{vendorProfile.city || ""}{vendorProfile.city && vendorProfile.state ? ", " : ""}{vendorProfile.state || ""}{(vendorProfile.city || vendorProfile.state) && vendorProfile.pincode ? " - " : ""}{vendorProfile.pincode || ""}</p>
                   <p>{vendorProfile.country || ""}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* PENDING Status - Limited Dashboard View */}
-        {vendorProfile && vendorProfile.status === 'PENDING' && (
-          <div className="space-y-8">
-            {/* What happens next section */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Info className="h-5 w-5 text-blue-600" />
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-blue-900 mb-3">What happens next?</h3>
-                  <p className="text-sm text-blue-700 mb-4">
-                    Your application is being reviewed by our team. Here's the process:
-                  </p>
-                  
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-xs font-medium text-blue-800">1</span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-blue-900">Document Verification</p>
-                        <p className="text-sm text-blue-700">We're reviewing your business documents</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3">
-                      <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-xs font-medium text-gray-600">2</span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-700">Business Validation</p>
-                        <p className="text-sm text-gray-600">GST and business details verification</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3">
-                      <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-xs font-medium text-gray-600">3</span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-700">Approval Notification</p>
-                        <p className="text-sm text-gray-600">You'll receive email confirmation (1-2 days)</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-6 pt-4 border-t border-blue-200">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-blue-700">Review in progress...</span>
-                      <button 
-                        onClick={fetchVendorProfile} 
-                        disabled={loading}
-                        className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
-                      >
-                        {loading ? 'Checking...' : 'Check Status'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Limited feature preview */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                <Package className="h-5 w-5 mr-2 text-gray-600" />
-                Coming Soon - Your Vendor Features
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 opacity-60">
-                  <div className="flex items-center mb-3">
-                    <ShoppingBag className="h-6 w-6 text-gray-400 mr-3" />
-                    <h3 className="text-lg font-medium text-gray-500">Product Management</h3>
-                  </div>
-                  <p className="text-sm text-gray-400">Add and manage your product catalog</p>
-                  <div className="mt-3 text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded inline-block">
-                    Available after approval
-                  </div>
-                </div>
-
-                <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 opacity-60">
-                  <div className="flex items-center mb-3">
-                    <Package className="h-6 w-6 text-gray-400 mr-3" />
-                    <h3 className="text-lg font-medium text-gray-500">Order Management</h3>
-                  </div>
-                  <p className="text-sm text-gray-400">Process and track customer orders</p>
-                  <div className="mt-3 text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded inline-block">
-                    Available after approval
-                  </div>
-                </div>
-
-                <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 opacity-60">
-                  <div className="flex items-center mb-3">
-                    <BarChart2 className="h-6 w-6 text-gray-400 mr-3" />
-                    <h3 className="text-lg font-medium text-gray-500">Sales Analytics</h3>
-                  </div>
-                  <p className="text-sm text-gray-400">Track your sales performance</p>
-                  <div className="mt-3 text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded inline-block">
-                    Available after approval
-                  </div>
-                </div>
-
-                <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 opacity-60">
-                  <div className="flex items-center mb-3">
-                    <Users className="h-6 w-6 text-gray-400 mr-3" />
-                    <h3 className="text-lg font-medium text-gray-500">Customer Management</h3>
-                  </div>
-                  <p className="text-sm text-gray-400">View customer information and feedback</p>
-                  <div className="mt-3 text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded inline-block">
-                    Available after approval
-                  </div>
-                </div>
-
-                <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 opacity-60">
-                  <div className="flex items-center mb-3">
-                    <DollarSign className="h-6 w-6 text-gray-400 mr-3" />
-                    <h3 className="text-lg font-medium text-gray-500">Payment & Billing</h3>
-                  </div>
-                  <p className="text-sm text-gray-400">Manage payments and billing</p>
-                  <div className="mt-3 text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded inline-block">
-                    Available after approval
-                  </div>
-                </div>
-
-                <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 opacity-60">
-                  <div className="flex items-center mb-3">
-                    <Truck className="h-6 w-6 text-gray-400 mr-3" />
-                    <h3 className="text-lg font-medium text-gray-500">Shipping & Logistics</h3>
-                  </div>
-                  <p className="text-sm text-gray-400">Configure shipping options</p>
-                  <div className="mt-3 text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded inline-block">
-                    Available after approval
-                  </div>
                 </div>
               </div>
             </div>
@@ -681,38 +559,6 @@ const VendorDashboard = () => {
               </div>
             </div>
 
-            {/* Inventory Overview */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                  <Database className="h-5 w-5 mr-2 text-gray-600" />
-                  Inventory Overview
-                </h2>
-                <Link to="/vendor/inventory" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                  Manage Inventory
-                </Link>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">42</div>
-                  <div className="text-sm text-blue-800">Total Products</div>
-                </div>
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">38</div>
-                  <div className="text-sm text-green-800">In Stock</div>
-                </div>
-                <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                  <div className="text-2xl font-bold text-yellow-600">3</div>
-                  <div className="text-sm text-yellow-800">Low Stock</div>
-                </div>
-                <div className="text-center p-4 bg-red-50 rounded-lg">
-                  <div className="text-2xl font-bold text-red-600">1</div>
-                  <div className="text-sm text-red-800">Out of Stock</div>
-                </div>
-              </div>
-            </div>
-
             {/* Manage Your Store */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
@@ -768,78 +614,6 @@ const VendorDashboard = () => {
                   </div>
                   <p className="text-sm text-gray-600">Get help and contact our support team</p>
                 </Link>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* REJECTED Status - Support and Contact Information */}
-        {vendorProfile && vendorProfile.status === 'REJECTED' && (
-          <div className="space-y-8">
-            {/* Support Contact Section */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                <Info className="h-5 w-5 mr-2 text-gray-600" />
-                Need Help?
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-6 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex items-center mb-4">
-                    <Mail className="h-6 w-6 text-blue-600 mr-3" />
-                    <h3 className="text-lg font-medium text-blue-900">Email Support</h3>
-                  </div>
-                  <p className="text-blue-700 mb-4">Get detailed assistance via email</p>
-                  <a 
-                    href="mailto:support@greenmagic.com?subject=Vendor Application - Assistance Required" 
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    <Mail className="h-4 w-4 mr-2" />
-                    Email Support
-                  </a>
-                </div>
-
-                <div className="p-6 bg-green-50 rounded-lg border border-green-200">
-                  <div className="flex items-center mb-4">
-                    <Building className="h-6 w-6 text-green-600 mr-3" />
-                    <h3 className="text-lg font-medium text-green-900">Reapply</h3>
-                  </div>
-                  <p className="text-green-700 mb-4">Submit a new application with corrected information</p>
-                  <Link 
-                    to="/vendor-registration" 
-                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                  >
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Start New Application
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* FAQ Section */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Frequently Asked Questions</h2>
-              
-              <div className="space-y-6">
-                <div className="border-b border-gray-200 pb-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Why was my application rejected?</h3>
-                  <p className="text-gray-600">Applications are typically rejected due to incomplete documentation, invalid business information, or failure to meet our vendor requirements. Check the rejection reason above for specific details.</p>
-                </div>
-                
-                <div className="border-b border-gray-200 pb-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Can I reapply?</h3>
-                  <p className="text-gray-600">Yes, you can submit a new application. Please ensure all information is accurate and complete, and address the issues mentioned in the rejection reason.</p>
-                </div>
-                
-                <div className="border-b border-gray-200 pb-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">How long does the review process take?</h3>
-                  <p className="text-gray-600">Our review process typically takes 1-2 business days. You'll receive an email notification once your application status changes.</p>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">What documents do I need?</h3>
-                  <p className="text-gray-600">Required documents include GST certificate, PAN card, business registration proof, bank account details, and identity verification documents.</p>
-                </div>
               </div>
             </div>
           </div>

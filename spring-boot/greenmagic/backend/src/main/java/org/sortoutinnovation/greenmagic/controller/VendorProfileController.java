@@ -26,7 +26,7 @@ import java.util.Map;
  * Controller for Vendor Profile management endpoints
  */
 @RestController
-@RequestMapping("/vendors")
+@RequestMapping("/api/vendors")
 @CrossOrigin(origins = "*")
 public class VendorProfileController {
 
@@ -146,6 +146,14 @@ public class VendorProfileController {
     public ResponseEntity<ApiResponseDto<VendorProfileResponseDto>> getVendorProfileByUserId(@PathVariable Integer userId) {
         try {
             VendorProfileResponseDto vendorProfile = vendorProfileService.getVendorProfileByUserId(userId);
+            
+            if (vendorProfile == null) {
+                return ResponseEntity.ok(new ApiResponseDto<>(
+                    false,
+                    "No vendor profile found for user ID: " + userId,
+                    null
+                ));
+            }
             
             return ResponseEntity.ok(new ApiResponseDto<>(
                 true,

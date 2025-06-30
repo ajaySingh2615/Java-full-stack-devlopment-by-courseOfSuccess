@@ -1050,42 +1050,14 @@ public class VendorManagementService {
             
             // Handle product highlights - ROBUST CONVERSION
             product.setProductHighlights(convertProductHighlights(dto.getProductHighlights()));
-            
-            product.setIngredientsList(dto.getIngredientsList());
-            
-            // Handle nutritional info - ROBUST CONVERSION
-            product.setNutritionalInfo(convertNutritionalInfo(dto.getNutritionalInfo()));
-            
-            product.setAllergenInfo(dto.getAllergenInfo());
 
             // ===========================
             // CERTIFICATIONS & COMPLIANCE
             // ===========================
             product.setFssaiLicense(dto.getFssaiLicense());
             
-            // Handle organic certification - ROBUST CONVERSION
-            product.setOrganicCertification(convertOrganicCertification(dto.getOrganicCertification()));
-            
             // Handle quality certifications - ROBUST CONVERSION
             product.setQualityCertifications(convertQualityCertifications(dto.getQualityCertifications()));
-            
-            product.setCountryOfOrigin(dto.getCountryOfOrigin());
-            product.setStateOfOrigin(dto.getStateOfOrigin());
-            product.setFarmName(dto.getFarmName());
-            
-            // Set harvest season enum
-            if (dto.getHarvestSeason() != null) {
-                try {
-                    product.setHarvestSeason(Product.HarvestSeason.valueOf(dto.getHarvestSeason()));
-                } catch (IllegalArgumentException e) {
-                    product.setHarvestSeason(null);
-                }
-            }
-            
-            product.setManufacturingDate(dto.getManufacturingDate());
-            product.setExpiryDate(dto.getExpiryDate());
-            product.setBestBeforeDate(dto.getBestBeforeDate());
-            product.setShelfLifeDays(dto.getShelfLifeDays());
 
             // ===========================
             // SEO OPTIMIZATION
@@ -1130,7 +1102,6 @@ public class VendorManagementService {
         if (dto.getCostPrice() != null) product.setCostPrice(dto.getCostPrice());
         if (dto.getStockQuantity() != null) product.setQuantity(dto.getStockQuantity());
         if (dto.getBrandName() != null) product.setBrand(dto.getBrandName());
-        if (dto.getIngredientsList() != null) product.setIngredientsList(dto.getIngredientsList());
         if (dto.getWeight() != null) product.setWeightForShipping(dto.getWeight());
         if (dto.getDeliveryTimeEstimate() != null) product.setDeliveryTimeEstimate(dto.getDeliveryTimeEstimate());
         if (dto.getUrlSlug() != null) product.setUrlSlug(dto.getUrlSlug());
@@ -1162,7 +1133,6 @@ public class VendorManagementService {
         target.setCostPrice(source.getCostPrice());
         target.setQuantity(source.getQuantity());
         target.setBrand(source.getBrand());
-        target.setIngredientsList(source.getIngredientsList());
         target.setWeightForShipping(source.getWeightForShipping());
         target.setDeliveryTimeEstimate(source.getDeliveryTimeEstimate());
         target.setImageUrl(source.getImageUrl());
@@ -1202,8 +1172,29 @@ public class VendorManagementService {
     }
 
     private String generateUrlSlug(String title) {
-        // Implementation of generateUrlSlug method
-        return title.replaceAll("[^a-zA-Z0-9]", "-").replaceAll("-+", "-").replaceAll("^-|-$", "");
+        String baseSlug = title.toLowerCase()
+            .replaceAll("[^a-zA-Z0-9\\s-]", "") // Remove special characters except spaces and hyphens
+            .replaceAll("\\s+", "-") // Replace spaces with hyphens
+            .replaceAll("-+", "-") // Replace multiple hyphens with single hyphen
+            .replaceAll("^-|-$", ""); // Remove leading/trailing hyphens
+
+        // Try the base slug first
+        String finalSlug = baseSlug;
+        int attempt = 1;
+
+        // Keep trying with random numbers until we find a unique slug
+        while (productRepository.existsByUrlSlug(finalSlug)) {
+            finalSlug = baseSlug + "-" + ((int) (Math.random() * 9000) + 1000); // 4-digit random number
+            attempt++;
+            
+            // Prevent infinite loop (though extremely unlikely)
+            if (attempt > 10) {
+                finalSlug = baseSlug + "-" + System.currentTimeMillis();
+                break;
+            }
+        }
+
+        return finalSlug;
     }
 
     // ===========================
@@ -1254,38 +1245,6 @@ public class VendorManagementService {
             return json;
         } catch (Exception e) {
             System.err.println("Error converting product highlights: " + e.getMessage());
-            return null;
-        }
-    }
-
-    private String convertNutritionalInfo(ProductCreateRequestDto.NutritionalInfo nutritionalInfo) {
-        if (nutritionalInfo == null) {
-            return null;
-        }
-        
-        try {
-            // Convert directly to JSON string for Hibernate
-            String json = objectMapper.writeValueAsString(nutritionalInfo);
-            System.out.println("=== DEBUG: Successfully converted nutritional info to JSON: " + json);
-            return json;
-        } catch (Exception e) {
-            System.err.println("Error converting nutritional info: " + e.getMessage());
-            return null;
-        }
-    }
-
-    private String convertOrganicCertification(ProductCreateRequestDto.OrganicCertification certification) {
-        if (certification == null) {
-            return null;
-        }
-        
-        try {
-            // Convert directly to JSON string for Hibernate
-            String json = objectMapper.writeValueAsString(certification);
-            System.out.println("=== DEBUG: Successfully converted organic certification to JSON: " + json);
-            return json;
-        } catch (Exception e) {
-            System.err.println("Error converting organic certification: " + e.getMessage());
             return null;
         }
     }

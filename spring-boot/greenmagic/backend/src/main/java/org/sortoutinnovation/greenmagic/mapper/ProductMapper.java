@@ -30,7 +30,6 @@ public class ProductMapper {
         dto.setUrlSlug(product.getUrlSlug());
         dto.setDescription(product.getDescription());
         dto.setShortDescription(product.getShortDescription());
-        dto.setIngredientsList(product.getIngredientsList());
         dto.setBrand(product.getBrand());
         dto.setPrice(product.getPrice());
         dto.setMrp(product.getMrp());
@@ -95,7 +94,6 @@ public class ProductMapper {
         product.setUrlSlug(dto.getUrlSlug());
         product.setDescription(dto.getDescription());
         product.setShortDescription(dto.getShortDescription());
-        product.setIngredientsList(dto.getIngredientsList());
         product.setBrand(dto.getBrand());
         product.setPrice(dto.getPrice());
         product.setMrp(dto.getMrp());

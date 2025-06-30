@@ -218,17 +218,6 @@ public class Product {
     @Column(name = "product_highlights", columnDefinition = "JSON")
     private String productHighlights;
 
-    @Column(name = "ingredients_list", columnDefinition = "TEXT")
-    private String ingredientsList;
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "nutritional_info", columnDefinition = "JSON")
-    private String nutritionalInfo;
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "allergen_info", columnDefinition = "JSON")
-    private List<String> allergenInfo;
-
     // ===========================
     // CERTIFICATIONS & COMPLIANCE
     // ===========================
@@ -239,40 +228,8 @@ public class Product {
     private String fssaiLicense;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "organic_certification", columnDefinition = "JSON")
-    private String organicCertification;
-
-    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "quality_certifications", columnDefinition = "JSON")
     private String qualityCertifications;
-
-    @Size(max = 50, message = "Country of origin must not exceed 50 characters")
-    @Column(name = "country_of_origin", length = 50)
-    private String countryOfOrigin = "India";
-
-    @Size(max = 50, message = "State of origin must not exceed 50 characters")
-    @Column(name = "state_of_origin", length = 50)
-    private String stateOfOrigin;
-
-    @Size(max = 100, message = "Farm name must not exceed 100 characters")
-    @Column(name = "farm_name", length = 100)
-    private String farmName;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "harvest_season")
-    private HarvestSeason harvestSeason;
-
-    @Column(name = "manufacturing_date")
-    private LocalDate manufacturingDate;
-
-    @Column(name = "expiry_date")
-    private LocalDate expiryDate;
-
-    @Column(name = "best_before_date")
-    private LocalDate bestBeforeDate;
-
-    @Column(name = "shelf_life_days")
-    private Integer shelfLifeDays;
 
     // ===========================
     // SEO OPTIMIZATION
@@ -359,10 +316,6 @@ public class Product {
 
     public enum ReturnWindow {
         SEVEN_DAYS, FIFTEEN_DAYS, THIRTY_DAYS
-    }
-
-    public enum HarvestSeason {
-        SPRING, SUMMER, MONSOON, WINTER, YEAR_ROUND
     }
 
     // ===========================

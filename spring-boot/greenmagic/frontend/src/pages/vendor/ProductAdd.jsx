@@ -90,22 +90,10 @@ const ProductAdd = () => {
     detailedDescription: '',
     keyFeatures: [],
     productHighlights: [],
-    ingredientsList: '',
-    nutritionalInfo: { servingSize: '', nutrients: {} },
-    allergenInfo: [],
 
     // Certifications & Compliance (Section 8)
     fssaiLicense: '',
-    organicCertification: { certificateNumber: '', issuingAuthority: '', issueDate: '', expiryDate: '', certificateFileUrl: '' },
     qualityCertifications: [],
-    countryOfOrigin: 'India',
-    stateOfOrigin: '',
-    farmName: '',
-    harvestSeason: '',
-    manufacturingDate: '',
-    expiryDate: '',
-    bestBeforeDate: '',
-    shelfLifeDays: '',
 
     // SEO Optimization (Section 9)
     metaTitle: '',
@@ -328,7 +316,6 @@ const ProductAdd = () => {
       imageAltTags: data.imageAltTags || [],
       keyFeatures: data.keyFeatures || [],
       productHighlights: data.productHighlights || [],
-      allergenInfo: data.allergenInfo || [],
       qualityCertifications: data.qualityCertifications || [],
       returnConditions: data.returnConditions || [],
       searchKeywords: data.searchKeywords || [],
@@ -442,8 +429,8 @@ const ProductAdd = () => {
       3: 'Manage inventory levels, stock settings and order quantities',
       4: 'Upload product images, videos and add image descriptions for SEO',
       5: 'Configure shipping weight, dimensions, delivery options and return policies',
-      6: 'Write compelling descriptions, features and nutritional information',
-      7: 'Add legal certifications, compliance details and product origin information',
+      6: 'Write compelling descriptions, key features and product highlights',
+      7: 'Add FSSAI license and other quality certifications with images',
       8: 'Optimize product for search engines with meta tags and keywords',
       9: 'Review all product information and choose publishing status'
     };
@@ -1278,107 +1265,7 @@ const ProductAdd = () => {
            </div>
          </div>
 
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <div>
-             <label className="block text-sm font-medium text-gray-700 mb-2">
-               Ingredients List
-             </label>
-             <textarea
-               value={formData.ingredientsList}
-               onChange={(e) => handleInputChange('ingredientsList', e.target.value)}
-               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-               rows={4}
-               placeholder="List all ingredients in order of quantity..."
-             />
-           </div>
 
-           <div>
-             <label className="block text-sm font-medium text-gray-700 mb-2">
-               Allergen Information
-             </label>
-             <div className="space-y-2">
-               {['nuts', 'dairy', 'eggs', 'soy', 'wheat', 'shellfish', 'fish'].map(allergen => (
-                 <label key={allergen} className="flex items-center space-x-2">
-                   <input
-                     type="checkbox"
-                     checked={formData.allergenInfo.includes(allergen)}
-                     onChange={(e) => {
-                       if (e.target.checked) {
-                         handleInputChange('allergenInfo', [...formData.allergenInfo, allergen]);
-                       } else {
-                         handleInputChange('allergenInfo', formData.allergenInfo.filter(a => a !== allergen));
-                       }
-                     }}
-                     className="h-4 w-4 text-green-600 rounded border-gray-300"
-                   />
-                   <span className="text-sm text-gray-700 capitalize">{allergen}</span>
-                 </label>
-               ))}
-             </div>
-           </div>
-         </div>
-
-         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-2">
-             Nutritional Information
-           </label>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <div>
-               <label className="block text-xs font-medium text-gray-600 mb-1">Serving Size</label>
-               <input
-                 type="text"
-                 value={formData.nutritionalInfo.servingSize}
-                 onChange={(e) => handleInputChange('nutritionalInfo', {...formData.nutritionalInfo, servingSize: e.target.value})}
-                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                 placeholder="e.g., 100g, 1 cup"
-               />
-             </div>
-           </div>
-           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-             {['energy', 'protein', 'carbohydrates', 'fat', 'fiber', 'sugar', 'sodium', 'calcium'].map(nutrient => (
-               <div key={nutrient}>
-                 <label className="block text-xs font-medium text-gray-600 mb-1 capitalize">{nutrient}</label>
-                 <div className="flex space-x-1">
-                   <input
-                     type="number"
-                     step="0.1"
-                     value={formData.nutritionalInfo.nutrients?.[nutrient]?.value || ''}
-                     onChange={(e) => handleInputChange('nutritionalInfo', {
-                       ...formData.nutritionalInfo,
-                       nutrients: {
-                         ...formData.nutritionalInfo.nutrients,
-                         [nutrient]: {
-                           ...formData.nutritionalInfo.nutrients?.[nutrient],
-                           value: e.target.value
-                         }
-                       }
-                     })}
-                     className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-green-500 focus:border-green-500"
-                     placeholder="0"
-                   />
-                   <select
-                     value={formData.nutritionalInfo.nutrients?.[nutrient]?.unit || (nutrient === 'energy' ? 'kcal' : 'g')}
-                     onChange={(e) => handleInputChange('nutritionalInfo', {
-                       ...formData.nutritionalInfo,
-                       nutrients: {
-                         ...formData.nutritionalInfo.nutrients,
-                         [nutrient]: {
-                           ...formData.nutritionalInfo.nutrients?.[nutrient],
-                           unit: e.target.value
-                         }
-                       }
-                     })}
-                     className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-green-500 focus:border-green-500"
-                   >
-                     <option value="g">g</option>
-                     <option value="mg">mg</option>
-                     <option value="kcal">kcal</option>
-                   </select>
-                 </div>
-               </div>
-             ))}
-           </div>
-         </div>
        </div>
      </div>
    );
@@ -1386,209 +1273,46 @@ const ProductAdd = () => {
    // Certifications & Compliance (Section 7)
    const renderCertificationsCompliance = () => (
      <div className="space-y-6">
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-2">
-             FSSAI License Number
-             <span className="text-sm font-normal text-gray-500">(Required for food products)</span>
-           </label>
-           <div className="relative">
-             <FiShield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-             <input
-               type="text"
-               value={formData.fssaiLicense}
-               onChange={(e) => handleInputChange('fssaiLicense', e.target.value)}
-               className={`w-full pl-10 pr-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
-                 errors.fssaiLicense ? 'border-red-300' : 'border-gray-300'
-               }`}
-               placeholder="14-digit FSSAI license number"
-               pattern="[0-9]{14}"
-               maxLength={14}
-             />
-           </div>
-           {errors.fssaiLicense && (
-             <p className="mt-1 text-sm text-red-600">{errors.fssaiLicense}</p>
-           )}
-         </div>
-
-         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-2">
-             Country of Origin
-           </label>
-           <input
-             type="text"
-             value={formData.countryOfOrigin}
-             onChange={(e) => handleInputChange('countryOfOrigin', e.target.value)}
-             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-             placeholder="India"
-           />
-         </div>
-       </div>
-
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-2">
-             State/Region
-           </label>
-           <input
-             type="text"
-             value={formData.stateOfOrigin}
-             onChange={(e) => handleInputChange('stateOfOrigin', e.target.value)}
-             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-             placeholder="e.g., Punjab, Karnataka"
-           />
-         </div>
-
-         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-2">
-             Farm/Producer Name
-           </label>
-           <input
-             type="text"
-             value={formData.farmName}
-             onChange={(e) => handleInputChange('farmName', e.target.value)}
-             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-             placeholder="Name of farm or producer"
-           />
-         </div>
-       </div>
-
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-2">
-             Harvest Season
-           </label>
-           <select
-             value={formData.harvestSeason}
-             onChange={(e) => handleInputChange('harvestSeason', e.target.value)}
-             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-           >
-             <option value="">Select Season</option>
-             <option value="SPRING">Spring</option>
-             <option value="SUMMER">Summer</option>
-             <option value="MONSOON">Monsoon</option>
-             <option value="WINTER">Winter</option>
-             <option value="YEAR_ROUND">Year Round</option>
-           </select>
-         </div>
-
-         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-2">
-             Shelf Life (Days)
-           </label>
-           <input
-             type="number"
-             value={formData.shelfLifeDays}
-             onChange={(e) => handleInputChange('shelfLifeDays', e.target.value)}
-             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-             placeholder="365"
-           />
-         </div>
-       </div>
-
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-2">
-             Manufacturing Date
-           </label>
-           <input
-             type="date"
-             value={formData.manufacturingDate}
-             onChange={(e) => handleInputChange('manufacturingDate', e.target.value)}
-             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-           />
-         </div>
-
-         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-2">
-             Expiry Date
-           </label>
-           <input
-             type="date"
-             value={formData.expiryDate}
-             onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-           />
-         </div>
-
-         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-2">
-             Best Before Date
-           </label>
-           <input
-             type="date"
-             value={formData.bestBeforeDate}
-             onChange={(e) => handleInputChange('bestBeforeDate', e.target.value)}
-             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-           />
-         </div>
-       </div>
-
        <div>
          <label className="block text-sm font-medium text-gray-700 mb-2">
-           Organic Certification
+           FSSAI License Number
+           <span className="text-sm font-normal text-gray-500">(Required for food products)</span>
          </label>
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-200 rounded-lg p-4">
-           <div>
-             <label className="block text-xs font-medium text-gray-600 mb-1">Certificate Number</label>
-             <input
-               type="text"
-               value={formData.organicCertification.certificateNumber}
-               onChange={(e) => handleInputChange('organicCertification', {...formData.organicCertification, certificateNumber: e.target.value})}
-               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-               placeholder="Certificate number"
-             />
-           </div>
-           <div>
-             <label className="block text-xs font-medium text-gray-600 mb-1">Issuing Authority</label>
-             <select
-               value={formData.organicCertification.issuingAuthority}
-               onChange={(e) => handleInputChange('organicCertification', {...formData.organicCertification, issuingAuthority: e.target.value})}
-               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-             >
-               <option value="">Select Authority</option>
-               <option value="india_organic">India Organic</option>
-               <option value="usda_organic">USDA Organic</option>
-               <option value="eu_organic">EU Organic</option>
-               <option value="jas_organic">JAS Organic</option>
-               <option value="other">Other</option>
-             </select>
-           </div>
-           <div>
-             <label className="block text-xs font-medium text-gray-600 mb-1">Issue Date</label>
-             <input
-               type="date"
-               value={formData.organicCertification.issueDate}
-               onChange={(e) => handleInputChange('organicCertification', {...formData.organicCertification, issueDate: e.target.value})}
-               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-             />
-           </div>
-           <div>
-             <label className="block text-xs font-medium text-gray-600 mb-1">Expiry Date</label>
-             <input
-               type="date"
-               value={formData.organicCertification.expiryDate}
-               onChange={(e) => handleInputChange('organicCertification', {...formData.organicCertification, expiryDate: e.target.value})}
-               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-             />
-           </div>
+         <div className="relative">
+           <FiShield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+           <input
+             type="text"
+             value={formData.fssaiLicense}
+             onChange={(e) => handleInputChange('fssaiLicense', e.target.value)}
+             className={`w-full pl-10 pr-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
+               errors.fssaiLicense ? 'border-red-300' : 'border-gray-300'
+             }`}
+             placeholder="14-digit FSSAI license number"
+             pattern="[0-9]{14}"
+             maxLength={14}
+           />
          </div>
+         {errors.fssaiLicense && (
+           <p className="mt-1 text-sm text-red-600">{errors.fssaiLicense}</p>
+         )}
        </div>
 
        <div>
          <label className="block text-sm font-medium text-gray-700 mb-2">
-           Quality Certifications
+           Other Certifications (Quality Check Lab Test, ISI, etc.)
          </label>
          <div className="space-y-3">
            {formData.qualityCertifications.map((cert, index) => (
              <div key={index} className="border border-gray-200 rounded-lg p-4">
-               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                  <select
                    value={cert.type}
                    onChange={(e) => handleArrayUpdate('qualityCertifications', index, {...cert, type: e.target.value})}
                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                  >
-                   <option value="">Select Type</option>
+                   <option value="">Select Certificate Type</option>
+                   <option value="quality_check_lab">Quality Check Lab Test</option>
+                   <option value="isi">ISI Mark</option>
                    <option value="iso_22000">ISO 22000 (Food Safety)</option>
                    <option value="haccp">HACCP</option>
                    <option value="gmp">Good Manufacturing Practice</option>
@@ -1596,6 +1320,8 @@ const ProductAdd = () => {
                    <option value="jain_friendly">Jain Friendly</option>
                    <option value="vegan">Vegan Certified</option>
                    <option value="fair_trade">Fair Trade Certified</option>
+                   <option value="organic">Organic Certification</option>
+                   <option value="other">Other</option>
                  </select>
                  <input
                    type="text"
@@ -1604,11 +1330,14 @@ const ProductAdd = () => {
                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                    placeholder="Certificate Number"
                  />
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                  <input
-                   type="date"
-                   value={cert.expiryDate}
-                   onChange={(e) => handleArrayUpdate('qualityCertifications', index, {...cert, expiryDate: e.target.value})}
+                   type="url"
+                   value={cert.certificateFileUrl}
+                   onChange={(e) => handleArrayUpdate('qualityCertifications', index, {...cert, certificateFileUrl: e.target.value})}
                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                   placeholder="Certificate Image URL (https://...)"
                  />
                  <button
                    type="button"
@@ -1618,11 +1347,23 @@ const ProductAdd = () => {
                    Remove
                  </button>
                </div>
+               {cert.certificateFileUrl && (
+                 <div className="mt-3">
+                   <img
+                     src={cert.certificateFileUrl}
+                     alt="Certificate Preview"
+                     className="max-w-xs h-24 object-cover rounded border"
+                     onError={(e) => {
+                       e.target.style.display = 'none';
+                     }}
+                   />
+                 </div>
+               )}
              </div>
            ))}
            <button
              type="button"
-             onClick={() => handleArrayAdd('qualityCertifications', {type: '', certificateNumber: '', issueDate: '', expiryDate: '', certificateFileUrl: ''})}
+             onClick={() => handleArrayAdd('qualityCertifications', {type: '', certificateNumber: '', certificateFileUrl: ''})}
              className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
            >
              <FiPlus className="mr-2 h-4 w-4" />

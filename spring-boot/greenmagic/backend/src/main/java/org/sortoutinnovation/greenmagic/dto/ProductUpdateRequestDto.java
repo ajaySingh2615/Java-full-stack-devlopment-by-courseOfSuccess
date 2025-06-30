@@ -88,8 +88,6 @@ public class ProductUpdateRequestDto {
     private String fullDescription;
 
     private List<String> features;
-    private String ingredientsList;
-    private String nutritionalInfo;
 
     // Certifications & Compliance
     private List<String> certifications;

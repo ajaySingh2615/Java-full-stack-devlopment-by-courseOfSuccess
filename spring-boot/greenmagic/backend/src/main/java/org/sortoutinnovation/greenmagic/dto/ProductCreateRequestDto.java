@@ -164,13 +164,6 @@ public class ProductCreateRequestDto {
     
     @JsonProperty("productHighlights")
     private List<ProductHighlight> productHighlights;
-    
-    private String ingredientsList;
-    
-    @JsonProperty("nutritionalInfo")
-    private NutritionalInfo nutritionalInfo;
-    
-    private List<String> allergenInfo;
 
     // ===========================
     // CERTIFICATIONS & COMPLIANCE (Section 8)
@@ -179,24 +172,9 @@ public class ProductCreateRequestDto {
     @Size(max = 14, message = "FSSAI license must be 14 digits")
     @Pattern(regexp = "^[0-9]{14}$", message = "FSSAI license must be 14 digits")
     private String fssaiLicense;
-
-    @JsonProperty("organicCertification")
-    private OrganicCertification organicCertification;
     
     @JsonProperty("qualityCertifications")
     private List<QualityCertification> qualityCertifications;
-    
-    private String countryOfOrigin = "India";
-    private String stateOfOrigin;
-    private String farmName;
-    
-    @Pattern(regexp = "^(SPRING|SUMMER|MONSOON|WINTER|YEAR_ROUND)$")
-    private String harvestSeason;
-    
-    private LocalDate manufacturingDate;
-    private LocalDate expiryDate;
-    private LocalDate bestBeforeDate;
-    private Integer shelfLifeDays;
 
     // ===========================
     // SEO OPTIMIZATION (Section 9)
@@ -286,41 +264,14 @@ public class ProductCreateRequestDto {
         private String description;
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class NutritionalInfo {
-        private String servingSize;
-        private Map<String, NutrientValue> nutrients; // energy, protein, carbs, fat, etc
-    }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class NutrientValue {
-        private BigDecimal value;
-        private String unit; // kcal, g, mg
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class OrganicCertification {
-        private String certificateNumber;
-        private String issuingAuthority; // india_organic, usda_organic, eu_organic, etc
-        private LocalDate issueDate;
-        private LocalDate expiryDate;
-        private String certificateFileUrl;
-    }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class QualityCertification {
-        private String type; // iso_22000, haccp, gmp, halal, etc
+        private String type; // quality_check_lab, isi, iso_22000, haccp, gmp, halal, organic, etc
         private String certificateNumber;
-        private LocalDate issueDate;
-        private LocalDate expiryDate;
         private String certificateFileUrl;
     }
 } 

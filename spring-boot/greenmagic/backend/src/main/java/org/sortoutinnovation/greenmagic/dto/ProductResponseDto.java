@@ -24,7 +24,6 @@ public class ProductResponseDto {
     private String urlSlug;
     private String description;
     private String shortDescription;
-    private String ingredientsList;
     private String brand;
     private BigDecimal price;
     private BigDecimal mrp;

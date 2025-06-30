@@ -26,7 +26,7 @@ public class VendorProfileCreateRequestDto {
 
     @NotBlank(message = "GST number is required")
     @Size(max = 20, message = "GST number must not exceed 20 characters")
-    // We're handling the GST format validation in the mapper
+    @Pattern(regexp = "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$", message = "Invalid GST number format. It should be in the format: 29ABCDE1234F1Z5")
     private String gstNumber;
     
     @NotBlank(message = "PAN number is required")

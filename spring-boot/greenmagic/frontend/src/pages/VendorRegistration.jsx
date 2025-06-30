@@ -235,7 +235,7 @@ const VendorRegistration = () => {
       setLoading(true);
       setSubmitError('');
       
-      // Get the user ID (could be id, userId, or _id depending on your backend)
+      // Get the user ID
       const userId = currentUser.userId || currentUser.id || currentUser._id;
       
       if (!userId) {
@@ -253,15 +253,14 @@ const VendorRegistration = () => {
         businessEmail: formData.businessEmail,
         supportEmail: formData.supportEmail,
         websiteUrl: formData.websiteUrl,
-        // Address fields
+        // Address fields - include both for backward compatibility
+        address: formData.addressLine1, // Required by backend
         addressLine1: formData.addressLine1,
         addressLine2: formData.addressLine2 || '',
         city: formData.city,
         state: formData.state,
         pincode: formData.pincode,
         country: formData.country,
-        // For backward compatibility
-        address: formData.addressLine1,
         // Bank details
         accountHolderName: formData.accountHolderName,
         accountNumber: formData.accountNumber,
@@ -269,34 +268,42 @@ const VendorRegistration = () => {
         bankName: formData.bankName,
         bankBranch: formData.bankBranch,
         // Store details
-        storeDescription: formData.storeDescription,
-        storeDisplayName: formData.storeDisplayName,
-        productCategories: formData.productCategories,
+        storeDescription: formData.storeDescription || '',
+        storeDisplayName: formData.storeDisplayName || '',
+        productCategories: formData.productCategories || '',
         // Document URLs
-        logoUrl: formData.logoUrl,
-        gstCertificateUrl: formData.gstCertificateUrl,
-        cancelledChequeUrl: formData.cancelledChequeUrl,
-        panCardUrl: formData.panCardUrl,
-        identityProofUrl: formData.identityProofUrl
+        logoUrl: formData.logoUrl || '',
+        gstCertificateUrl: formData.gstCertificateUrl || '',
+        cancelledChequeUrl: formData.cancelledChequeUrl || '',
+        panCardUrl: formData.panCardUrl || '',
+        identityProofUrl: formData.identityProofUrl || ''
       };
       
       console.log("Sending vendor profile data to backend:", vendorData);
       
+      let response;
       if (profileExists) {
         // First get the vendor profile to get the vendorId
         const profileResponse = await vendorService.getVendorProfileByUserId(userId);
         if (profileResponse.success && profileResponse.data) {
-          await vendorService.updateVendorProfile(profileResponse.data.id, vendorData);
+          response = await vendorService.updateVendorProfile(profileResponse.data.id, vendorData);
         } else {
           throw new Error('Could not find your vendor profile');
         }
       } else {
-        await vendorService.createVendorProfile(userId, vendorData);
+        response = await vendorService.createVendorProfile(userId, vendorData);
+      }
+
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to save vendor profile');
       }
       
       // Update the vendor profile completion status in the auth context
-      setVendorProfileCompleted();
+      setVendorProfileCompleted(true);
       console.log("Vendor profile marked as completed in auth context");
+      
+      // Update local storage
+      localStorage.setItem('greenmagic_vendor_profile_complete', 'true');
       
       setSuccess(true);
       // Redirect after a short delay
@@ -306,7 +313,31 @@ const VendorRegistration = () => {
       
     } catch (error) {
       console.error("Error submitting vendor profile:", error);
-      setSubmitError(error.message || 'An error occurred while submitting your profile. Please try again.');
+      
+      // Extract error message from the error object
+      let errorMessage = '';
+      
+      if (error.response?.data?.message) {
+        // Backend validation error with specific message
+        errorMessage = error.response.data.message;
+      } else if (error.message.includes('GST')) {
+        // GST validation error
+        errorMessage = error.message;
+      } else if (error.message.includes('Network Error')) {
+        // Network error
+        errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.';
+      } else {
+        // Other errors
+        errorMessage = error.message || 'An unexpected error occurred. Please try again.';
+      }
+      
+      setSubmitError(errorMessage);
+      
+      // Scroll to error message
+      const errorElement = document.querySelector('.submit-error');
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     } finally {
       setLoading(false);
     }
@@ -387,10 +418,47 @@ const VendorRegistration = () => {
           
           {submitError && (
             <div className="submit-error">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              {submitError}
+              <div className="error-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="error-content">
+                <h3>Please fix the following errors:</h3>
+                {submitError.toLowerCase().includes('gst') ? (
+                  <div className="error-item gst-error">
+                    <p>{submitError}</p>
+                    <div className="error-help">
+                      <p>A valid GST number should:</p>
+                      <ul>
+                        <li>Be 15 characters long</li>
+                        <li>Start with 2 digits (state code)</li>
+                        <li>Follow with 5 letters (PAN number)</li>
+                        <li>Have 4 digits</li>
+                        <li>End with 4 characters (1 letter, 1 number/letter, Z, 1 number/letter)</li>
+                      </ul>
+                      <p className="error-example">Example: 29ABCDE1234F1Z5</p>
+                      <p className="error-tip">Tip: Make sure there are no spaces or special characters in your GST number.</p>
+                    </div>
+                  </div>
+                ) : submitError.toLowerCase().includes('network') ? (
+                  <div className="error-item network-error">
+                    <p>{submitError}</p>
+                    <div className="error-help">
+                      <p>Troubleshooting steps:</p>
+                      <ul>
+                        <li>Check your internet connection</li>
+                        <li>Try refreshing the page</li>
+                        <li>If the problem persists, please try again later</li>
+                      </ul>
+                    </div>
+                  </div>
+                ) : (
+                  submitError.split('\n').map((error, index) => (
+                    <p key={index} className="error-item">{error}</p>
+                  ))
+                )}
+              </div>
             </div>
           )}
           

@@ -14,6 +14,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,6 +23,7 @@ import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Controller for Vendor Profile management endpoints
@@ -32,6 +35,64 @@ public class VendorProfileController {
 
     @Autowired
     private VendorProfileService vendorProfileService;
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponseDto<Map<String, String>>> handleValidationExceptions(
+            MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = "";
+            String errorMessage = error.getDefaultMessage();
+            
+            if (error instanceof FieldError) {
+                fieldName = ((FieldError) error).getField();
+                // Map field names to user-friendly names
+                fieldName = mapFieldToUserFriendlyName(fieldName);
+            } else {
+                fieldName = error.getObjectName();
+            }
+            
+            errors.put(fieldName, errorMessage);
+        });
+        
+        String errorMessage = errors.entrySet().stream()
+            .map(entry -> entry.getKey() + ": " + entry.getValue())
+            .collect(Collectors.joining("\n"));
+            
+        return ResponseEntity
+            .badRequest()
+            .body(new ApiResponseDto<>(
+                false,
+                errorMessage,
+                errors
+            ));
+    }
+    
+    private String mapFieldToUserFriendlyName(String fieldName) {
+        return switch (fieldName) {
+            case "businessName" -> "Business Name";
+            case "legalBusinessName" -> "Legal Business Name";
+            case "gstNumber" -> "GST Number";
+            case "panNumber" -> "PAN Number";
+            case "businessPhone" -> "Business Phone";
+            case "businessEmail" -> "Business Email";
+            case "supportEmail" -> "Support Email";
+            case "websiteUrl" -> "Website URL";
+            case "address" -> "Address";
+            case "addressLine1" -> "Address Line 1";
+            case "city" -> "City";
+            case "state" -> "State";
+            case "pincode" -> "Pincode";
+            case "country" -> "Country";
+            case "accountHolderName" -> "Account Holder Name";
+            case "accountNumber" -> "Account Number";
+            case "ifscCode" -> "IFSC Code";
+            case "bankName" -> "Bank Name";
+            case "bankBranch" -> "Bank Branch";
+            default -> fieldName;
+        };
+    }
 
     /**
      * Complete vendor profile (step 2 of vendor registration)

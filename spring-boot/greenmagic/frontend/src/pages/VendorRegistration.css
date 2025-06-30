@@ -232,22 +232,123 @@
 }
 
 .submit-error {
-  padding: 0.75rem;
-  margin-bottom: 1rem;
+  background-color: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 20px 0;
   display: flex;
-  align-items: center;
-  font-size: 0.875rem;
-  color: #991b1b;
-  border-radius: 0.375rem;
-  background-color: #fef2f2;
+  align-items: flex-start;
+  gap: 12px;
 }
 
-.submit-error svg {
-  margin-right: 0.5rem;
-  height: 1.25rem;
-  width: 1.25rem;
-  color: #f87171;
+.submit-error .error-icon {
   flex-shrink: 0;
+  color: #DC2626;
+}
+
+.submit-error .error-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.submit-error .error-content {
+  flex-grow: 1;
+}
+
+.submit-error .error-content h3 {
+  color: #991B1B;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.submit-error .error-content p {
+  color: #7F1D1D;
+  font-size: 14px;
+  margin: 4px 0;
+  line-height: 1.4;
+}
+
+/* Enhance form validation styles */
+.input-error {
+  border-color: #DC2626 !important;
+  background-color: #FEF2F2 !important;
+}
+
+.error-item {
+  margin: 8px 0;
+  color: #991B1B;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.gst-error, .network-error {
+  background-color: #FFF;
+  border-left: 4px solid #DC2626;
+  padding: 16px;
+  margin: 12px 0;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.gst-error p, .network-error p {
+  margin: 0;
+  color: #991B1B;
+  font-weight: 500;
+}
+
+.error-help {
+  margin-top: 12px !important;
+  padding-top: 12px !important;
+  border-top: 1px solid #FCA5A5;
+  font-size: 13px !important;
+  color: #4B5563 !important;
+}
+
+.error-help p {
+  margin: 0 0 8px 0 !important;
+  color: #4B5563 !important;
+  font-weight: normal !important;
+}
+
+.error-help ul {
+  margin: 8px 0;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.error-help li {
+  margin: 4px 0;
+  color: #4B5563;
+  line-height: 1.4;
+}
+
+.error-example {
+  background-color: #F3F4F6;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: monospace;
+  margin: 8px 0 !important;
+}
+
+.error-tip {
+  font-style: italic;
+  color: #6B7280 !important;
+  margin-top: 8px !important;
+}
+
+/* Add focus styles for error fields */
+.input-error:focus {
+  border-color: #DC2626 !important;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.1) !important;
+}
+
+/* Add required field indicator */
+.form-group label.required::after {
+  content: '*';
+  color: #DC2626;
+  margin-left: 4px;
 }
 
 /* Button styles */

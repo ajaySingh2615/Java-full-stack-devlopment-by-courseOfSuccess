@@ -27,7 +27,10 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
+    // Only redirect to login for authentication errors
+    // Don't redirect for validation errors (400) or other client errors
+    if ((error.response?.status === 401 || error.response?.status === 403) && 
+        !error.config.url.includes('/login')) {
       // Clear user data and redirect to login
       localStorage.removeItem('greenmagic_user');
       localStorage.removeItem('greenmagic_vendor_status');
@@ -43,14 +46,71 @@ const vendorService = {
   // VENDOR PROFILE MANAGEMENT
   // ===========================
 
+  async checkVendorProfileExists(userId) {
+    try {
+      const response = await apiClient.get(`/vendors/users/${userId}/exists`);
+      return {
+        success: true,
+        exists: response.data.exists
+      };
+    } catch (error) {
+      console.error('Error checking vendor profile:', error);
+      return {
+        success: false,
+        exists: false,
+        error: error.message
+      };
+    }
+  },
+
   async getVendorProfileByUserId(userId) {
     const response = await apiClient.get(`/vendors/users/${userId}`);
     return response.data;
   },
 
-  async createVendorProfile(profileData) {
-    const response = await apiClient.post('/vendors', profileData);
-    return response.data;
+  async createVendorProfile(userId, profileData) {
+    try {
+      const response = await apiClient.post(`/vendors/users/${userId}`, profileData);
+      
+      // Update local storage to indicate profile is complete
+      localStorage.setItem('greenmagic_vendor_profile_complete', 'true');
+      
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message || 'Vendor profile created successfully'
+      };
+    } catch (error) {
+      console.error('Error creating vendor profile:', error);
+      
+      // Handle validation errors
+      if (error.response?.status === 400) {
+        const data = error.response.data;
+        
+        // If we have a structured error message from the backend
+        if (data.message) {
+          throw new Error(data.message);
+        }
+        
+        // Fallback error handling for other types of errors
+        if (data.errors && typeof data.errors === 'object') {
+          const errorMessages = Object.entries(data.errors)
+            .map(([field, message]) => `${field}: ${message}`)
+            .join('\n');
+          throw new Error(errorMessages);
+        }
+        
+        throw new Error(data.error || 'Validation failed. Please check your input.');
+      }
+      
+      // Handle network errors
+      if (!error.response) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      }
+      
+      // Handle other errors
+      throw new Error(error.response?.data?.message || 'Failed to create vendor profile. Please try again.');
+    }
   },
 
   async updateVendorProfile(profileId, profileData) {

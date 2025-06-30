@@ -923,6 +923,189 @@ public class VendorManagementService {
     }
 
     /**
+     * Get detailed product information for modal
+     */
+    public Map<String, Object> getProductDetails(Integer vendorId, Integer productId) {
+        Product product = productRepository.findById(productId.longValue())
+            .orElseThrow(() -> new RuntimeException("Product not found"));
+        
+        // Verify ownership
+        if (!product.getCreatedBy().getUserId().equals(vendorId)) {
+            throw new RuntimeException("Unauthorized to access this product");
+        }
+        
+        Map<String, Object> details = new HashMap<>();
+        
+        // Basic product information
+        Map<String, Object> basic = new HashMap<>();
+        basic.put("productId", product.getProductId());
+        basic.put("name", product.getName());
+        basic.put("description", product.getDescription());
+        basic.put("sku", product.getSku());
+        basic.put("category", product.getCategory() != null ? product.getCategory().getName() : "Uncategorized");
+        basic.put("brand", product.getBrand());
+        basic.put("status", product.getStatus() != null ? product.getStatus().toString().toLowerCase() : "active");
+        basic.put("createdAt", product.getCreatedAt());
+        basic.put("updatedAt", product.getCreatedAt()); // Using createdAt since updatedAt doesn't exist
+        details.put("basic", basic);
+        
+        // Pricing information
+        Map<String, Object> pricing = new HashMap<>();
+        pricing.put("price", product.getPrice());
+        pricing.put("mrp", product.getMrp());
+        pricing.put("costPrice", product.getCostPrice());
+        pricing.put("comparePrice", product.getMrp()); // Use MRP as compare price
+        pricing.put("margin", calculateMargin(product.getPrice(), product.getCostPrice()));
+        details.put("pricing", pricing);
+        
+        // Inventory information
+        Map<String, Object> inventory = new HashMap<>();
+        inventory.put("stockQuantity", product.getQuantity());
+        inventory.put("lowStockThreshold", product.getMinStockAlert() != null ? product.getMinStockAlert() : 10);
+        inventory.put("trackQuantity", true);
+        inventory.put("unitOfMeasurement", product.getUnitOfMeasurement());
+        inventory.put("variants", getProductVariants(vendorId, productId));
+        details.put("inventory", inventory);
+        
+        // Media information
+        Map<String, Object> media = new HashMap<>();
+        List<String> images = new ArrayList<>();
+        if (product.getImageUrl() != null && !product.getImageUrl().isEmpty()) {
+            images.add(product.getImageUrl());
+        }
+        // Add gallery images if available
+        if (product.getGalleryImages() != null && !product.getGalleryImages().isEmpty()) {
+            // Parse gallery images JSON string
+            try {
+                String[] galleryImages = product.getGalleryImages().split(",");
+                for (String img : galleryImages) {
+                    if (!img.trim().isEmpty()) {
+                        images.add(img.trim());
+                    }
+                }
+            } catch (Exception e) {
+                // Fallback if parsing fails
+            }
+        }
+        media.put("images", images);
+        media.put("videos", new ArrayList<>());
+        media.put("documents", new ArrayList<>());
+        details.put("media", media);
+        
+        // Analytics placeholder
+        details.put("analytics", getProductAnalytics(vendorId, productId));
+        
+        return details;
+    }
+
+    /**
+     * Get product analytics data
+     */
+    public Map<String, Object> getProductAnalytics(Integer vendorId, Integer productId) {
+        Product product = productRepository.findById(productId.longValue())
+            .orElseThrow(() -> new RuntimeException("Product not found"));
+        
+        // Verify ownership
+        if (!product.getCreatedBy().getUserId().equals(vendorId)) {
+            throw new RuntimeException("Unauthorized to access this product");
+        }
+        
+        Map<String, Object> analytics = new HashMap<>();
+        
+        // Mock analytics data - In real implementation, these would come from order/analytics tables
+        analytics.put("totalSales", getProductSalesCount(productId));
+        analytics.put("totalRevenue", getProductRevenue(productId));
+        analytics.put("pageViews", Math.random() * 1000); // Mock data
+        analytics.put("addToCartRate", Math.random() * 0.3); // Mock conversion rate
+        analytics.put("conversionRate", Math.random() * 0.15); // Mock conversion rate
+        analytics.put("averageRating", 4.2 + (Math.random() * 0.8)); // Mock rating 4.2-5.0
+        analytics.put("reviewCount", (int)(Math.random() * 50)); // Mock review count
+        
+        return analytics;
+    }
+
+    /**
+     * Quick update product fields
+     */
+    public ProductResponseDto quickUpdateProduct(Integer vendorId, Integer productId, Map<String, Object> updateFields) {
+        Product product = productRepository.findById(productId.longValue())
+            .orElseThrow(() -> new RuntimeException("Product not found"));
+        
+        // Verify ownership
+        if (!product.getCreatedBy().getUserId().equals(vendorId)) {
+            throw new RuntimeException("Unauthorized to update this product");
+        }
+        
+        // Update allowed fields
+        if (updateFields.containsKey("price")) {
+            BigDecimal price = new BigDecimal(updateFields.get("price").toString());
+            product.setPrice(price);
+        }
+        
+        if (updateFields.containsKey("stockQuantity")) {
+            Integer stock = Integer.valueOf(updateFields.get("stockQuantity").toString());
+            product.setQuantity(stock);
+        }
+        
+        if (updateFields.containsKey("status")) {
+            String status = updateFields.get("status").toString();
+            try {
+                product.setStatus(Product.ProductStatus.valueOf(status.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid status: " + status);
+            }
+        }
+        
+        if (updateFields.containsKey("lowStockThreshold")) {
+            Integer threshold = Integer.valueOf(updateFields.get("lowStockThreshold").toString());
+            product.setMinStockAlert(threshold);
+        }
+        
+        Product savedProduct = productRepository.save(product);
+        return productMapper.toDto(savedProduct);
+    }
+
+    /**
+     * Update product status
+     */
+    public ProductResponseDto updateProductStatus(Integer vendorId, Integer productId, String status) {
+        Product product = productRepository.findById(productId.longValue())
+            .orElseThrow(() -> new RuntimeException("Product not found"));
+        
+        // Verify ownership
+        if (!product.getCreatedBy().getUserId().equals(vendorId)) {
+            throw new RuntimeException("Unauthorized to update this product");
+        }
+        
+        try {
+            product.setStatus(Product.ProductStatus.valueOf(status.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid status: " + status);
+        }
+        
+        Product savedProduct = productRepository.save(product);
+        return productMapper.toDto(savedProduct);
+    }
+
+    // Helper methods for analytics
+    private Integer getProductSalesCount(Integer productId) {
+        // In real implementation, query from order_items table
+        return (int)(Math.random() * 100); // Mock data
+    }
+
+    private BigDecimal getProductRevenue(Integer productId) {
+        // In real implementation, sum revenue from order_items table
+        return BigDecimal.valueOf(Math.random() * 10000); // Mock data
+    }
+
+    private BigDecimal calculateMargin(BigDecimal sellingPrice, BigDecimal costPrice) {
+        if (costPrice == null || costPrice.equals(BigDecimal.ZERO)) {
+            return BigDecimal.ZERO;
+        }
+        return sellingPrice.subtract(costPrice).divide(sellingPrice, 4, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100));
+    }
+
+    /**
      * Bulk update product stock
      */
     public void bulkUpdateProductStock(Integer vendorId, List<Integer> productIds, String updateType, Integer value) {

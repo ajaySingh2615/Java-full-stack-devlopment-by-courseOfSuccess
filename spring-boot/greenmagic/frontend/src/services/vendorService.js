@@ -187,6 +187,54 @@ const vendorService = {
     return response.data;
   },
 
+  async getProductDetails(vendorId, productId) {
+    try {
+      const response = await apiClient.get(`/vendor/products/${productId}/details`, {
+        params: { vendorId }
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error fetching product details:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async getProductAnalytics(vendorId, productId) {
+    try {
+      const response = await apiClient.get(`/vendor/products/${productId}/analytics`, {
+        params: { vendorId }
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error fetching product analytics:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async quickUpdateProduct(vendorId, productId, updateData) {
+    try {
+      const response = await apiClient.put(`/vendor/products/${productId}/quick-update`, updateData, {
+        params: { vendorId }
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error updating product:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async updateProductStatus(vendorId, productId, status) {
+    try {
+      const response = await apiClient.put(`/vendor/products/${productId}/status`, { status }, {
+        params: { vendorId }
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error updating product status:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
   async createProduct(vendorId, productData) {
     try {
       const response = await apiClient.post(`/vendor/products`, productData, {

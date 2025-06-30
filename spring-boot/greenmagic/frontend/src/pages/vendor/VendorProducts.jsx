@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import vendorService from '../../services/vendorService';
+import ProductDetailModal from '../../components/modals/ProductDetailModal';
 import {
   FiPlus,
   FiSearch,
@@ -54,6 +55,10 @@ const VendorProducts = () => {
   const [bulkAction, setBulkAction] = useState('');
   const [bulkValue, setBulkValue] = useState('');
   const [bulkLoading, setBulkLoading] = useState(false);
+
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   const vendorId = vendorService.getCurrentVendorId();
 
@@ -217,6 +222,37 @@ const VendorProducts = () => {
     }
   };
 
+  // Modal handlers
+  const handleProductClick = (product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedProduct(null);
+  };
+
+  const handleProductUpdate = (updatedProduct) => {
+    setProducts(prevProducts =>
+      prevProducts.map(p =>
+        p.productId === updatedProduct.productId ? { ...p, ...updatedProduct } : p
+      )
+    );
+    loadStats(); // Refresh stats
+  };
+
+  const handleProductDelete = (productId) => {
+    setProducts(prevProducts =>
+      prevProducts.filter(p => p.productId !== productId)
+    );
+    loadStats(); // Refresh stats
+  };
+
+  const handleNavigateToEdit = (productId) => {
+    navigate(`/vendor/products/edit/${productId}`);
+  };
+
   const ProductStatsCard = ({ title, value, icon: Icon, color, change }) => (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between">
@@ -239,11 +275,14 @@ const VendorProducts = () => {
   const ProductCard = ({ product }) => (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow transition-shadow">
       <div className="relative">
-        <div className="aspect-w-16 aspect-h-9 rounded-t-lg overflow-hidden">
+        <div 
+          className="aspect-w-16 aspect-h-9 rounded-t-lg overflow-hidden cursor-pointer"
+          onClick={() => handleProductClick(product)}
+        >
           <img
             src={product.imageUrl || '/placeholder-product.jpg'}
             alt={product.name}
-            className="object-cover w-full h-full"
+            className="object-cover w-full h-full hover:scale-105 transition-transform duration-200"
           />
         </div>
         <div className="absolute top-2 right-2">
@@ -252,13 +291,31 @@ const VendorProducts = () => {
             checked={selectedProducts.includes(product.productId)}
             onChange={() => handleSelectProduct(product.productId)}
             className="h-4 w-4 text-green-600 rounded border-gray-300 shadow-sm"
+            onClick={(e) => e.stopPropagation()}
           />
+        </div>
+        <div className="absolute top-2 left-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleProductClick(product);
+            }}
+            className="bg-white bg-opacity-90 text-gray-600 p-2 rounded-full hover:bg-opacity-100 transition-all"
+            title="View details"
+          >
+            <FiEye className="h-4 w-4" />
+          </button>
         </div>
       </div>
       
-      <div className="p-4">
+      <div 
+        className="p-4 cursor-pointer"
+        onClick={() => handleProductClick(product)}
+      >
         <div className="mb-2">
-          <h3 className="text-lg font-medium text-gray-900 line-clamp-1">{product.name}</h3>
+          <h3 className="text-lg font-medium text-gray-900 line-clamp-1 hover:text-green-600 transition-colors">
+            {product.name}
+          </h3>
           <p className="text-sm text-gray-500 line-clamp-2">{product.description}</p>
         </div>
         
@@ -286,27 +343,43 @@ const VendorProducts = () => {
         <div className="flex items-center justify-between border-t pt-3">
           <div className="flex items-center space-x-2">
             <button
-              onClick={() => navigate(`/vendor/products/edit/${product.productId}`)}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/vendor/products/edit/${product.productId}`);
+              }}
               className="text-blue-600 hover:text-blue-700"
+              title="Edit product"
             >
               <FiEdit className="h-5 w-5" />
             </button>
             <button
-              onClick={() => handleDuplicateProduct(product.productId)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDuplicateProduct(product.productId);
+              }}
               className="text-gray-600 hover:text-gray-700"
+              title="Duplicate product"
             >
               <FiCopy className="h-5 w-5" />
             </button>
             <button
-              onClick={() => handleDeleteProduct(product.productId)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteProduct(product.productId);
+              }}
               className="text-red-600 hover:text-red-700"
+              title="Delete product"
             >
               <FiTrash2 className="h-5 w-5" />
             </button>
           </div>
           <button
-            onClick={() => navigate(`/vendor/products/variants/${product.productId}`)}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/vendor/products/variants/${product.productId}`);
+            }}
             className="text-gray-600 hover:text-gray-700"
+            title="Manage variants"
           >
             <FiPackage className="h-5 w-5" />
           </button>
@@ -540,6 +613,16 @@ const VendorProducts = () => {
             </div>
           </div>
         )}
+
+        {/* Product Detail Modal */}
+        <ProductDetailModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          product={selectedProduct}
+          onProductUpdate={handleProductUpdate}
+          onProductDelete={handleProductDelete}
+          onNavigateToEdit={handleNavigateToEdit}
+        />
       </div>
     </div>
   );

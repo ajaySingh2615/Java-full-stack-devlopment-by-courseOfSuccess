@@ -343,6 +343,92 @@ public class VendorManagementController {
     }
 
     /**
+     * Get detailed product information for modal
+     * GET /api/vendor/products/{productId}/details
+     */
+    @GetMapping("/products/{productId}/details")
+    public ResponseEntity<ApiResponseDto<Map<String, Object>>> getProductDetails(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId) {
+        try {
+            Map<String, Object> productDetails = vendorManagementService.getProductDetails(vendorId, productId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product details retrieved successfully", productDetails));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve product details: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get product analytics data
+     * GET /api/vendor/products/{productId}/analytics
+     */
+    @GetMapping("/products/{productId}/analytics")
+    public ResponseEntity<ApiResponseDto<Map<String, Object>>> getProductAnalytics(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId) {
+        try {
+            Map<String, Object> analytics = vendorManagementService.getProductAnalytics(vendorId, productId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product analytics retrieved successfully", analytics));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve product analytics: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Quick update product fields
+     * PUT /api/vendor/products/{productId}/quick-update
+     */
+    @PutMapping("/products/{productId}/quick-update")
+    public ResponseEntity<ApiResponseDto<ProductResponseDto>> quickUpdateProduct(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId,
+            @RequestBody Map<String, Object> updateFields) {
+        try {
+            ProductResponseDto updatedProduct = vendorManagementService.quickUpdateProduct(vendorId, productId, updateFields);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product updated successfully", updatedProduct));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(new ApiResponseDto<>(false, e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to update product: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Update product status
+     * PUT /api/vendor/products/{productId}/status
+     */
+    @PutMapping("/products/{productId}/status")
+    public ResponseEntity<ApiResponseDto<ProductResponseDto>> updateProductStatus(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId,
+            @RequestBody Map<String, String> statusUpdate) {
+        try {
+            String status = statusUpdate.get("status");
+            if (status == null || status.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(new ApiResponseDto<>(false, "Status is required", null));
+            }
+            
+            ProductResponseDto updatedProduct = vendorManagementService.updateProductStatus(vendorId, productId, status);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product status updated successfully", updatedProduct));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(new ApiResponseDto<>(false, e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to update product status: " + e.getMessage(), null));
+        }
+    }
+
+    /**
      * Bulk update product stock
      * POST /api/vendor/products/bulk-stock
      */

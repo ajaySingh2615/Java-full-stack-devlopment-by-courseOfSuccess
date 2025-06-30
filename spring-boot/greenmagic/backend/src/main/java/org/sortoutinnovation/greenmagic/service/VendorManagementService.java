@@ -729,6 +729,17 @@ public class VendorManagementService {
                 .orElseThrow(() -> new RuntimeException("Vendor not found with ID: " + vendorId));
             System.out.println("=== DEBUG: Vendor found: " + vendor.getName());
 
+            // Generate URL slug if not provided
+            String urlSlug = request.getUrlSlug();
+            if (urlSlug == null || urlSlug.isEmpty()) {
+                urlSlug = generateUrlSlug(request.getProductTitle());
+            }
+
+            // Check if URL slug already exists
+            if (productRepository.existsByUrlSlug(urlSlug)) {
+                throw new IllegalArgumentException("A product with URL slug '" + urlSlug + "' already exists. Please provide a different product title or custom URL slug.");
+            }
+
             // Create new product
             Product product = new Product();
             
@@ -737,12 +748,7 @@ public class VendorManagementService {
             
             // Set system fields
             product.setCreatedBy(vendor);
-            
-            // Generate URL slug if not provided
-            if (product.getUrlSlug() == null || product.getUrlSlug().isEmpty()) {
-                String slug = generateUrlSlug(product.getName());
-                product.setUrlSlug(slug);
-            }
+            product.setUrlSlug(urlSlug);
             
             System.out.println("=== DEBUG: About to save product");
             
@@ -774,6 +780,9 @@ public class VendorManagementService {
             System.out.println("=== DEBUG: Response created successfully");
             return response;
             
+        } catch (IllegalArgumentException e) {
+            System.err.println("=== ERROR in createProductFromDto: " + e.getMessage());
+            throw e; // Re-throw to preserve the specific error message
         } catch (Exception e) {
             System.err.println("=== ERROR in createProductFromDto: " + e.getMessage());
             e.printStackTrace();
@@ -1172,29 +1181,11 @@ public class VendorManagementService {
     }
 
     private String generateUrlSlug(String title) {
-        String baseSlug = title.toLowerCase()
+        return title.toLowerCase()
             .replaceAll("[^a-zA-Z0-9\\s-]", "") // Remove special characters except spaces and hyphens
             .replaceAll("\\s+", "-") // Replace spaces with hyphens
             .replaceAll("-+", "-") // Replace multiple hyphens with single hyphen
             .replaceAll("^-|-$", ""); // Remove leading/trailing hyphens
-
-        // Try the base slug first
-        String finalSlug = baseSlug;
-        int attempt = 1;
-
-        // Keep trying with random numbers until we find a unique slug
-        while (productRepository.existsByUrlSlug(finalSlug)) {
-            finalSlug = baseSlug + "-" + ((int) (Math.random() * 9000) + 1000); // 4-digit random number
-            attempt++;
-            
-            // Prevent infinite loop (though extremely unlikely)
-            if (attempt > 10) {
-                finalSlug = baseSlug + "-" + System.currentTimeMillis();
-                break;
-            }
-        }
-
-        return finalSlug;
     }
 
     // ===========================

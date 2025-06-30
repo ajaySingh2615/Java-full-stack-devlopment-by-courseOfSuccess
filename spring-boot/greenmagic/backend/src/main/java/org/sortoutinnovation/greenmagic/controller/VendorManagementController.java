@@ -175,6 +175,11 @@ public class VendorManagementController {
             ProductResponseDto createdProduct = vendorManagementService.createProductFromDto(vendorId, productRequest);
             return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDto<>(true, "Product created successfully", createdProduct));
+        } catch (IllegalArgumentException e) {
+            // Handle URL slug conflict specifically
+            System.err.println("=== DEBUG: Validation error in createProduct: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiResponseDto<>(false, e.getMessage(), null));
         } catch (RuntimeException e) {
             System.err.println("=== DEBUG: RuntimeException in createProduct: " + e.getMessage());
             e.printStackTrace();

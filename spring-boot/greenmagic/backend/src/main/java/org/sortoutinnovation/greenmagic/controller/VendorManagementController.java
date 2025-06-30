@@ -1,5 +1,6 @@
 package org.sortoutinnovation.greenmagic.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.sortoutinnovation.greenmagic.dto.ApiResponseDto;
 import org.sortoutinnovation.greenmagic.dto.ProductCreateRequestDto;
 import org.sortoutinnovation.greenmagic.dto.ProductUpdateRequestDto;
@@ -37,6 +38,9 @@ public class VendorManagementController {
 
     @Autowired
     private VendorManagementService vendorManagementService;
+    
+    @Autowired
+    private ObjectMapper objectMapper;
 
     // ===========================
     // VENDOR DASHBOARD ANALYTICS
@@ -113,7 +117,7 @@ public class VendorManagementController {
      * GET /api/vendor/products
      */
     @GetMapping("/products")
-    public ResponseEntity<ApiResponseDto<Page<Product>>> getVendorProducts(
+    public ResponseEntity<ApiResponseDto<Page<ProductResponseDto>>> getVendorProducts(
             @RequestParam Integer vendorId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -126,7 +130,7 @@ public class VendorManagementController {
             Sort sort = Sort.by(sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
             Pageable pageable = PageRequest.of(page, size, sort);
             
-            Page<Product> products = vendorManagementService.getVendorProducts(vendorId, pageable, status, category, search);
+            Page<ProductResponseDto> products = vendorManagementService.getVendorProducts(vendorId, pageable, status, category, search);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Products retrieved successfully", products));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -156,17 +160,54 @@ public class VendorManagementController {
     @PostMapping("/products")
     public ResponseEntity<ApiResponseDto<ProductResponseDto>> createProduct(
             @RequestParam Integer vendorId,
-            @Valid @RequestBody ProductCreateRequestDto productRequest) {
+            @RequestBody Map<String, Object> rawRequest) {
         try {
+            System.out.println("=== DEBUG: Creating product for vendorId: " + vendorId);
+            System.out.println("=== DEBUG: Raw request received, preprocessing...");
+            
+            // Preprocess the request to handle LinkedHashMap issues
+            ProductCreateRequestDto productRequest = preprocessProductRequest(rawRequest);
+            
+            System.out.println("=== DEBUG: Product request data: " + productRequest.getProductTitle());
+            System.out.println("=== DEBUG: Category ID: " + productRequest.getCategoryId());
+            System.out.println("=== DEBUG: SKU Code: " + productRequest.getSkuCode());
+            
             ProductResponseDto createdProduct = vendorManagementService.createProductFromDto(vendorId, productRequest);
             return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDto<>(true, "Product created successfully", createdProduct));
         } catch (RuntimeException e) {
+            System.err.println("=== DEBUG: RuntimeException in createProduct: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest()
                 .body(new ApiResponseDto<>(false, e.getMessage(), null));
         } catch (Exception e) {
+            System.err.println("=== DEBUG: Exception in createProduct: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to create product: " + e.getMessage(), null));
+        }
+    }
+    
+    /**
+     * Preprocess raw request to handle LinkedHashMap deserialization issues
+     */
+    private ProductCreateRequestDto preprocessProductRequest(Map<String, Object> rawRequest) {
+        try {
+            System.out.println("=== DEBUG: Preprocessing request with ObjectMapper");
+            
+            // Convert the raw request to JSON string and then back to DTO
+            // This ensures proper type conversion and eliminates LinkedHashMap issues
+            String jsonString = objectMapper.writeValueAsString(rawRequest);
+            System.out.println("=== DEBUG: JSON String: " + jsonString);
+            
+            ProductCreateRequestDto dto = objectMapper.readValue(jsonString, ProductCreateRequestDto.class);
+            System.out.println("=== DEBUG: Successfully converted to DTO");
+            
+            return dto;
+        } catch (Exception e) {
+            System.err.println("=== ERROR: Failed to preprocess request: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to process product request: " + e.getMessage(), e);
         }
     }
 

@@ -1,5 +1,6 @@
 package org.sortoutinnovation.greenmagic.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.sortoutinnovation.greenmagic.dto.ProductCreateRequestDto;
 import org.sortoutinnovation.greenmagic.dto.ProductUpdateRequestDto;
 import org.sortoutinnovation.greenmagic.dto.ProductResponseDto;
@@ -55,6 +56,9 @@ public class VendorManagementService {
 
     @Autowired
     private ProductMapper productMapper;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     // ===========================
     // DASHBOARD METHODS
@@ -137,10 +141,13 @@ public class VendorManagementService {
     /**
      * Get vendor products with filtering
      */
-    public Page<Product> getVendorProducts(Integer vendorId, Pageable pageable, String status, String category, String search) {
+    public Page<ProductResponseDto> getVendorProducts(Integer vendorId, Pageable pageable, String status, String category, String search) {
         // Implementation would use custom query or specification pattern
         // For now, basic implementation
-        return productRepository.findByCreatedByUserId(vendorId, pageable);
+        Page<Product> products = productRepository.findByCreatedByUserId(vendorId, pageable);
+        
+        // Convert entities to DTOs to avoid serialization issues
+        return products.map(product -> productMapper.toDto(product));
     }
 
     /**
@@ -712,21 +719,66 @@ public class VendorManagementService {
      * Create product from DTO
      */
     public ProductResponseDto createProductFromDto(Integer vendorId, ProductCreateRequestDto request) {
-        User vendor = userRepository.findById(vendorId.longValue())
-            .orElseThrow(() -> new RuntimeException("Vendor not found"));
-        
-        Product product = new Product();
-        mapDtoToProduct(request, product);
-        product.setCreatedBy(vendor);
-        product.setCreatedAt(LocalDateTime.now());
-        
-        // Generate SKU if not provided
-        if (product.getSku() == null || product.getSku().isEmpty()) {
-            product.setSku(generateSkuFromDto(vendorId, request.getProductTitle(), request.getCategoryId()));
+        try {
+            System.out.println("=== DEBUG: Starting createProductFromDto");
+            System.out.println("=== DEBUG: VendorId: " + vendorId);
+            System.out.println("=== DEBUG: Product Title: " + request.getProductTitle());
+            
+            // Find vendor
+            User vendor = userRepository.findById(vendorId.longValue())
+                .orElseThrow(() -> new RuntimeException("Vendor not found with ID: " + vendorId));
+            System.out.println("=== DEBUG: Vendor found: " + vendor.getName());
+
+            // Create new product
+            Product product = new Product();
+            
+            // Map DTO to Product using our fixed method
+            mapDtoToProduct(request, product);
+            
+            // Set system fields
+            product.setCreatedBy(vendor);
+            
+            // Generate URL slug if not provided
+            if (product.getUrlSlug() == null || product.getUrlSlug().isEmpty()) {
+                String slug = generateUrlSlug(product.getName());
+                product.setUrlSlug(slug);
+            }
+            
+            System.out.println("=== DEBUG: About to save product");
+            
+            // Save product to database
+            Product savedProduct = productRepository.save(product);
+            
+            System.out.println("=== DEBUG: Product saved successfully with ID: " + savedProduct.getProductId());
+            
+            // Return a simple response without using ProductMapper to avoid LinkedHashMap issues
+            ProductResponseDto response = new ProductResponseDto();
+            response.setProductId(savedProduct.getProductId());
+            response.setSku(savedProduct.getSku());
+            response.setName(savedProduct.getName());
+            response.setPrice(savedProduct.getPrice());
+            response.setMrp(savedProduct.getMrp());
+            response.setQuantity(savedProduct.getQuantity());
+            response.setImageUrl(savedProduct.getImageUrl());
+            response.setStatus(savedProduct.getStatus());
+            response.setCreatedAt(savedProduct.getCreatedAt());
+            
+            // Set simple fields only to avoid JSON conversion issues
+            if (savedProduct.getCategory() != null) {
+                response.setCategoryName(savedProduct.getCategory().getName());
+            }
+            if (savedProduct.getCreatedBy() != null) {
+                response.setCreatedByName(savedProduct.getCreatedBy().getName());
+            }
+            
+            System.out.println("=== DEBUG: Response created successfully");
+            return response;
+            
+        } catch (Exception e) {
+            System.err.println("=== ERROR in createProductFromDto: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to create product: " + e.getMessage(), e);
         }
-        
-        Product savedProduct = productRepository.save(product);
-        return productMapper.toDto(savedProduct);
     }
 
     /**
@@ -843,21 +895,33 @@ public class VendorManagementService {
         
         Map<String, Object> organicGrains = new HashMap<>();
         organicGrains.put("name", "Organic Grains & Cereals");
+        organicGrains.put("id", 1);
         Map<String, Object> subcategories = new HashMap<>();
-        subcategories.put("wheat", Map.of("name", "Wheat & Wheat Products", "hsn", "1001", "gst", 0));
-        subcategories.put("rice", Map.of("name", "Rice & Rice Products", "hsn", "1006", "gst", 0));
-        subcategories.put("corn", Map.of("name", "Corn & Corn Products", "hsn", "1005", "gst", 0));
+        subcategories.put("101", Map.of("name", "Wheat & Wheat Products", "hsn", "1001", "gst", 0, "id", 101));
+        subcategories.put("102", Map.of("name", "Rice & Rice Products", "hsn", "1006", "gst", 0, "id", 102));
+        subcategories.put("103", Map.of("name", "Corn & Corn Products", "hsn", "1005", "gst", 0, "id", 103));
         organicGrains.put("subcategories", subcategories);
         
         Map<String, Object> pulses = new HashMap<>();
         pulses.put("name", "Pulses & Legumes");
+        pulses.put("id", 2);
         Map<String, Object> pulseSubcategories = new HashMap<>();
-        pulseSubcategories.put("lentils", Map.of("name", "Lentils (Dal)", "hsn", "0713", "gst", 0));
-        pulseSubcategories.put("whole_pulses", Map.of("name", "Whole Pulses", "hsn", "0713", "gst", 0));
+        pulseSubcategories.put("201", Map.of("name", "Lentils (Dal)", "hsn", "0713", "gst", 0, "id", 201));
+        pulseSubcategories.put("202", Map.of("name", "Whole Pulses", "hsn", "0713", "gst", 0, "id", 202));
         pulses.put("subcategories", pulseSubcategories);
         
-        categories.put("organic_grains", organicGrains);
-        categories.put("pulses_legumes", pulses);
+        Map<String, Object> dairy = new HashMap<>();
+        dairy.put("name", "Dairy & Milk Products");
+        dairy.put("id", 3);
+        Map<String, Object> dairySubcategories = new HashMap<>();
+        dairySubcategories.put("301", Map.of("name", "Fresh Milk", "hsn", "0401", "gst", 0, "id", 301));
+        dairySubcategories.put("302", Map.of("name", "Yogurt & Curd", "hsn", "0403", "gst", 5, "id", 302));
+        dairySubcategories.put("303", Map.of("name", "Cheese & Paneer", "hsn", "0406", "gst", 12, "id", 303));
+        dairy.put("subcategories", dairySubcategories);
+        
+        categories.put("1", organicGrains);
+        categories.put("2", pulses);
+        categories.put("3", dairy);
         
         return categories;
     }
@@ -875,37 +939,184 @@ public class VendorManagementService {
 
     // Helper methods for DTO mapping
     private void mapDtoToProduct(ProductCreateRequestDto dto, Product product) {
-        product.setName(dto.getProductTitle());
-        product.setSku(dto.getSkuCode());
-        product.setDescription(dto.getFullDescription());
-        product.setShortDescription(dto.getShortDescription());
-        product.setMrp(dto.getMrp());
-        product.setPrice(dto.getSellingPrice());
-        product.setCostPrice(dto.getCostPrice());
-        product.setQuantity(dto.getStockQuantity());
-        product.setBrand(dto.getBrandName());
-        product.setIngredientsList(dto.getIngredientsList());
-        product.setWeightForShipping(dto.getWeight());
-        product.setDeliveryTimeEstimate(dto.getDeliveryTimeEstimate());
-        product.setUrlSlug(dto.getUrlSlug());
-        product.setMetaTitle(dto.getMetaTitle());
-        product.setMetaDescription(dto.getMetaDescription());
-        
-        // Set category if provided
-        if (dto.getCategoryId() != null) {
-            Category category = categoryRepository.findById(dto.getCategoryId().longValue()).orElse(null);
-            product.setCategory(category);
-        }
-        
-        // Set status
-        if (dto.getStatus() != null) {
-            try {
-                product.setStatus(Product.ProductStatus.valueOf(dto.getStatus()));
-            } catch (IllegalArgumentException e) {
+        try {
+            System.out.println("=== DEBUG: Starting mapDtoToProduct with ROBUST conversion");
+            
+            // ===========================
+            // BASIC INFORMATION
+            // ===========================
+            product.setName(dto.getProductTitle());
+            product.setSku(dto.getSkuCode());
+            product.setBrand(dto.getBrandName() != null ? dto.getBrandName() : dto.getCustomBrandName());
+            product.setSubcategoryId(dto.getSubcategoryId());
+            
+            // Set category if provided
+            if (dto.getCategoryId() != null) {
+                Category category = categoryRepository.findById(dto.getCategoryId().longValue()).orElse(null);
+                product.setCategory(category);
+            }
+            
+            // Set product type
+            if (dto.getProductType() != null) {
+                try {
+                    product.setProductType(Product.ProductType.valueOf(dto.getProductType()));
+                } catch (IllegalArgumentException e) {
+                    product.setProductType(Product.ProductType.SIMPLE);
+                }
+            }
+
+            // ===========================
+            // PRICING STRATEGY
+            // ===========================
+            product.setMrp(dto.getMrp());
+            product.setPrice(dto.getSellingPrice());
+            product.setCostPrice(dto.getCostPrice());
+            product.setOfferStartDate(dto.getOfferStartDate());
+            product.setOfferEndDate(dto.getOfferEndDate());
+
+            // Handle bulk pricing tiers - ROBUST CONVERSION
+            product.setBulkPricingTiers(convertBulkPricingTiers(dto.getBulkPricingTiers()));
+
+            // ===========================
+            // INVENTORY MANAGEMENT
+            // ===========================
+            product.setQuantity(dto.getStockQuantity());
+            product.setUnitOfMeasurement(dto.getUnitOfMeasurement());
+            product.setMinimumOrderQuantity(dto.getMinimumOrderQuantity());
+            product.setMaximumOrderQuantity(dto.getMaximumOrderQuantity());
+            product.setMinStockAlert(dto.getLowStockAlert());
+            product.setTrackQuantity(dto.getTrackQuantity());
+            product.setRestockDate(dto.getRestockDate());
+
+            // ===========================
+            // MEDIA GALLERY
+            // ===========================
+            product.setImageUrl(dto.getMainImageUrl());
+            
+            // Handle gallery images - ROBUST CONVERSION
+            product.setGalleryImages(convertGalleryImages(dto.getGalleryImages()));
+            
+            product.setVideoUrl(dto.getVideoUrl());
+            product.setImageAltTags(dto.getImageAltTags());
+
+            // ===========================
+            // SHIPPING & LOGISTICS
+            // ===========================
+            product.setWeightForShipping(dto.getWeightForShipping());
+            if (dto.getDimensions() != null) {
+                try {
+                    String dimensionsJson = objectMapper.writeValueAsString(dto.getDimensions());
+                    product.setDimensions(dimensionsJson);
+                } catch (Exception e) {
+                    product.setDimensions(null);
+                }
+            }
+            product.setDeliveryTimeEstimate(dto.getDeliveryTimeEstimate());
+            
+            // Set shipping class enum
+            if (dto.getShippingClass() != null) {
+                try {
+                    product.setShippingClass(Product.ShippingClass.valueOf(dto.getShippingClass()));
+                } catch (IllegalArgumentException e) {
+                    product.setShippingClass(Product.ShippingClass.STANDARD);
+                }
+            }
+            
+            product.setColdStorageRequired(dto.getColdStorageRequired());
+            product.setSpecialPackaging(dto.getSpecialPackaging());
+            product.setInsuranceRequired(dto.getInsuranceRequired());
+            product.setFreeShipping(dto.getFreeShipping());
+            product.setFreeShippingThreshold(dto.getFreeShippingThreshold());
+            product.setIsReturnable(dto.getIsReturnable());
+            
+            // Set return window enum
+            if (dto.getReturnWindow() != null) {
+                try {
+                    product.setReturnWindow(Product.ReturnWindow.valueOf(dto.getReturnWindow()));
+                } catch (IllegalArgumentException e) {
+                    product.setReturnWindow(Product.ReturnWindow.SEVEN_DAYS);
+                }
+            }
+            
+            product.setReturnConditions(dto.getReturnConditions());
+            product.setIsCodAvailable(dto.getIsCodAvailable());
+
+            // ===========================
+            // PRODUCT DESCRIPTIONS
+            // ===========================
+            product.setShortDescription(dto.getShortDescription());
+            product.setDescription(dto.getDetailedDescription());
+            product.setKeyFeatures(dto.getKeyFeatures());
+            
+            // Handle product highlights - ROBUST CONVERSION
+            product.setProductHighlights(convertProductHighlights(dto.getProductHighlights()));
+            
+            product.setIngredientsList(dto.getIngredientsList());
+            
+            // Handle nutritional info - ROBUST CONVERSION
+            product.setNutritionalInfo(convertNutritionalInfo(dto.getNutritionalInfo()));
+            
+            product.setAllergenInfo(dto.getAllergenInfo());
+
+            // ===========================
+            // CERTIFICATIONS & COMPLIANCE
+            // ===========================
+            product.setFssaiLicense(dto.getFssaiLicense());
+            
+            // Handle organic certification - ROBUST CONVERSION
+            product.setOrganicCertification(convertOrganicCertification(dto.getOrganicCertification()));
+            
+            // Handle quality certifications - ROBUST CONVERSION
+            product.setQualityCertifications(convertQualityCertifications(dto.getQualityCertifications()));
+            
+            product.setCountryOfOrigin(dto.getCountryOfOrigin());
+            product.setStateOfOrigin(dto.getStateOfOrigin());
+            product.setFarmName(dto.getFarmName());
+            
+            // Set harvest season enum
+            if (dto.getHarvestSeason() != null) {
+                try {
+                    product.setHarvestSeason(Product.HarvestSeason.valueOf(dto.getHarvestSeason()));
+                } catch (IllegalArgumentException e) {
+                    product.setHarvestSeason(null);
+                }
+            }
+            
+            product.setManufacturingDate(dto.getManufacturingDate());
+            product.setExpiryDate(dto.getExpiryDate());
+            product.setBestBeforeDate(dto.getBestBeforeDate());
+            product.setShelfLifeDays(dto.getShelfLifeDays());
+
+            // ===========================
+            // SEO OPTIMIZATION
+            // ===========================
+            product.setMetaTitle(dto.getMetaTitle());
+            product.setMetaDescription(dto.getMetaDescription());
+            product.setSearchKeywords(dto.getSearchKeywords());
+            product.setUrlSlug(dto.getUrlSlug());
+            
+            // Handle structured data - ROBUST CONVERSION
+            product.setStructuredData(convertStructuredData(dto.getStructuredData()));
+
+            // ===========================
+            // STATUS
+            // ===========================
+            if (dto.getStatus() != null) {
+                try {
+                    product.setStatus(Product.ProductStatus.valueOf(dto.getStatus()));
+                } catch (IllegalArgumentException e) {
+                    product.setStatus(Product.ProductStatus.DRAFT);
+                }
+            } else {
                 product.setStatus(Product.ProductStatus.DRAFT);
             }
-        } else {
-            product.setStatus(Product.ProductStatus.DRAFT);
+            
+            System.out.println("=== DEBUG: Successfully completed mapDtoToProduct with ROBUST conversion");
+            
+        } catch (Exception e) {
+            System.err.println("=== ERROR in mapDtoToProduct: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to map DTO to Product: " + e.getMessage(), e);
         }
     }
 
@@ -988,5 +1199,126 @@ public class VendorManagementService {
         String productNumber = String.format("%04d", (int) (Math.random() * 9999) + 1);
         
         return "GM" + categoryCode + vendorCode + productNumber;
+    }
+
+    private String generateUrlSlug(String title) {
+        // Implementation of generateUrlSlug method
+        return title.replaceAll("[^a-zA-Z0-9]", "-").replaceAll("-+", "-").replaceAll("^-|-$", "");
+    }
+
+    // ===========================
+    // ROBUST CONVERSION METHODS
+    // ===========================
+
+    private String convertBulkPricingTiers(List<ProductCreateRequestDto.BulkPricingTier> tiers) {
+        if (tiers == null || tiers.isEmpty()) {
+            return null;
+        }
+        
+        try {
+            // Convert directly to JSON string for Hibernate
+            String json = objectMapper.writeValueAsString(tiers);
+            System.out.println("=== DEBUG: Successfully converted bulk pricing tiers to JSON: " + json);
+            return json;
+        } catch (Exception e) {
+            System.err.println("Error converting bulk pricing tiers: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private String convertGalleryImages(List<String> images) {
+        if (images == null || images.isEmpty()) {
+            return null;
+        }
+        
+        try {
+            // Convert directly to JSON string for Hibernate
+            String json = objectMapper.writeValueAsString(images);
+            System.out.println("=== DEBUG: Successfully converted gallery images to JSON: " + json);
+            return json;
+        } catch (Exception e) {
+            System.err.println("Error converting gallery images: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private String convertProductHighlights(List<ProductCreateRequestDto.ProductHighlight> highlights) {
+        if (highlights == null || highlights.isEmpty()) {
+            return null;
+        }
+        
+        try {
+            // Convert directly to JSON string for Hibernate
+            String json = objectMapper.writeValueAsString(highlights);
+            System.out.println("=== DEBUG: Successfully converted product highlights to JSON: " + json);
+            return json;
+        } catch (Exception e) {
+            System.err.println("Error converting product highlights: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private String convertNutritionalInfo(ProductCreateRequestDto.NutritionalInfo nutritionalInfo) {
+        if (nutritionalInfo == null) {
+            return null;
+        }
+        
+        try {
+            // Convert directly to JSON string for Hibernate
+            String json = objectMapper.writeValueAsString(nutritionalInfo);
+            System.out.println("=== DEBUG: Successfully converted nutritional info to JSON: " + json);
+            return json;
+        } catch (Exception e) {
+            System.err.println("Error converting nutritional info: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private String convertOrganicCertification(ProductCreateRequestDto.OrganicCertification certification) {
+        if (certification == null) {
+            return null;
+        }
+        
+        try {
+            // Convert directly to JSON string for Hibernate
+            String json = objectMapper.writeValueAsString(certification);
+            System.out.println("=== DEBUG: Successfully converted organic certification to JSON: " + json);
+            return json;
+        } catch (Exception e) {
+            System.err.println("Error converting organic certification: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private String convertQualityCertifications(List<ProductCreateRequestDto.QualityCertification> certifications) {
+        if (certifications == null || certifications.isEmpty()) {
+            return null;
+        }
+        
+        try {
+            // Convert directly to JSON string for Hibernate
+            String json = objectMapper.writeValueAsString(certifications);
+            System.out.println("=== DEBUG: Successfully converted quality certifications to JSON: " + json);
+            return json;
+        } catch (Exception e) {
+            System.err.println("Error converting quality certifications: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private String convertStructuredData(Object structuredData) {
+        if (structuredData == null) {
+            return null;
+        }
+        
+        try {
+            // Convert directly to JSON string for Hibernate
+            String json = objectMapper.writeValueAsString(structuredData);
+            System.out.println("=== DEBUG: Successfully converted structured data to JSON: " + json);
+            return json;
+        } catch (Exception e) {
+            System.err.println("Error converting structured data: " + e.getMessage());
+            return null;
+        }
     }
 } 

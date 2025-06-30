@@ -40,6 +40,7 @@ public class ProductResponseDto {
     private String metaTitle;
     private String metaDescription;
     private String categoryName;
+    private CategoryInfo category;
     private String createdByName;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -71,5 +72,14 @@ public class ProductResponseDto {
         this.brand = brand;
         this.categoryName = categoryName;
         this.status = status;
+    }
+
+    // Nested class for category information
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CategoryInfo {
+        private Integer categoryId;
+        private String name;
     }
 } 

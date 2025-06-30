@@ -128,7 +128,31 @@ const vendorService = {
   },
 
   async createProduct(vendorId, productData) {
-    const response = await apiClient.post(`/vendor/products`, productData, {
+    // Transform the form data to match the backend DTO structure
+    const transformedData = {
+      ...productData,
+      // Ensure arrays are properly structured
+      bulkPricingTiers: productData.bulkPricingTiers || [],
+      galleryImages: productData.galleryImages || [],
+      imageAltTags: productData.imageAltTags || [],
+      keyFeatures: productData.keyFeatures || [],
+      productHighlights: productData.productHighlights || [],
+      allergenInfo: productData.allergenInfo || [],
+      qualityCertifications: productData.qualityCertifications || [],
+      returnConditions: productData.returnConditions || [],
+      searchKeywords: productData.searchKeywords || [],
+      
+      // Transform nutritional info if present
+      nutritionalInfo: productData.nutritionalInfo?.servingSize ? productData.nutritionalInfo : null,
+      
+      // Transform organic certification if present
+      organicCertification: productData.organicCertification?.certificateNumber ? productData.organicCertification : null,
+      
+      // Ensure dimensions object
+      dimensions: productData.dimensions?.length ? productData.dimensions : null
+    };
+
+    const response = await apiClient.post(`/vendor/products`, transformedData, {
       params: { vendorId }
     });
     return response.data;
@@ -217,9 +241,10 @@ const vendorService = {
 
   async generateSku(vendorId, category, subcategory) {
     const response = await apiClient.post(`/vendor/products/generate-sku`, {
-      vendorId,
       category,
       subcategory
+    }, {
+      params: { vendorId }
     });
     return response.data;
   },

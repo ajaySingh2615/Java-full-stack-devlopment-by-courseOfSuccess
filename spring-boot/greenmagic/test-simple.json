@@ -1,0 +1,17 @@
+{
+  "productTitle": "Simple Test Product",
+  "categoryId": 1,
+  "brandName": "Test Brand",
+  "skuCode": "GMTE0011234",
+  "productType": "SIMPLE",
+  "mrp": 100.00,
+  "sellingPrice": 90.00,
+  "costPrice": 70.00,
+  "stockQuantity": 50,
+  "unitOfMeasurement": "kg",
+  "mainImageUrl": "https://example.com/image.jpg",
+  "weightForShipping": 1.0,
+  "deliveryTimeEstimate": "3-5 days",
+  "shortDescription": "This is a test product with a short description that meets the minimum length requirement of fifty characters.",
+  "detailedDescription": "This is a detailed description of the test product. It provides comprehensive information about the product features, benefits, and usage instructions. This description is long enough to meet the validation requirements and provides valuable information to potential customers about the product's quality and benefits."
+} 

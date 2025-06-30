@@ -1,0 +1,78 @@
+{
+  "productTitle": "Premium Organic Basmati Rice - 5 KG",
+  "categoryId": 1,
+  "brandName": "Green Magic Farms",
+  "productType": "SIMPLE",
+  "mrp": 850.00,
+  "sellingPrice": 750.00,
+  "costPrice": 600.00,
+  "bulkPricingTiers": [
+    {
+      "minQuantity": 5,
+      "discountType": "percentage",
+      "discountValue": 4.0
+    }
+  ],
+  "stockQuantity": 100,
+  "unitOfMeasurement": "KG",
+  "minimumOrderQuantity": 1,
+  "maximumOrderQuantity": 50,
+  "lowStockAlert": 10,
+  "trackQuantity": true,
+  "mainImageUrl": "https://example.com/main-image.jpg",
+  "galleryImages": [
+    "https://example.com/gallery1.jpg",
+    "https://example.com/gallery2.jpg"
+  ],
+  "weightForShipping": 5.0,
+  "deliveryTimeEstimate": "3-5 days",
+  "shortDescription": "Premium quality organic basmati rice sourced directly from the best farms in India, ensuring authentic taste and aroma.",
+  "detailedDescription": "This premium organic basmati rice is carefully selected from the finest farms in India. Each grain is aged to perfection, delivering the authentic basmati aroma and fluffy texture that makes every meal special. Rich in nutrients and free from harmful chemicals, this rice is perfect for biryanis, pulao, and everyday meals.",
+  "keyFeatures": [
+    "100% Organic",
+    "Aged Rice",
+    "Long Grain",
+    "Aromatic"
+  ],
+  "productHighlights": [
+    {
+      "icon": "organic",
+      "title": "Certified Organic",
+      "description": "100% organic and chemical-free"
+    }
+  ],
+  "nutritionalInfo": {
+    "servingSize": "100g",
+    "nutrients": {
+      "energy": {
+        "value": 345,
+        "unit": "kcal"
+      },
+      "protein": {
+        "value": 7.5,
+        "unit": "g"
+      }
+    }
+  },
+  "organicCertification": {
+    "certificateNumber": "ORG12345",
+    "issuingAuthority": "india_organic",
+    "issueDate": "2024-01-01",
+    "expiryDate": "2025-01-01"
+  },
+  "qualityCertifications": [
+    {
+      "type": "iso_22000",
+      "certificateNumber": "ISO12345",
+      "issueDate": "2024-01-01",
+      "expiryDate": "2025-01-01"
+    }
+  ],
+  "countryOfOrigin": "India",
+  "stateOfOrigin": "Punjab",
+  "harvestSeason": "WINTER",
+  "metaTitle": "Premium Organic Basmati Rice - 5 KG",
+  "metaDescription": "Buy premium organic basmati rice online. 100% organic, aged rice with authentic aroma and taste.",
+  "searchKeywords": ["organic", "basmati", "rice", "premium"],
+  "status": "DRAFT"
+} 

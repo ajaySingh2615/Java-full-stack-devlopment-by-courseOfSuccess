@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - Complex JSON</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        button { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 5px; white-space: pre-wrap; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .loading { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Green Magic API Test</h1>
+        <h2>Complex JSON Product Creation Test</h2>
+        
+        <button onclick="testSimpleProduct()">Test Simple Product</button>
+        <button onclick="testMinimalComplexProduct()">Test Minimal Complex Product</button>
+        <button onclick="testComplexProduct()">Test Full Complex Product</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api/vendor/products?vendorId=25';
+        
+        function showResult(message, type = 'loading') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.textContent = message;
+        }
+        
+        async function testAPI(data, testName) {
+            showResult(`🔄 Testing ${testName}...`, 'loading');
+            
+            try {
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ ${testName} SUCCESS!\n\nProduct ID: ${result.data.productId}\nProduct Name: ${result.data.name}\nBrand: ${result.data.brand}\nPrice: ${result.data.price}\n\nFull Response:\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ ${testName} FAILED!\n\nStatus: ${response.status}\nError: ${result.message}\n\nFull Response:\n${JSON.stringify(result, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult(`💥 ${testName} ERROR!\n\nError: ${error.message}`, 'error');
+            }
+        }
+        
+        function testSimpleProduct() {
+            const simpleProduct = {
+                productTitle: "Simple Test Product",
+                categoryId: 1,
+                brandName: "Test Brand",
+                productType: "SIMPLE",
+                mrp: 100.00,
+                sellingPrice: 90.00,
+                stockQuantity: 50,
+                unitOfMeasurement: "KG",
+                mainImageUrl: "https://example.com/image.jpg",
+                shortDescription: "This is a simple test product.",
+                detailedDescription: "This is a detailed description for the simple test product.",
+                status: "DRAFT"
+            };
+            
+            testAPI(simpleProduct, 'Simple Product');
+        }
+        
+        function testMinimalComplexProduct() {
+            const minimalComplexProduct = {
+                productTitle: "Minimal Complex Test Product",
+                categoryId: 1,
+                brandName: "Test Brand",
+                productType: "SIMPLE",
+                mrp: 100.00,
+                sellingPrice: 90.00,
+                stockQuantity: 50,
+                unitOfMeasurement: "KG",
+                mainImageUrl: "https://example.com/image.jpg",
+                shortDescription: "This is a test product with minimal complex nested objects.",
+                detailedDescription: "This is a detailed description for testing minimal complex object serialization.",
+                bulkPricingTiers: [
+                    {
+                        minQuantity: 5,
+                        discountType: "percentage",
+                        discountValue: 4.0
+                    }
+                ],
+                status: "DRAFT"
+            };
+            
+            testAPI(minimalComplexProduct, 'Minimal Complex Product');
+        }
+        
+        function testComplexProduct() {
+            const complexProduct = {
+                productTitle: "Premium Organic Basmati Rice - 5 KG",
+                categoryId: 1,
+                brandName: "Green Magic Farms",
+                productType: "SIMPLE",
+                mrp: 850.00,
+                sellingPrice: 750.00,
+                costPrice: 600.00,
+                bulkPricingTiers: [
+                    {
+                        minQuantity: 5,
+                        discountType: "percentage",
+                        discountValue: 4.0
+                    },
+                    {
+                        minQuantity: 10,
+                        discountType: "fixed",
+                        discountValue: 50.0
+                    }
+                ],
+                stockQuantity: 100,
+                unitOfMeasurement: "KG",
+                minimumOrderQuantity: 1,
+                maximumOrderQuantity: 50,
+                lowStockAlert: 10,
+                trackQuantity: true,
+                mainImageUrl: "https://example.com/main-image.jpg",
+                galleryImages: [
+                    "https://example.com/gallery1.jpg",
+                    "https://example.com/gallery2.jpg"
+                ],
+                weightForShipping: 5.0,
+                deliveryTimeEstimate: "3-5 days",
+                shortDescription: "Premium organic basmati rice sourced directly from certified organic farms.",
+                detailedDescription: "This premium organic basmati rice is carefully sourced from certified organic farms in India. Each grain is aged for optimal flavor and aroma.",
+                keyFeatures: [
+                    "100% Organic Certified",
+                    "Aged for 2 years",
+                    "Extra long grain",
+                    "Aromatic variety"
+                ],
+                productHighlights: [
+                    {
+                        title: "Organic Certified",
+                        description: "Certified organic by authorized agencies",
+                        icon: "leaf"
+                    },
+                    {
+                        title: "Premium Quality",
+                        description: "Hand-picked and quality tested",
+                        icon: "star"
+                    }
+                ],
+                nutritionalInfo: {
+                    servingSize: "100g",
+                    calories: 350,
+                    protein: 7.5,
+                    carbohydrates: 78.0,
+                    fat: 0.5,
+                    fiber: 2.0,
+                    sodium: 2.0
+                },
+                organicCertification: {
+                    certificateNumber: "ORG-2024-001",
+                    certifyingBody: "India Organic",
+                    validUntil: "2025-12-31",
+                    scope: "Production and Processing"
+                },
+                qualityCertifications: [
+                    {
+                        name: "ISO 22000",
+                        number: "ISO-22000-2024",
+                        validUntil: "2025-06-30"
+                    },
+                    {
+                        name: "HACCP",
+                        number: "HACCP-2024-001",
+                        validUntil: "2025-12-31"
+                    }
+                ],
+                countryOfOrigin: "India",
+                stateOfOrigin: "Punjab",
+                farmName: "Green Valley Organic Farm",
+                harvestSeason: "KHARIF",
+                manufacturingDate: "2024-01-15",
+                expiryDate: "2025-01-14",
+                shelfLifeDays: 365,
+                metaTitle: "Premium Organic Basmati Rice - Green Magic Farms",
+                metaDescription: "Buy premium organic basmati rice online. Certified organic, aged for 2 years, extra long grain variety.",
+                searchKeywords: ["organic", "basmati", "rice", "premium", "aged"],
+                status: "DRAFT"
+            };
+            
+            testAPI(complexProduct, 'Full Complex Product');
+        }
+    </script>
+</body>
+</html> 

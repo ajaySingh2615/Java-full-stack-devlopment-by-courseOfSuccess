@@ -91,7 +91,7 @@ public class Product {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "bulk_pricing_tiers", columnDefinition = "JSON")
-    private List<Object> bulkPricingTiers;
+    private String bulkPricingTiers;
 
     // ===========================
     // INVENTORY MANAGEMENT
@@ -135,7 +135,7 @@ public class Product {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "gallery_images", columnDefinition = "JSON")
-    private List<Object> galleryImages;
+    private String galleryImages;
 
     @Size(max = 255, message = "Video URL must not exceed 255 characters")
     @Column(name = "video_url", length = 255)
@@ -216,14 +216,14 @@ public class Product {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "product_highlights", columnDefinition = "JSON")
-    private List<Object> productHighlights;
+    private String productHighlights;
 
     @Column(name = "ingredients_list", columnDefinition = "TEXT")
     private String ingredientsList;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "nutritional_info", columnDefinition = "JSON")
-    private Object nutritionalInfo;
+    private String nutritionalInfo;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "allergen_info", columnDefinition = "JSON")
@@ -240,11 +240,11 @@ public class Product {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "organic_certification", columnDefinition = "JSON")
-    private Object organicCertification;
+    private String organicCertification;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "quality_certifications", columnDefinition = "JSON")
-    private List<Object> qualityCertifications;
+    private String qualityCertifications;
 
     @Size(max = 50, message = "Country of origin must not exceed 50 characters")
     @Column(name = "country_of_origin", length = 50)
@@ -296,7 +296,7 @@ public class Product {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "structured_data", columnDefinition = "JSON")
-    private Object structuredData;
+    private String structuredData;
 
     // ===========================
     // SYSTEM FIELDS

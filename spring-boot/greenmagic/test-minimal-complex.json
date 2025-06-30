@@ -1,0 +1,21 @@
+{
+  "productTitle": "Test Complex Product",
+  "categoryId": 1,
+  "brandName": "Test Brand",
+  "productType": "SIMPLE",
+  "mrp": 100.00,
+  "sellingPrice": 90.00,
+  "stockQuantity": 50,
+  "unitOfMeasurement": "KG",
+  "mainImageUrl": "https://example.com/image.jpg",
+  "shortDescription": "This is a test product with complex nested objects to debug the LinkedHashMap issue.",
+  "detailedDescription": "This is a detailed description for testing complex object serialization.",
+  "bulkPricingTiers": [
+    {
+      "minQuantity": 5,
+      "discountType": "percentage",
+      "discountValue": 4.0
+    }
+  ],
+  "status": "DRAFT"
+} 

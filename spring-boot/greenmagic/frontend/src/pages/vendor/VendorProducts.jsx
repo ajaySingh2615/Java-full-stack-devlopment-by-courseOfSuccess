@@ -218,7 +218,7 @@ const VendorProducts = () => {
   };
 
   const ProductStatsCard = ({ title, value, icon: Icon, color, change }) => (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-600">{title}</p>
@@ -237,91 +237,79 @@ const VendorProducts = () => {
   );
 
   const ProductCard = ({ product }) => (
-    <div className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow transition-shadow">
+      <div className="relative">
+        <div className="aspect-w-16 aspect-h-9 rounded-t-lg overflow-hidden">
+          <img
+            src={product.imageUrl || '/placeholder-product.jpg'}
+            alt={product.name}
+            className="object-cover w-full h-full"
+          />
+        </div>
+        <div className="absolute top-2 right-2">
+          <input
+            type="checkbox"
+            checked={selectedProducts.includes(product.productId)}
+            onChange={() => handleSelectProduct(product.productId)}
+            className="h-4 w-4 text-green-600 rounded border-gray-300 shadow-sm"
+          />
+        </div>
+      </div>
+      
       <div className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-3">
-            <input
-              type="checkbox"
-              checked={selectedProducts.includes(product.productId)}
-              onChange={() => handleSelectProduct(product.productId)}
-              className="mt-1 h-4 w-4 text-green-600 rounded border-gray-300"
-            />
-            <img
-              src={product.imageUrl || '/api/placeholder/80/80'}
-              alt={product.name}
-              className="w-16 h-16 object-cover rounded-lg"
-            />
-            <div className="flex-1">
-              <h3 className="font-medium text-gray-900">{product.name}</h3>
-              <p className="text-sm text-gray-600">{product.sku}</p>
-              <div className="flex items-center space-x-2 mt-1">
-                <span className={`px-2 py-1 text-xs rounded-full ${vendorService.getStatusBadgeClass(product.status)}`}>
-                  {product.status}
-                </span>
-                <span className="text-sm text-gray-500">{product.category?.name}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="relative">
-            <button
-              onClick={() => setActionMenuOpen(actionMenuOpen === product.productId ? null : product.productId)}
-              className="p-2 text-gray-400 hover:text-gray-600"
-            >
-              <FiMoreVertical className="h-4 w-4" />
-            </button>
-            
-            {actionMenuOpen === product.productId && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
-                <div className="py-1">
-                  <Link
-                    to={`/vendor/products/${product.productId}`}
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    <FiEye className="mr-3 h-4 w-4" />
-                    View Details
-                  </Link>
-                  <Link
-                    to={`/vendor/products/${product.productId}/edit`}
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    <FiEdit className="mr-3 h-4 w-4" />
-                    Edit Product
-                  </Link>
-                  <button
-                    onClick={() => handleDuplicateProduct(product.productId)}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    <FiCopy className="mr-3 h-4 w-4" />
-                    Duplicate
-                  </button>
-                  <button
-                    onClick={() => handleDeleteProduct(product.productId)}
-                    className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    <FiTrash2 className="mr-3 h-4 w-4" />
-                    Delete
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="mb-2">
+          <h3 className="text-lg font-medium text-gray-900 line-clamp-1">{product.name}</h3>
+          <p className="text-sm text-gray-500 line-clamp-2">{product.description}</p>
         </div>
         
-        <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
-          <div>
-            <p className="text-gray-600">Price</p>
-            <p className="font-medium">{vendorService.formatCurrency(product.price)}</p>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-2">
+            <span className="text-lg font-bold text-gray-900">₹{product.price}</span>
+            {product.comparePrice && (
+              <span className="text-sm text-gray-500 line-through">₹{product.comparePrice}</span>
+            )}
           </div>
-          <div>
-            <p className="text-gray-600">Stock</p>
-            <p className="font-medium">{product.quantity}</p>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            product.status === 'active' ? 'bg-green-100 text-green-800' :
+            product.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+            'bg-yellow-100 text-yellow-800'
+          }`}>
+            {product.status}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+          <span>Stock: {product.stockQuantity}</span>
+          <span>{product.category}</span>
+        </div>
+
+        <div className="flex items-center justify-between border-t pt-3">
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => navigate(`/vendor/products/edit/${product.productId}`)}
+              className="text-blue-600 hover:text-blue-700"
+            >
+              <FiEdit className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => handleDuplicateProduct(product.productId)}
+              className="text-gray-600 hover:text-gray-700"
+            >
+              <FiCopy className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => handleDeleteProduct(product.productId)}
+              className="text-red-600 hover:text-red-700"
+            >
+              <FiTrash2 className="h-5 w-5" />
+            </button>
           </div>
-          <div>
-            <p className="text-gray-600">MRP</p>
-            <p className="font-medium">{vendorService.formatCurrency(product.mrp)}</p>
-          </div>
+          <button
+            onClick={() => navigate(`/vendor/products/variants/${product.productId}`)}
+            className="text-gray-600 hover:text-gray-700"
+          >
+            <FiPackage className="h-5 w-5" />
+          </button>
         </div>
       </div>
     </div>
@@ -336,255 +324,223 @@ const VendorProducts = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-          <p className="text-gray-600">Manage your product listings</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={handleExportProducts}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <FiDownload className="mr-2 h-4 w-4" />
-            Export
-          </button>
-          <Link
-            to="/vendor/products/add"
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
-          >
-            <FiPlus className="mr-2 h-4 w-4" />
-            Add Product
-          </Link>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <ProductStatsCard
-          title="Total Products"
-          value={vendorService.formatNumber(stats.totalProducts || 0)}
-          icon={FiPackage}
-          color="bg-blue-500"
-        />
-        <ProductStatsCard
-          title="Active Products"
-          value={vendorService.formatNumber(stats.activeProducts || 0)}
-          icon={FiBarChart}
-          color="bg-green-500"
-        />
-        <ProductStatsCard
-          title="Out of Stock"
-          value={vendorService.formatNumber(stats.outOfStockProducts || 0)}
-          icon={FiAlertCircle}
-          color="bg-red-500"
-        />
-        <ProductStatsCard
-          title="Total Value"
-          value={vendorService.formatCurrency(stats.totalValue || 0)}
-          icon={FiDollarSign}
-          color="bg-purple-500"
-        />
-      </div>
-
-      {/* Filters and Search */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="flex items-center justify-between space-x-4">
-          <div className="flex-1 max-w-lg">
-            <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={filters.search}
-                onChange={handleSearch}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              />
-            </div>
-          </div>
-          
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <FiFilter className="mr-2 h-4 w-4" />
-            Filters
-            <FiChevronDown className="ml-2 h-4 w-4" />
-          </button>
-        </div>
-
-        {showFilters && (
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
-            <select
-              value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-            >
-              <option value="">All Status</option>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-              <option value="DRAFT">Draft</option>
-            </select>
-            
-            <select
-              value={filters.category}
-              onChange={(e) => handleFilterChange('category', e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-            >
-              <option value="">All Categories</option>
-              {Object.entries(categories).map(([key, category]) => (
-                <option key={key} value={key}>{category.name}</option>
-              ))}
-            </select>
-            
-            <select
-              value={`${filters.sortBy}-${filters.sortDir}`}
-              onChange={(e) => {
-                const [sortBy, sortDir] = e.target.value.split('-');
-                handleFilterChange('sortBy', sortBy);
-                handleFilterChange('sortDir', sortDir);
-              }}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-            >
-              <option value="createdAt-desc">Newest First</option>
-              <option value="createdAt-asc">Oldest First</option>
-              <option value="name-asc">Name A-Z</option>
-              <option value="name-desc">Name Z-A</option>
-              <option value="price-desc">Price High-Low</option>
-              <option value="price-asc">Price Low-High</option>
-            </select>
-          </div>
-        )}
-      </div>
-
-      {/* Bulk Actions */}
-      {showBulkActions && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header Section */}
+        <div className="mb-8">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <span className="text-sm font-medium text-blue-900">
-                {selectedProducts.length} products selected
-              </span>
-              
-              <select
-                value={bulkAction}
-                onChange={(e) => setBulkAction(e.target.value)}
-                className="px-3 py-1 border border-blue-300 rounded text-sm"
-              >
-                <option value="">Choose action...</option>
-                <option value="status">Update Status</option>
-                <option value="price">Adjust Prices</option>
-                <option value="stock">Update Stock</option>
-              </select>
-              
-              {bulkAction === 'status' && (
-                <select
-                  value={bulkValue}
-                  onChange={(e) => setBulkValue(e.target.value)}
-                  className="px-3 py-1 border border-blue-300 rounded text-sm"
-                >
-                  <option value="">Select status...</option>
-                  <option value="ACTIVE">Active</option>
-                  <option value="INACTIVE">Inactive</option>
-                  <option value="DRAFT">Draft</option>
-                </select>
-              )}
-              
-              {(bulkAction === 'price' || bulkAction === 'stock') && (
-                <input
-                  type="number"
-                  value={bulkValue}
-                  onChange={(e) => setBulkValue(e.target.value)}
-                  placeholder={bulkAction === 'price' ? '% change' : 'Quantity'}
-                  className="px-3 py-1 border border-blue-300 rounded text-sm w-24"
-                />
-              )}
-              
-              <button
-                onClick={handleBulkAction}
-                disabled={!bulkAction || !bulkValue || bulkLoading}
-                className="px-4 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50"
-              >
-                {bulkLoading ? 'Processing...' : 'Apply'}
-              </button>
-            </div>
-            
-            <button
-              onClick={() => {
-                setSelectedProducts([]);
-                setShowBulkActions(false);
-                setBulkAction('');
-                setBulkValue('');
-              }}
-              className="text-blue-600 hover:text-blue-800"
-            >
-              <FiX className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Products Grid */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">{error}</p>
-        </div>
-      )}
-
-      {products.length === 0 && !loading ? (
-        <div className="text-center py-12">
-          <FiPackage className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No products found</h3>
-          <p className="mt-1 text-sm text-gray-500">Get started by adding your first product.</p>
-          <div className="mt-6">
+            <h1 className="text-3xl font-bold text-gray-900">Products</h1>
             <Link
               to="/vendor/products/add"
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+              className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 font-medium inline-flex items-center"
             >
-              <FiPlus className="mr-2 h-4 w-4" />
+              <FiPlus className="h-5 w-5 mr-2" />
               Add Product
             </Link>
           </div>
         </div>
-      ) : (
-        <>
-          {/* Select All */}
-          {products.length > 0 && (
-            <div className="flex items-center space-x-2 px-4">
-              <input
-                type="checkbox"
-                checked={selectedProducts.length === products.length}
-                onChange={handleSelectAll}
-                className="h-4 w-4 text-green-600 rounded border-gray-300"
-              />
-              <span className="text-sm text-gray-600">
-                Select all ({products.length} products)
-              </span>
+
+        {/* Stats Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <ProductStatsCard
+            title="Total Products"
+            value={stats.totalProducts || 0}
+            icon={FiPackage}
+            color="bg-blue-600"
+            change={stats.productGrowth}
+          />
+          <ProductStatsCard
+            title="Active Products"
+            value={stats.activeProducts || 0}
+            icon={FiBarChart}
+            color="bg-green-600"
+          />
+          <ProductStatsCard
+            title="Low Stock"
+            value={stats.lowStockProducts || 0}
+            icon={FiAlertCircle}
+            color="bg-yellow-600"
+          />
+          <ProductStatsCard
+            title="Total Revenue"
+            value={`₹${stats.totalRevenue || 0}`}
+            icon={FiDollarSign}
+            color="bg-purple-600"
+            change={stats.revenueGrowth}
+          />
+        </div>
+
+        {/* Filters and Actions */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div className="flex-1 min-w-0">
+              <div className="relative rounded-md shadow-sm">
+                <input
+                  type="text"
+                  value={filters.search}
+                  onChange={handleSearch}
+                  placeholder="Search products..."
+                  className="block w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <FiSearch className="h-5 w-5 text-gray-400" />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                <FiFilter className="h-5 w-5 mr-2" />
+                Filters
+              </button>
+              
+              <button
+                onClick={handleExportProducts}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                <FiDownload className="h-5 w-5 mr-2" />
+                Export
+              </button>
+            </div>
+          </div>
+
+          {showFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+              <select
+                value={filters.status}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+              >
+                <option value="">All Status</option>
+                <option value="ACTIVE">Active</option>
+                <option value="INACTIVE">Inactive</option>
+                <option value="DRAFT">Draft</option>
+              </select>
+              
+              <select
+                value={filters.category}
+                onChange={(e) => handleFilterChange('category', e.target.value)}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+              >
+                <option value="">All Categories</option>
+                {Object.entries(categories).map(([key, category]) => (
+                  <option key={key} value={key}>{category.name}</option>
+                ))}
+              </select>
+              
+              <select
+                value={`${filters.sortBy}-${filters.sortDir}`}
+                onChange={(e) => {
+                  const [sortBy, sortDir] = e.target.value.split('-');
+                  handleFilterChange('sortBy', sortBy);
+                  handleFilterChange('sortDir', sortDir);
+                }}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+              >
+                <option value="createdAt-desc">Newest First</option>
+                <option value="createdAt-asc">Oldest First</option>
+                <option value="name-asc">Name A-Z</option>
+                <option value="name-desc">Name Z-A</option>
+                <option value="price-desc">Price High-Low</option>
+                <option value="price-asc">Price Low-High</option>
+              </select>
             </div>
           )}
-          
-          {/* Products Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {products.map((product) => (
+        </div>
+
+        {/* Products Grid */}
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+            <p className="text-lg text-gray-600">Loading products...</p>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-8">
+            <div className="flex items-center">
+              <FiAlertCircle className="h-5 w-5 text-red-400 mr-3" />
+              <span className="text-red-800">{error}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {products.map(product => (
               <ProductCard key={product.productId} product={product} />
             ))}
           </div>
-        </>
-      )}
+        )}
 
-      {/* Load More / Pagination */}
-      {products.length >= filters.size && (
-        <div className="text-center">
-          <button
-            onClick={() => setFilters(prev => ({ ...prev, size: prev.size + 10 }))}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            Load More Products
-          </button>
-        </div>
-      )}
+        {/* Bulk Actions */}
+        {showBulkActions && (
+          <div className="fixed bottom-0 inset-x-0 bg-white border-t shadow-lg p-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm font-medium text-blue-900">
+                    {selectedProducts.length} products selected
+                  </span>
+                  
+                  <select
+                    value={bulkAction}
+                    onChange={(e) => setBulkAction(e.target.value)}
+                    className="px-3 py-1 border border-blue-300 rounded text-sm"
+                  >
+                    <option value="">Choose action...</option>
+                    <option value="status">Update Status</option>
+                    <option value="price">Adjust Prices</option>
+                    <option value="stock">Update Stock</option>
+                  </select>
+                  
+                  {bulkAction === 'status' && (
+                    <select
+                      value={bulkValue}
+                      onChange={(e) => setBulkValue(e.target.value)}
+                      className="px-3 py-1 border border-blue-300 rounded text-sm"
+                    >
+                      <option value="">Select status...</option>
+                      <option value="ACTIVE">Active</option>
+                      <option value="INACTIVE">Inactive</option>
+                      <option value="DRAFT">Draft</option>
+                    </select>
+                  )}
+                  
+                  {(bulkAction === 'price' || bulkAction === 'stock') && (
+                    <input
+                      type="number"
+                      value={bulkValue}
+                      onChange={(e) => setBulkValue(e.target.value)}
+                      placeholder={bulkAction === 'price' ? '% change' : 'Quantity'}
+                      className="px-3 py-1 border border-blue-300 rounded text-sm w-24"
+                    />
+                  )}
+                  
+                  <button
+                    onClick={handleBulkAction}
+                    disabled={!bulkAction || !bulkValue || bulkLoading}
+                    className="px-4 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {bulkLoading ? 'Processing...' : 'Apply'}
+                  </button>
+                </div>
+                
+                <button
+                  onClick={() => {
+                    setSelectedProducts([]);
+                    setShowBulkActions(false);
+                    setBulkAction('');
+                    setBulkValue('');
+                  }}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  <FiX className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

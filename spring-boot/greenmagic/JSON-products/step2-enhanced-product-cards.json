@@ -1,0 +1,398 @@
+{
+  "step": 2,
+  "title": "Enhanced Product Cards Implementation",
+  "description": "Add performance indicators, quick actions, and visual enhancements to existing product cards",
+  "priority": "HIGH",
+  "estimatedTime": "2-3 days",
+  "dependencies": ["step1-product-detail-modal"],
+  
+  "files": {
+    "modify": [
+      {
+        "path": "frontend/src/pages/vendor/VendorProducts.jsx",
+        "changes": "Enhance ProductCard component with new features"
+      },
+      {
+        "path": "frontend/src/services/vendorService.js",
+        "changes": "Add methods for quick actions and performance data"
+      }
+    ],
+    "create": [
+      {
+        "path": "frontend/src/components/product/ProductPerformanceBadge.jsx",
+        "type": "React Component",
+        "purpose": "Display performance indicators on product cards"
+      },
+      {
+        "path": "frontend/src/components/product/QuickActionMenu.jsx",
+        "type": "React Component",
+        "purpose": "Hover menu with quick actions"
+      },
+      {
+        "path": "frontend/src/components/product/StockLevelIndicator.jsx",
+        "type": "React Component",
+        "purpose": "Visual stock level indicator"
+      }
+    ]
+  },
+
+  "implementation": {
+    "cardEnhancements": {
+      "layout": "Maintain existing card structure but add new elements",
+      "hoverEffects": "Enhanced hover states with quick action reveal",
+      "performanceIndicators": "Sales badges, stock status, trend arrows",
+      "quickActions": "Inline editing capabilities and status toggles"
+    },
+
+    "performanceIndicators": [
+      {
+        "name": "Sales Performance",
+        "type": "badge",
+        "position": "top-left",
+        "colors": {
+          "high": "bg-green-100 text-green-800",
+          "medium": "bg-yellow-100 text-yellow-800",
+          "low": "bg-red-100 text-red-800"
+        },
+        "criteria": {
+          "high": "sales > avgSales * 1.5",
+          "medium": "sales > avgSales * 0.5",
+          "low": "sales <= avgSales * 0.5"
+        }
+      },
+      {
+        "name": "Stock Level",
+        "type": "indicator",
+        "position": "bottom-right",
+        "colors": {
+          "high": "bg-green-500",
+          "medium": "bg-yellow-500",
+          "low": "bg-red-500",
+          "out": "bg-gray-500"
+        },
+        "criteria": {
+          "high": "stock > lowStockThreshold * 2",
+          "medium": "stock > lowStockThreshold",
+          "low": "stock <= lowStockThreshold && stock > 0",
+          "out": "stock <= 0"
+        }
+      },
+      {
+        "name": "Trending",
+        "type": "arrow",
+        "position": "top-right",
+        "icons": {
+          "up": "FiTrendingUp",
+          "down": "FiTrendingDown",
+          "stable": "FiMinus"
+        },
+        "colors": {
+          "up": "text-green-600",
+          "down": "text-red-600",
+          "stable": "text-gray-600"
+        }
+      },
+      {
+        "name": "Rating",
+        "type": "stars",
+        "position": "bottom-left",
+        "display": "Star rating with count"
+      }
+    ],
+
+    "quickActions": [
+      {
+        "name": "Quick Status Toggle",
+        "trigger": "click",
+        "element": "status badge",
+        "action": "toggleProductStatus",
+        "feedback": "Immediate visual update"
+      },
+      {
+        "name": "Quick Stock Edit",
+        "trigger": "double-click",
+        "element": "stock indicator",
+        "action": "showInlineStockEditor",
+        "feedback": "Inline input field"
+      },
+      {
+        "name": "Quick Price Edit",
+        "trigger": "double-click",
+        "element": "price display",
+        "action": "showInlinePriceEditor",
+        "feedback": "Inline input field"
+      },
+      {
+        "name": "Action Menu",
+        "trigger": "hover",
+        "element": "card",
+        "action": "showQuickActionMenu",
+        "feedback": "Floating action buttons"
+      }
+    ],
+
+    "hoverEffects": {
+      "cardElevation": "transform scale-105 shadow-lg",
+      "actionReveal": "Fade in quick action buttons",
+      "infoOverlay": "Show additional product information",
+      "transitionDuration": "300ms"
+    }
+  },
+
+  "uiComponents": {
+    "enhancedCard": {
+      "container": "relative bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 group",
+      "imageContainer": "relative aspect-w-16 aspect-h-9 rounded-t-lg overflow-hidden",
+      "image": "object-cover w-full h-full group-hover:scale-105 transition-transform duration-300",
+      "overlays": {
+        "performanceBadge": "absolute top-2 left-2 z-10",
+        "trendingIndicator": "absolute top-2 right-2 z-10",
+        "stockIndicator": "absolute bottom-2 right-2 z-10",
+        "ratingDisplay": "absolute bottom-2 left-2 z-10"
+      }
+    },
+
+    "performanceBadge": {
+      "high": "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800",
+      "medium": "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800",
+      "low": "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+    },
+
+    "stockIndicator": {
+      "container": "flex items-center space-x-1",
+      "dot": "w-2 h-2 rounded-full",
+      "text": "text-xs font-medium",
+      "colors": {
+        "high": "bg-green-500 text-green-700",
+        "medium": "bg-yellow-500 text-yellow-700",
+        "low": "bg-red-500 text-red-700",
+        "out": "bg-gray-500 text-gray-700"
+      }
+    },
+
+    "quickActionMenu": {
+      "container": "absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center",
+      "buttonGroup": "flex space-x-2",
+      "button": "p-2 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors",
+      "icon": "h-5 w-5"
+    },
+
+    "inlineEditor": {
+      "container": "absolute inset-0 bg-white border-2 border-blue-500 rounded-lg p-2 z-20",
+      "input": "w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-blue-500 focus:border-blue-500",
+      "buttons": "flex justify-end space-x-1 mt-2",
+      "saveButton": "px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700",
+      "cancelButton": "px-2 py-1 bg-gray-300 text-gray-700 text-xs rounded hover:bg-gray-400"
+    }
+  },
+
+  "dataStructure": {
+    "enhancedProduct": {
+      "existing": "All current product fields",
+      "performance": {
+        "salesCount": "number",
+        "salesTrend": "string (up|down|stable)",
+        "viewCount": "number",
+        "addToCartCount": "number",
+        "conversionRate": "number",
+        "averageRating": "number",
+        "reviewCount": "number"
+      },
+      "stockStatus": {
+        "level": "string (high|medium|low|out)",
+        "quantity": "number",
+        "lowStockThreshold": "number",
+        "lastRestocked": "date"
+      },
+      "quickEditFields": {
+        "editablePrice": "boolean",
+        "editableStock": "boolean",
+        "editableStatus": "boolean"
+      }
+    }
+  },
+
+  "apiIntegration": {
+    "endpoints": [
+      {
+        "method": "GET",
+        "url": "/api/vendor/products/performance",
+        "purpose": "Get performance data for all products",
+        "response": "Array of product performance metrics"
+      },
+      {
+        "method": "PUT",
+        "url": "/api/vendor/products/{productId}/quick-update",
+        "purpose": "Quick update single field",
+        "body": "{ field: 'price|stock|status', value: 'newValue' }"
+      },
+      {
+        "method": "POST",
+        "url": "/api/vendor/products/{productId}/toggle-status",
+        "purpose": "Toggle product active/inactive status",
+        "response": "Updated product with new status"
+      }
+    ],
+
+    "serviceMethods": [
+      {
+        "name": "getProductPerformance",
+        "implementation": "async getProductPerformance(vendorId) {\n  try {\n    const response = await apiClient.get('/vendor/products/performance', {\n      params: { vendorId }\n    });\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+      },
+      {
+        "name": "quickUpdateProduct",
+        "implementation": "async quickUpdateProduct(vendorId, productId, field, value) {\n  try {\n    const response = await apiClient.put(`/vendor/products/${productId}/quick-update`, {\n      field,\n      value\n    }, {\n      params: { vendorId }\n    });\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+      },
+      {
+        "name": "toggleProductStatus",
+        "implementation": "async toggleProductStatus(vendorId, productId) {\n  try {\n    const response = await apiClient.post(`/vendor/products/${productId}/toggle-status`, {}, {\n      params: { vendorId }\n    });\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+      }
+    ]
+  },
+
+  "stateManagement": {
+    "cardState": {
+      "hoveredCard": "string - ID of currently hovered card",
+      "editingField": "object - { productId, field } for inline editing",
+      "performanceData": "object - performance metrics for all products",
+      "quickActionLoading": "object - loading states for quick actions"
+    },
+
+    "useState": [
+      "const [hoveredCard, setHoveredCard] = useState(null)",
+      "const [editingField, setEditingField] = useState(null)",
+      "const [performanceData, setPerformanceData] = useState({})",
+      "const [quickActionLoading, setQuickActionLoading] = useState({})"
+    ],
+
+    "handlers": [
+      {
+        "name": "handleCardHover",
+        "purpose": "Show/hide quick actions on hover",
+        "implementation": "const handleCardHover = (productId, isHovering) => {\n  setHoveredCard(isHovering ? productId : null);\n}"
+      },
+      {
+        "name": "handleQuickEdit",
+        "purpose": "Start inline editing for a field",
+        "implementation": "const handleQuickEdit = (productId, field, currentValue) => {\n  setEditingField({ productId, field, value: currentValue });\n}"
+      },
+      {
+        "name": "handleQuickSave",
+        "purpose": "Save inline edit changes",
+        "implementation": "const handleQuickSave = async () => {\n  if (!editingField) return;\n  \n  setQuickActionLoading(prev => ({ ...prev, [editingField.productId]: true }));\n  \n  const result = await vendorService.quickUpdateProduct(\n    vendorId, \n    editingField.productId, \n    editingField.field, \n    editingField.value\n  );\n  \n  if (result.success) {\n    // Update local state\n    updateProductInList(editingField.productId, { [editingField.field]: editingField.value });\n  }\n  \n  setEditingField(null);\n  setQuickActionLoading(prev => ({ ...prev, [editingField.productId]: false }));\n}"
+      },
+      {
+        "name": "handleStatusToggle",
+        "purpose": "Toggle product status",
+        "implementation": "const handleStatusToggle = async (productId) => {\n  setQuickActionLoading(prev => ({ ...prev, [productId]: true }));\n  \n  const result = await vendorService.toggleProductStatus(vendorId, productId);\n  \n  if (result.success) {\n    updateProductInList(productId, { status: result.data.status });\n  }\n  \n  setQuickActionLoading(prev => ({ ...prev, [productId]: false }));\n}"
+      }
+    ]
+  },
+
+  "styling": {
+    "cardAnimations": {
+      "hover": "transform: scale(1.02); box-shadow: 0 10px 25px rgba(0,0,0,0.1);",
+      "quickActionFadeIn": "opacity: 0 -> 1; transition: 300ms ease-out;",
+      "inlineEditAppear": "scale: 0.95 -> 1; opacity: 0 -> 1; transition: 200ms ease-out;"
+    },
+
+    "performanceBadges": {
+      "positioning": "absolute top-2 left-2 z-10",
+      "animation": "fade-in on data load",
+      "responsive": "Hide on mobile, show on tablet+"
+    },
+
+    "stockIndicators": {
+      "dotSize": "8px diameter",
+      "positioning": "bottom-right corner",
+      "tooltip": "Show exact stock count on hover"
+    },
+
+    "quickActions": {
+      "backdropBlur": "backdrop-blur-sm",
+      "buttonSpacing": "8px between buttons",
+      "iconSize": "20px",
+      "hoverFeedback": "scale(1.1) on button hover"
+    }
+  },
+
+  "interactions": {
+    "cardClick": {
+      "default": "Open product detail modal",
+      "withModifier": "Ctrl+click to select for bulk operations"
+    },
+
+    "statusBadgeClick": {
+      "action": "Toggle product status",
+      "feedback": "Immediate badge color change",
+      "confirmation": "None needed for status toggle"
+    },
+
+    "doubleClickActions": {
+      "priceField": "Start inline price editing",
+      "stockField": "Start inline stock editing",
+      "nameField": "Start inline name editing"
+    },
+
+    "hoverActions": {
+      "card": "Show quick action overlay",
+      "statusBadge": "Show status change tooltip",
+      "stockIndicator": "Show detailed stock information",
+      "performanceBadge": "Show performance details"
+    }
+  },
+
+  "testing": {
+    "functionality": [
+      "Performance badges display correct data",
+      "Quick actions work without page refresh",
+      "Inline editing saves correctly",
+      "Status toggle updates immediately",
+      "Hover effects work smoothly"
+    ],
+
+    "ui": [
+      "Cards maintain consistent layout",
+      "Animations are smooth and not jarring",
+      "Quick actions are easily discoverable",
+      "Inline editing is intuitive",
+      "Performance indicators are clear"
+    ],
+
+    "performance": [
+      "Card rendering doesn't slow with many products",
+      "Hover effects are responsive",
+      "Quick actions complete in < 1 second",
+      "Performance data loads efficiently"
+    ],
+
+    "accessibility": [
+      "Quick actions are keyboard accessible",
+      "Screen readers can interpret performance data",
+      "Color indicators have text alternatives",
+      "Focus management works correctly"
+    ]
+  },
+
+  "acceptanceCriteria": [
+    "✅ Performance badges show correct sales/trend data",
+    "✅ Stock level indicators display with appropriate colors",
+    "✅ Quick status toggle works without page refresh",
+    "✅ Inline editing for price and stock functions properly",
+    "✅ Hover effects reveal quick action menu",
+    "✅ All enhancements are responsive on mobile devices",
+    "✅ Card layout remains consistent with design system",
+    "✅ Performance data loads and displays efficiently",
+    "✅ Quick actions provide immediate visual feedback",
+    "✅ Error handling works for failed quick actions"
+  ],
+
+  "notes": [
+    "Maintain backward compatibility with existing card structure",
+    "Ensure performance data doesn't impact page load speed",
+    "Consider adding keyboard shortcuts for power users",
+    "Test with products that have missing performance data",
+    "Implement progressive enhancement for older browsers",
+    "Add analytics tracking for quick action usage"
+  ]
+} 

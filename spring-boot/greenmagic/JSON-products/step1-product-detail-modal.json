@@ -1,0 +1,353 @@
+{
+  "step": 1,
+  "title": "Product Detail Modal Implementation",
+  "description": "Create a comprehensive product detail modal that opens when vendors click on product cards",
+  "priority": "HIGH",
+  "estimatedTime": "3-4 days",
+  "dependencies": [],
+  
+  "files": {
+    "create": [
+      {
+        "path": "frontend/src/components/modals/ProductDetailModal.jsx",
+        "type": "React Component",
+        "purpose": "Main modal component for displaying product details"
+      },
+      {
+        "path": "frontend/src/components/modals/ProductDetailModal.css",
+        "type": "CSS File",
+        "purpose": "Custom styles for product modal if needed"
+      },
+      {
+        "path": "frontend/src/components/product/ProductImageGallery.jsx",
+        "type": "React Component",
+        "purpose": "Image gallery component for product photos"
+      },
+      {
+        "path": "frontend/src/components/product/ProductInfoTabs.jsx",
+        "type": "React Component",
+        "purpose": "Tabbed interface for product information"
+      },
+      {
+        "path": "frontend/src/components/product/QuickEditForm.jsx",
+        "type": "React Component",
+        "purpose": "Inline editing form within modal"
+      }
+    ],
+    "modify": [
+      {
+        "path": "frontend/src/pages/vendor/VendorProducts.jsx",
+        "changes": "Add modal state management and click handlers"
+      },
+      {
+        "path": "frontend/src/services/vendorService.js",
+        "changes": "Add API methods for detailed product data"
+      }
+    ]
+  },
+
+  "implementation": {
+    "modalStructure": {
+      "layout": "Large centered modal with backdrop",
+      "width": "max-w-6xl",
+      "height": "max-h-[90vh]",
+      "responsive": true,
+      "scrollable": true
+    },
+
+    "tabs": [
+      {
+        "id": "overview",
+        "name": "Overview",
+        "icon": "FiInfo",
+        "content": {
+          "sections": [
+            "Product basic information",
+            "Image gallery with zoom",
+            "Description and specifications",
+            "Category and tags",
+            "Created/Modified dates"
+          ]
+        }
+      },
+      {
+        "id": "analytics",
+        "name": "Analytics",
+        "icon": "FiBarChart",
+        "content": {
+          "sections": [
+            "Sales performance chart",
+            "View and click statistics",
+            "Conversion rate metrics",
+            "Revenue trends",
+            "Customer ratings summary"
+          ]
+        }
+      },
+      {
+        "id": "inventory",
+        "name": "Inventory",
+        "icon": "FiPackage",
+        "content": {
+          "sections": [
+            "Current stock levels",
+            "Stock movement history",
+            "Low stock alerts",
+            "Variant stock details",
+            "Reorder recommendations"
+          ]
+        }
+      },
+      {
+        "id": "actions",
+        "name": "Actions",
+        "icon": "FiSettings",
+        "content": {
+          "sections": [
+            "Quick edit forms",
+            "Status management",
+            "Bulk operations",
+            "Export options",
+            "Advanced settings"
+          ]
+        }
+      }
+    ],
+
+    "quickActions": [
+      {
+        "name": "Edit Product",
+        "icon": "FiEdit",
+        "action": "navigate('/vendor/products/edit/{id}')",
+        "color": "blue"
+      },
+      {
+        "name": "Toggle Status",
+        "icon": "FiToggleLeft",
+        "action": "toggleProductStatus(productId)",
+        "color": "green"
+      },
+      {
+        "name": "Duplicate",
+        "icon": "FiCopy",
+        "action": "duplicateProduct(productId)",
+        "color": "gray"
+      },
+      {
+        "name": "Delete",
+        "icon": "FiTrash2",
+        "action": "deleteProduct(productId)",
+        "color": "red",
+        "confirmation": true
+      }
+    ],
+
+    "dataStructure": {
+      "productDetails": {
+        "basic": {
+          "productId": "string",
+          "name": "string",
+          "description": "string",
+          "sku": "string",
+          "category": "object",
+          "tags": "array",
+          "status": "string",
+          "createdAt": "date",
+          "updatedAt": "date"
+        },
+        "pricing": {
+          "price": "number",
+          "comparePrice": "number",
+          "costPrice": "number",
+          "margin": "number",
+          "taxRate": "number"
+        },
+        "inventory": {
+          "stockQuantity": "number",
+          "lowStockThreshold": "number",
+          "trackQuantity": "boolean",
+          "variants": "array"
+        },
+        "media": {
+          "images": "array",
+          "videos": "array",
+          "documents": "array"
+        },
+        "analytics": {
+          "totalSales": "number",
+          "totalRevenue": "number",
+          "pageViews": "number",
+          "addToCartRate": "number",
+          "conversionRate": "number",
+          "averageRating": "number",
+          "reviewCount": "number"
+        }
+      }
+    }
+  },
+
+  "uiComponents": {
+    "modal": {
+      "backdrop": "fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity",
+      "container": "fixed inset-0 z-10 overflow-y-auto",
+      "wrapper": "flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0",
+      "panel": "relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-6xl"
+    },
+
+    "header": {
+      "container": "flex items-center justify-between p-6 border-b border-gray-200",
+      "title": "text-2xl font-bold text-gray-900",
+      "closeButton": "text-gray-400 hover:text-gray-600 transition-colors"
+    },
+
+    "tabNavigation": {
+      "container": "border-b border-gray-200",
+      "tabList": "flex space-x-8 px-6",
+      "tab": "py-4 px-1 border-b-2 font-medium text-sm",
+      "activeTab": "border-green-500 text-green-600",
+      "inactiveTab": "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+    },
+
+    "content": {
+      "container": "p-6 max-h-96 overflow-y-auto",
+      "section": "mb-6",
+      "sectionTitle": "text-lg font-semibold text-gray-900 mb-3",
+      "grid": "grid grid-cols-1 md:grid-cols-2 gap-6"
+    },
+
+    "footer": {
+      "container": "flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50",
+      "actionButtons": "flex space-x-3"
+    }
+  },
+
+  "apiIntegration": {
+    "endpoints": [
+      {
+        "method": "GET",
+        "url": "/api/vendor/products/{productId}/details",
+        "purpose": "Get complete product details",
+        "response": "Detailed product object with all tabs data"
+      },
+      {
+        "method": "GET",
+        "url": "/api/vendor/products/{productId}/analytics",
+        "purpose": "Get product analytics data",
+        "response": "Analytics metrics and charts data"
+      },
+      {
+        "method": "PUT",
+        "url": "/api/vendor/products/{productId}/quick-update",
+        "purpose": "Quick update product fields",
+        "body": "Fields to update (price, stock, status, etc.)"
+      }
+    ],
+
+    "serviceMethod": {
+      "name": "getProductDetails",
+      "implementation": "async getProductDetails(vendorId, productId) {\n  try {\n    const response = await apiClient.get(`/vendor/products/${productId}/details`, {\n      params: { vendorId }\n    });\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+    }
+  },
+
+  "stateManagement": {
+    "modalState": {
+      "isOpen": "boolean - controls modal visibility",
+      "selectedProduct": "object - currently selected product",
+      "activeTab": "string - currently active tab",
+      "loading": "boolean - loading state",
+      "error": "string - error message if any"
+    },
+
+    "useState": [
+      "const [isModalOpen, setIsModalOpen] = useState(false)",
+      "const [selectedProduct, setSelectedProduct] = useState(null)",
+      "const [activeTab, setActiveTab] = useState('overview')",
+      "const [productDetails, setProductDetails] = useState(null)",
+      "const [loading, setLoading] = useState(false)"
+    ],
+
+    "handlers": [
+      {
+        "name": "handleProductClick",
+        "purpose": "Open modal when product card is clicked",
+        "implementation": "const handleProductClick = async (product) => {\n  setSelectedProduct(product);\n  setIsModalOpen(true);\n  await loadProductDetails(product.productId);\n}"
+      },
+      {
+        "name": "handleCloseModal",
+        "purpose": "Close modal and reset state",
+        "implementation": "const handleCloseModal = () => {\n  setIsModalOpen(false);\n  setSelectedProduct(null);\n  setProductDetails(null);\n  setActiveTab('overview');\n}"
+      },
+      {
+        "name": "handleTabChange",
+        "purpose": "Switch between tabs",
+        "implementation": "const handleTabChange = (tabId) => {\n  setActiveTab(tabId);\n}"
+      }
+    ]
+  },
+
+  "styling": {
+    "animations": {
+      "modalEnter": "transition ease-out duration-300 transform opacity-0 scale-95 -> opacity-100 scale-100",
+      "modalExit": "transition ease-in duration-200 transform opacity-100 scale-100 -> opacity-0 scale-95",
+      "tabSwitch": "transition-all duration-200 ease-in-out"
+    },
+
+    "responsive": {
+      "mobile": "Modal takes full screen on mobile devices",
+      "tablet": "Modal adjusts width and height for tablet",
+      "desktop": "Full modal experience with all features"
+    },
+
+    "accessibility": {
+      "focusManagement": "Focus trapped within modal",
+      "keyboardNavigation": "Tab navigation between elements",
+      "screenReader": "Proper ARIA labels and descriptions",
+      "escapeKey": "Close modal with Escape key"
+    }
+  },
+
+  "testing": {
+    "functionality": [
+      "Modal opens when product card is clicked",
+      "All tabs display correct content",
+      "Quick actions work properly",
+      "Modal closes correctly",
+      "API integration works"
+    ],
+
+    "ui": [
+      "Modal is responsive on all screen sizes",
+      "Animations are smooth",
+      "Loading states display properly",
+      "Error handling works",
+      "Accessibility features function"
+    ],
+
+    "performance": [
+      "Modal opens quickly (< 300ms)",
+      "Tab switching is instant",
+      "Large product lists don't slow down modal",
+      "Images load efficiently"
+    ]
+  },
+
+  "acceptanceCriteria": [
+    "✅ Modal opens when any product card is clicked",
+    "✅ All four tabs (Overview, Analytics, Inventory, Actions) work",
+    "✅ Product information displays correctly in each tab",
+    "✅ Quick edit functionality works within modal",
+    "✅ Modal is fully responsive and accessible",
+    "✅ Loading and error states are handled properly",
+    "✅ Modal can be closed via close button, backdrop click, or Escape key",
+    "✅ Quick actions (edit, delete, duplicate, status toggle) function correctly"
+  ],
+
+  "notes": [
+    "Use existing design system classes from design-system.json",
+    "Ensure modal doesn't break on products with missing data",
+    "Implement proper error boundaries",
+    "Add keyboard shortcuts for power users",
+    "Consider adding print functionality for product details",
+    "Make sure modal works with existing bulk selection system"
+  ]
+} 

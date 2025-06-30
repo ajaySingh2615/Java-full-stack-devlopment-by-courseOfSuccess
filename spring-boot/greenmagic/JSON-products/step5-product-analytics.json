@@ -1,0 +1,542 @@
+{
+    "step": 5,
+    "title": "Product Analytics Integration",
+    "description": "Add comprehensive analytics and performance tracking to product management",
+    "priority": "MEDIUM",
+    "estimatedTime": "4-5 days",
+    "dependencies": ["step1-product-detail-modal", "step2-enhanced-product-cards"],
+    
+    "files": {
+      "modify": [
+        {
+          "path": "frontend/src/pages/vendor/VendorProducts.jsx",
+          "changes": "Integrate analytics data into product cards and modal"
+        },
+        {
+          "path": "frontend/src/services/vendorService.js",
+          "changes": "Add analytics API methods"
+        }
+      ],
+      "create": [
+        {
+          "path": "frontend/src/components/analytics/ProductAnalyticsChart.jsx",
+          "type": "React Component",
+          "purpose": "Charts for product performance metrics"
+        },
+        {
+          "path": "frontend/src/components/analytics/PerformanceMetrics.jsx",
+          "type": "React Component",
+          "purpose": "Display key performance indicators"
+        },
+        {
+          "path": "frontend/src/components/analytics/TrendIndicator.jsx",
+          "type": "React Component",
+          "purpose": "Show trend arrows and percentages"
+        },
+        {
+          "path": "frontend/src/components/analytics/ComparisonTool.jsx",
+          "type": "React Component",
+          "purpose": "Compare product performance"
+        },
+        {
+          "path": "frontend/src/hooks/useProductAnalytics.js",
+          "type": "Custom Hook",
+          "purpose": "Hook for managing analytics data"
+        },
+        {
+          "path": "frontend/src/utils/analyticsUtils.js",
+          "type": "Utility",
+          "purpose": "Analytics calculation and formatting utilities"
+        }
+      ]
+    },
+  
+    "implementation": {
+      "analyticsMetrics": [
+        {
+          "category": "Sales Performance",
+          "metrics": [
+            {
+              "name": "Total Sales",
+              "key": "totalSales",
+              "type": "number",
+              "format": "integer",
+              "description": "Total units sold",
+              "trending": true
+            },
+            {
+              "name": "Total Revenue",
+              "key": "totalRevenue",
+              "type": "currency",
+              "format": "currency",
+              "description": "Total revenue generated",
+              "trending": true
+            },
+            {
+              "name": "Average Order Value",
+              "key": "averageOrderValue",
+              "type": "currency",
+              "format": "currency",
+              "description": "Average value per order",
+              "trending": true
+            },
+            {
+              "name": "Conversion Rate",
+              "key": "conversionRate",
+              "type": "percentage",
+              "format": "percentage",
+              "description": "Views to purchases ratio",
+              "trending": true
+            }
+          ]
+        },
+        {
+          "category": "Customer Engagement",
+          "metrics": [
+            {
+              "name": "Page Views",
+              "key": "pageViews",
+              "type": "number",
+              "format": "integer",
+              "description": "Total product page views",
+              "trending": true
+            },
+            {
+              "name": "Unique Visitors",
+              "key": "uniqueVisitors",
+              "type": "number",
+              "format": "integer",
+              "description": "Unique visitors to product page",
+              "trending": true
+            },
+            {
+              "name": "Add to Cart Rate",
+              "key": "addToCartRate",
+              "type": "percentage",
+              "format": "percentage",
+              "description": "Views to cart additions ratio",
+              "trending": true
+            },
+            {
+              "name": "Wishlist Additions",
+              "key": "wishlistAdditions",
+              "type": "number",
+              "format": "integer",
+              "description": "Times added to wishlist",
+              "trending": true
+            }
+          ]
+        },
+        {
+          "category": "Customer Feedback",
+          "metrics": [
+            {
+              "name": "Average Rating",
+              "key": "averageRating",
+              "type": "rating",
+              "format": "stars",
+              "description": "Average customer rating",
+              "trending": true
+            },
+            {
+              "name": "Review Count",
+              "key": "reviewCount",
+              "type": "number",
+              "format": "integer",
+              "description": "Total number of reviews",
+              "trending": true
+            },
+            {
+              "name": "Return Rate",
+              "key": "returnRate",
+              "type": "percentage",
+              "format": "percentage",
+              "description": "Percentage of returned items",
+              "trending": true
+            }
+          ]
+        },
+        {
+          "category": "Inventory Performance",
+          "metrics": [
+            {
+              "name": "Stock Turnover",
+              "key": "stockTurnover",
+              "type": "number",
+              "format": "decimal",
+              "description": "How fast inventory turns over",
+              "trending": true
+            },
+            {
+              "name": "Days in Stock",
+              "key": "daysInStock",
+              "type": "number",
+              "format": "integer",
+              "description": "Days since last restock",
+              "trending": false
+            },
+            {
+              "name": "Stock Out Frequency",
+              "key": "stockOutFrequency",
+              "type": "number",
+              "format": "integer",
+              "description": "Times out of stock this period",
+              "trending": true
+            }
+          ]
+        }
+      ],
+  
+      "chartTypes": [
+        {
+          "name": "Sales Trend",
+          "type": "line",
+          "data": "daily sales over time",
+          "timeframe": ["7d", "30d", "90d", "1y"],
+          "yAxis": "sales count",
+          "xAxis": "date"
+        },
+        {
+          "name": "Revenue Trend",
+          "type": "line",
+          "data": "daily revenue over time",
+          "timeframe": ["7d", "30d", "90d", "1y"],
+          "yAxis": "revenue amount",
+          "xAxis": "date"
+        },
+        {
+          "name": "Traffic Sources",
+          "type": "pie",
+          "data": "traffic source breakdown",
+          "segments": ["Direct", "Search", "Social", "Referral", "Email"]
+        },
+        {
+          "name": "Performance Comparison",
+          "type": "bar",
+          "data": "product comparison metrics",
+          "yAxis": "metric value",
+          "xAxis": "product names"
+        }
+      ],
+  
+      "timeframes": [
+        {
+          "label": "Last 7 Days",
+          "value": "7d",
+          "default": true
+        },
+        {
+          "label": "Last 30 Days",
+          "value": "30d"
+        },
+        {
+          "label": "Last 90 Days",
+          "value": "90d"
+        },
+        {
+          "label": "Last Year",
+          "value": "1y"
+        },
+        {
+          "label": "Custom Range",
+          "value": "custom"
+        }
+      ]
+    },
+  
+    "uiComponents": {
+      "analyticsCard": {
+        "container": "bg-white rounded-lg shadow-sm border border-gray-200 p-6",
+        "header": "flex items-center justify-between mb-4",
+        "title": "text-lg font-semibold text-gray-900",
+        "timeframeSelector": "text-sm text-gray-500",
+        "content": "space-y-4"
+      },
+  
+      "metricDisplay": {
+        "container": "flex items-center justify-between",
+        "value": "text-2xl font-bold text-gray-900",
+        "label": "text-sm text-gray-600",
+        "trend": "flex items-center text-sm",
+        "trendUp": "text-green-600",
+        "trendDown": "text-red-600",
+        "trendStable": "text-gray-600"
+      },
+  
+      "miniChart": {
+        "container": "h-16 w-full",
+        "line": "stroke-current text-blue-600 stroke-2 fill-none",
+        "area": "fill-current text-blue-100",
+        "bar": "fill-current text-blue-600"
+      },
+  
+      "performanceBadge": {
+        "high": "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium",
+        "medium": "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium",
+        "low": "bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium"
+      },
+  
+      "trendIndicator": {
+        "container": "inline-flex items-center",
+        "icon": "h-4 w-4 mr-1",
+        "percentage": "text-sm font-medium",
+        "label": "text-xs text-gray-500 ml-1"
+      },
+  
+      "comparisonTool": {
+        "container": "bg-gray-50 rounded-lg p-4",
+        "selector": "flex space-x-4 mb-4",
+        "chart": "h-64 w-full",
+        "legend": "flex justify-center space-x-6 mt-4"
+      }
+    },
+  
+    "dataStructure": {
+      "productAnalytics": {
+        "productId": "string",
+        "timeframe": "string",
+        "metrics": {
+          "sales": {
+            "totalSales": "number",
+            "totalRevenue": "number",
+            "averageOrderValue": "number",
+            "conversionRate": "number",
+            "trend": {
+              "period": "string",
+              "change": "number",
+              "direction": "string (up|down|stable)"
+            }
+          },
+          "engagement": {
+            "pageViews": "number",
+            "uniqueVisitors": "number",
+            "addToCartRate": "number",
+            "wishlistAdditions": "number",
+            "trend": {
+              "period": "string",
+              "change": "number",
+              "direction": "string"
+            }
+          },
+          "feedback": {
+            "averageRating": "number",
+            "reviewCount": "number",
+            "returnRate": "number",
+            "trend": {
+              "period": "string",
+              "change": "number",
+              "direction": "string"
+            }
+          },
+          "inventory": {
+            "stockTurnover": "number",
+            "daysInStock": "number",
+            "stockOutFrequency": "number",
+            "trend": {
+              "period": "string",
+              "change": "number",
+              "direction": "string"
+            }
+          }
+        },
+        "chartData": {
+          "salesTrend": "array of {date, sales, revenue}",
+          "trafficSources": "array of {source, count, percentage}",
+          "performanceComparison": "array of {metric, value, benchmark}"
+        },
+        "lastUpdated": "timestamp"
+      },
+  
+      "aggregatedAnalytics": {
+        "vendorId": "string",
+        "timeframe": "string",
+        "productCount": "number",
+        "topPerformers": "array of product analytics",
+        "lowPerformers": "array of product analytics",
+        "averageMetrics": "object with average values",
+        "totalMetrics": "object with sum values"
+      }
+    },
+  
+    "apiIntegration": {
+      "endpoints": [
+        {
+          "method": "GET",
+          "url": "/api/vendor/products/{productId}/analytics",
+          "purpose": "Get analytics for specific product",
+          "params": {
+            "timeframe": "7d|30d|90d|1y|custom",
+            "startDate": "date (for custom timeframe)",
+            "endDate": "date (for custom timeframe)",
+            "metrics": "comma-separated list of metrics"
+          }
+        },
+        {
+          "method": "GET",
+          "url": "/api/vendor/products/analytics/summary",
+          "purpose": "Get analytics summary for all products",
+          "params": {
+            "timeframe": "string",
+            "limit": "number of products to include",
+            "sortBy": "metric to sort by"
+          }
+        },
+        {
+          "method": "GET",
+          "url": "/api/vendor/products/analytics/comparison",
+          "purpose": "Compare multiple products",
+          "params": {
+            "productIds": "comma-separated product IDs",
+            "metrics": "comma-separated metrics",
+            "timeframe": "string"
+          }
+        },
+        {
+          "method": "GET",
+          "url": "/api/vendor/products/analytics/trends",
+          "purpose": "Get trending products",
+          "params": {
+            "metric": "sales|revenue|views|rating",
+            "direction": "up|down",
+            "timeframe": "string",
+            "limit": "number"
+          }
+        }
+      ],
+  
+      "serviceMethods": [
+        {
+          "name": "getProductAnalytics",
+          "implementation": "async getProductAnalytics(vendorId, productId, timeframe = '30d') {\n  try {\n    const response = await apiClient.get(`/vendor/products/${productId}/analytics`, {\n      params: {\n        vendorId,\n        timeframe\n      }\n    });\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+        },
+        {
+          "name": "getAnalyticsSummary",
+          "implementation": "async getAnalyticsSummary(vendorId, timeframe = '30d') {\n  try {\n    const response = await apiClient.get('/vendor/products/analytics/summary', {\n      params: {\n        vendorId,\n        timeframe,\n        limit: 100\n      }\n    });\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+        },
+        {
+          "name": "compareProducts",
+          "implementation": "async compareProducts(vendorId, productIds, metrics, timeframe = '30d') {\n  try {\n    const response = await apiClient.get('/vendor/products/analytics/comparison', {\n      params: {\n        vendorId,\n        productIds: productIds.join(','),\n        metrics: metrics.join(','),\n        timeframe\n      }\n    });\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+        }
+      ]
+    },
+  
+    "stateManagement": {
+      "analyticsState": {
+        "productAnalytics": "object - analytics data by product ID",
+        "aggregatedData": "object - summary analytics",
+        "selectedTimeframe": "string - current timeframe",
+        "loadingStates": "object - loading states by product",
+        "comparisonMode": "boolean - comparison tool active",
+        "selectedProducts": "array - products for comparison"
+      },
+  
+      "customHook": {
+        "name": "useProductAnalytics",
+        "implementation": "export const useProductAnalytics = (vendorId) => {\n  const [analyticsData, setAnalyticsData] = useState({});\n  const [timeframe, setTimeframe] = useState('30d');\n  const [loading, setLoading] = useState(false);\n  const [error, setError] = useState(null);\n  \n  const loadProductAnalytics = useCallback(async (productId) => {\n    setLoading(true);\n    try {\n      const result = await vendorService.getProductAnalytics(vendorId, productId, timeframe);\n      if (result.success) {\n        setAnalyticsData(prev => ({\n          ...prev,\n          [productId]: result.data\n        }));\n      } else {\n        setError(result.error);\n      }\n    } catch (err) {\n      setError(err.message);\n    } finally {\n      setLoading(false);\n    }\n  }, [vendorId, timeframe]);\n  \n  const getMetricTrend = (current, previous) => {\n    if (!previous || previous === 0) return { direction: 'stable', change: 0 };\n    const change = ((current - previous) / previous) * 100;\n    return {\n      direction: change > 5 ? 'up' : change < -5 ? 'down' : 'stable',\n      change: Math.abs(change)\n    };\n  };\n  \n  const formatMetric = (value, type) => {\n    switch (type) {\n      case 'currency':\n        return new Intl.NumberFormat('en-IN', {\n          style: 'currency',\n          currency: 'INR'\n        }).format(value);\n      case 'percentage':\n        return `${value.toFixed(1)}%`;\n      case 'rating':\n        return value.toFixed(1);\n      default:\n        return value.toLocaleString();\n    }\n  };\n  \n  return {\n    analyticsData,\n    timeframe,\n    loading,\n    error,\n    setTimeframe,\n    loadProductAnalytics,\n    getMetricTrend,\n    formatMetric\n  };\n};"
+      }
+    },
+  
+    "visualizations": {
+      "chartLibrary": "recharts",
+      "chartConfigurations": {
+        "salesTrend": {
+          "type": "LineChart",
+          "data": "daily sales data",
+          "xAxis": "date",
+          "yAxis": "sales count",
+          "colors": ["#3B82F6", "#10B981"],
+          "responsive": true
+        },
+        "performanceMetrics": {
+          "type": "BarChart",
+          "data": "metric comparisons",
+          "xAxis": "metric names",
+          "yAxis": "values",
+          "colors": ["#3B82F6"],
+          "responsive": true
+        },
+        "trafficSources": {
+          "type": "PieChart",
+          "data": "source breakdown",
+          "colors": ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"],
+          "responsive": true
+        }
+      },
+  
+      "miniCharts": {
+        "sparkline": "Small line chart for trends",
+        "miniBar": "Small bar chart for comparisons",
+        "progressRing": "Circular progress for percentages"
+      }
+    },
+  
+    "performanceOptimization": {
+      "dataLoading": {
+        "lazyLoading": "Load analytics only when needed",
+        "caching": "Cache analytics data for 5 minutes",
+        "backgroundRefresh": "Refresh data in background",
+        "batchRequests": "Batch multiple product requests"
+      },
+  
+      "chartRendering": {
+        "virtualizedCharts": "For large datasets",
+        "dataSubsampling": "Reduce data points for performance",
+        "chartCaching": "Cache rendered charts",
+        "progressiveLoading": "Load chart data progressively"
+      }
+    },
+  
+    "testing": {
+      "functionality": [
+        "Analytics data loads correctly",
+        "Charts render with accurate data",
+        "Trend calculations are correct",
+        "Timeframe changes update data",
+        "Comparison tool works properly",
+        "Error handling works for failed requests"
+      ],
+  
+      "performance": [
+        "Charts render quickly (< 1 second)",
+        "Large datasets don't slow down UI",
+        "Memory usage stays reasonable",
+        "Data caching works effectively"
+      ],
+  
+      "ui": [
+        "Charts are responsive on all devices",
+        "Tooltips provide helpful information",
+        "Loading states are clear",
+        "Error states are handled gracefully"
+      ],
+  
+      "data_accuracy": [
+        "Metrics match backend calculations",
+        "Trends show correct direction",
+        "Percentages are calculated correctly",
+        "Currency formatting is accurate"
+      ]
+    },
+  
+    "acceptanceCriteria": [
+      "✅ Product cards display key performance metrics",
+      "✅ Analytics modal shows comprehensive data",
+      "✅ Charts render correctly and are interactive",
+      "✅ Trend indicators show accurate direction and percentage",
+      "✅ Timeframe selector updates all analytics",
+      "✅ Comparison tool allows product comparison",
+      "✅ Performance metrics are clearly labeled and formatted",
+      "✅ Loading and error states are handled properly",
+      "✅ Analytics data refreshes appropriately",
+      "✅ Mobile responsive design works well"
+    ],
+  
+    "notes": [
+      "Ensure analytics don't slow down main product listing",
+      "Consider adding export functionality for analytics data",
+      "Implement proper error boundaries for chart components",
+      "Add analytics tracking for feature usage",
+      "Consider adding alerts for significant metric changes",
+      "Test with products that have no analytics data"
+    ]
+  }

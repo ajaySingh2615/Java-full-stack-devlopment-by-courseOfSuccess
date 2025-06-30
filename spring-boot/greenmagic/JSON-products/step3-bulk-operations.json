@@ -1,0 +1,444 @@
+{
+  "step": 3,
+  "title": "Enhanced Bulk Operations Implementation",
+  "description": "Improve bulk selection UI and add comprehensive bulk operations for product management",
+  "priority": "MEDIUM",
+  "estimatedTime": "3-4 days",
+  "dependencies": ["step1-product-detail-modal", "step2-enhanced-product-cards"],
+  
+  "files": {
+    "modify": [
+      {
+        "path": "frontend/src/pages/vendor/VendorProducts.jsx",
+        "changes": "Enhance bulk selection system and add floating action toolbar"
+      },
+      {
+        "path": "frontend/src/services/vendorService.js",
+        "changes": "Add comprehensive bulk operation methods"
+      }
+    ],
+    "create": [
+      {
+        "path": "frontend/src/components/bulk/BulkActionToolbar.jsx",
+        "type": "React Component",
+        "purpose": "Floating toolbar for bulk operations"
+      },
+      {
+        "path": "frontend/src/components/bulk/BulkOperationModal.jsx",
+        "type": "React Component",
+        "purpose": "Modal for complex bulk operations"
+      },
+      {
+        "path": "frontend/src/components/bulk/ProgressIndicator.jsx",
+        "type": "React Component",
+        "purpose": "Progress tracking for bulk operations"
+      },
+      {
+        "path": "frontend/src/hooks/useBulkOperations.js",
+        "type": "Custom Hook",
+        "purpose": "Hook for managing bulk operation state"
+      }
+    ]
+  },
+
+  "implementation": {
+    "selectionSystem": {
+      "multiSelect": "Enhanced checkbox system with visual feedback",
+      "selectAll": "Smart select all with pagination awareness",
+      "selectFiltered": "Select all products matching current filters",
+      "selectionPersistence": "Maintain selections across page navigation",
+      "selectionLimit": "Maximum 100 products per bulk operation"
+    },
+
+    "bulkOperations": [
+      {
+        "name": "Status Change",
+        "type": "simple",
+        "options": ["Active", "Inactive", "Draft"],
+        "confirmation": "required",
+        "batchSize": 50,
+        "estimatedTime": "2-5 seconds"
+      },
+      {
+        "name": "Price Update",
+        "type": "complex",
+        "methods": ["percentage", "fixed_amount", "set_price"],
+        "validation": "price > 0",
+        "confirmation": "required",
+        "batchSize": 25,
+        "estimatedTime": "5-10 seconds"
+      },
+      {
+        "name": "Stock Update",
+        "type": "complex",
+        "methods": ["increase", "decrease", "set_quantity"],
+        "validation": "quantity >= 0",
+        "confirmation": "required",
+        "batchSize": 50,
+        "estimatedTime": "3-7 seconds"
+      },
+      {
+        "name": "Category Assignment",
+        "type": "simple",
+        "options": "dynamic from categories API",
+        "confirmation": "required",
+        "batchSize": 100,
+        "estimatedTime": "2-5 seconds"
+      },
+      {
+        "name": "Tag Management",
+        "type": "complex",
+        "methods": ["add_tags", "remove_tags", "replace_tags"],
+        "validation": "tags array not empty",
+        "confirmation": "optional",
+        "batchSize": 100,
+        "estimatedTime": "2-5 seconds"
+      },
+      {
+        "name": "Export",
+        "type": "simple",
+        "formats": ["CSV", "Excel", "PDF"],
+        "confirmation": "optional",
+        "batchSize": 1000,
+        "estimatedTime": "10-30 seconds"
+      },
+      {
+        "name": "Delete",
+        "type": "destructive",
+        "confirmation": "double_confirmation",
+        "batchSize": 20,
+        "estimatedTime": "5-15 seconds",
+        "undoable": false
+      }
+    ],
+
+    "progressTracking": {
+      "realTimeUpdates": "WebSocket or polling for progress",
+      "batchProcessing": "Process in smaller batches to show progress",
+      "errorHandling": "Continue processing on individual failures",
+      "resultSummary": "Show success/failure counts",
+      "undoSupport": "For non-destructive operations"
+    }
+  },
+
+  "uiComponents": {
+    "selectionInterface": {
+      "bulkCheckbox": {
+        "container": "flex items-center space-x-2 p-4 bg-gray-50 border-b",
+        "checkbox": "h-4 w-4 text-blue-600 rounded border-gray-300",
+        "label": "text-sm font-medium text-gray-700",
+        "counter": "text-sm text-gray-500 ml-2"
+      },
+      
+      "productCheckbox": {
+        "container": "absolute top-2 right-2 z-10",
+        "checkbox": "h-4 w-4 text-blue-600 rounded border-gray-300 shadow-sm bg-white",
+        "checkedOverlay": "absolute inset-0 bg-blue-500 bg-opacity-20 rounded-lg"
+      },
+
+      "selectionSummary": {
+        "container": "flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4",
+        "text": "text-blue-800 font-medium",
+        "clearButton": "text-blue-600 hover:text-blue-700 text-sm font-medium"
+      }
+    },
+
+    "bulkToolbar": {
+      "container": "fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50 transform transition-transform duration-300",
+      "wrapper": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4",
+      "content": "flex items-center justify-between",
+      "selectionInfo": "flex items-center space-x-4",
+      "actionButtons": "flex items-center space-x-2",
+      
+      "hidden": "translate-y-full",
+      "visible": "translate-y-0"
+    },
+
+    "actionButtons": {
+      "primary": "bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium",
+      "secondary": "bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700",
+      "destructive": "bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700",
+      "disabled": "bg-gray-300 text-gray-500 px-4 py-2 rounded-md cursor-not-allowed"
+    },
+
+    "bulkModal": {
+      "backdrop": "fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50",
+      "container": "fixed inset-0 z-50 overflow-y-auto",
+      "wrapper": "flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0",
+      "panel": "relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg"
+    },
+
+    "progressIndicator": {
+      "container": "w-full bg-gray-200 rounded-full h-2 mb-4",
+      "bar": "bg-blue-600 h-2 rounded-full transition-all duration-300",
+      "text": "text-sm text-gray-600 mb-2",
+      "spinner": "animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 inline-block mr-2"
+    }
+  },
+
+  "dataStructure": {
+    "bulkOperationRequest": {
+      "operation": "string - operation type",
+      "productIds": "array - selected product IDs",
+      "parameters": {
+        "priceUpdate": {
+          "method": "string (percentage|fixed_amount|set_price)",
+          "value": "number",
+          "applyToVariants": "boolean"
+        },
+        "stockUpdate": {
+          "method": "string (increase|decrease|set_quantity)",
+          "value": "number",
+          "applyToVariants": "boolean"
+        },
+        "statusChange": {
+          "newStatus": "string (active|inactive|draft)"
+        },
+        "categoryAssignment": {
+          "categoryId": "string",
+          "subcategoryId": "string (optional)"
+        },
+        "tagManagement": {
+          "method": "string (add_tags|remove_tags|replace_tags)",
+          "tags": "array of strings"
+        },
+        "export": {
+          "format": "string (csv|excel|pdf)",
+          "includeVariants": "boolean",
+          "includeImages": "boolean"
+        }
+      }
+    },
+
+    "bulkOperationResponse": {
+      "operationId": "string - unique operation identifier",
+      "status": "string (pending|processing|completed|failed)",
+      "progress": {
+        "total": "number",
+        "processed": "number",
+        "successful": "number",
+        "failed": "number"
+      },
+      "results": {
+        "successfulIds": "array",
+        "failedItems": "array with error details"
+      },
+      "downloadUrl": "string (for export operations)",
+      "undoToken": "string (for undoable operations)"
+    }
+  },
+
+  "apiIntegration": {
+    "endpoints": [
+      {
+        "method": "POST",
+        "url": "/api/vendor/products/bulk/status",
+        "purpose": "Bulk status change",
+        "body": "{ productIds: [], newStatus: 'active' }"
+      },
+      {
+        "method": "POST",
+        "url": "/api/vendor/products/bulk/price",
+        "purpose": "Bulk price update",
+        "body": "{ productIds: [], method: 'percentage', value: 10 }"
+      },
+      {
+        "method": "POST",
+        "url": "/api/vendor/products/bulk/stock",
+        "purpose": "Bulk stock update",
+        "body": "{ productIds: [], method: 'increase', value: 50 }"
+      },
+      {
+        "method": "POST",
+        "url": "/api/vendor/products/bulk/category",
+        "purpose": "Bulk category assignment",
+        "body": "{ productIds: [], categoryId: 'cat123' }"
+      },
+      {
+        "method": "POST",
+        "url": "/api/vendor/products/bulk/tags",
+        "purpose": "Bulk tag management",
+        "body": "{ productIds: [], method: 'add_tags', tags: ['tag1', 'tag2'] }"
+      },
+      {
+        "method": "POST",
+        "url": "/api/vendor/products/bulk/export",
+        "purpose": "Bulk export",
+        "body": "{ productIds: [], format: 'csv', options: {} }"
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/vendor/products/bulk/delete",
+        "purpose": "Bulk delete",
+        "body": "{ productIds: [] }"
+      },
+      {
+        "method": "GET",
+        "url": "/api/vendor/products/bulk/status/{operationId}",
+        "purpose": "Get bulk operation status",
+        "response": "Operation progress and results"
+      },
+      {
+        "method": "POST",
+        "url": "/api/vendor/products/bulk/undo/{undoToken}",
+        "purpose": "Undo bulk operation",
+        "response": "Undo operation status"
+      }
+    ],
+
+    "serviceMethods": [
+      {
+        "name": "bulkUpdateStatus",
+        "implementation": "async bulkUpdateStatus(vendorId, productIds, newStatus) {\n  try {\n    const response = await apiClient.post('/vendor/products/bulk/status', {\n      productIds,\n      newStatus\n    }, {\n      params: { vendorId }\n    });\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+      },
+      {
+        "name": "bulkUpdatePrices",
+        "implementation": "async bulkUpdatePrices(vendorId, productIds, method, value, options = {}) {\n  try {\n    const response = await apiClient.post('/vendor/products/bulk/price', {\n      productIds,\n      method,\n      value,\n      ...options\n    }, {\n      params: { vendorId }\n    });\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+      },
+      {
+        "name": "getBulkOperationStatus",
+        "implementation": "async getBulkOperationStatus(operationId) {\n  try {\n    const response = await apiClient.get(`/vendor/products/bulk/status/${operationId}`);\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+      }
+    ]
+  },
+
+  "stateManagement": {
+    "bulkState": {
+      "selectedProducts": "Set - selected product IDs",
+      "selectAll": "boolean - select all state",
+      "bulkToolbarVisible": "boolean - toolbar visibility",
+      "activeOperation": "object - current bulk operation",
+      "operationProgress": "object - progress tracking",
+      "operationHistory": "array - recent operations for undo"
+    },
+
+    "customHook": {
+      "name": "useBulkOperations",
+      "implementation": "export const useBulkOperations = () => {\n  const [selectedProducts, setSelectedProducts] = useState(new Set());\n  const [selectAll, setSelectAll] = useState(false);\n  const [activeOperation, setActiveOperation] = useState(null);\n  const [operationProgress, setOperationProgress] = useState(null);\n  \n  const selectProduct = (productId) => {\n    setSelectedProducts(prev => {\n      const newSet = new Set(prev);\n      if (newSet.has(productId)) {\n        newSet.delete(productId);\n      } else {\n        newSet.add(productId);\n      }\n      return newSet;\n    });\n  };\n  \n  const selectAllProducts = (productIds) => {\n    if (selectAll) {\n      setSelectedProducts(new Set());\n      setSelectAll(false);\n    } else {\n      setSelectedProducts(new Set(productIds));\n      setSelectAll(true);\n    }\n  };\n  \n  const clearSelection = () => {\n    setSelectedProducts(new Set());\n    setSelectAll(false);\n  };\n  \n  return {\n    selectedProducts,\n    selectAll,\n    activeOperation,\n    operationProgress,\n    selectProduct,\n    selectAllProducts,\n    clearSelection,\n    startBulkOperation,\n    cancelBulkOperation\n  };\n};"
+    }
+  },
+
+  "workflowSteps": {
+    "bulkOperation": [
+      {
+        "step": 1,
+        "name": "Selection",
+        "description": "User selects products using checkboxes",
+        "validation": "At least 1 product must be selected"
+      },
+      {
+        "step": 2,
+        "name": "Operation Choice",
+        "description": "User chooses bulk operation from toolbar",
+        "validation": "Valid operation must be selected"
+      },
+      {
+        "step": 3,
+        "name": "Parameter Input",
+        "description": "User provides operation parameters (if needed)",
+        "validation": "Parameters must be valid for operation type"
+      },
+      {
+        "step": 4,
+        "name": "Confirmation",
+        "description": "User confirms the bulk operation",
+        "validation": "User must explicitly confirm"
+      },
+      {
+        "step": 5,
+        "name": "Processing",
+        "description": "System processes products in batches",
+        "validation": "Handle individual product failures gracefully"
+      },
+      {
+        "step": 6,
+        "name": "Results",
+        "description": "Show operation results and any errors",
+        "validation": "Provide clear feedback on success/failure"
+      },
+      {
+        "step": 7,
+        "name": "Cleanup",
+        "description": "Clear selection and update product list",
+        "validation": "UI state must be properly reset"
+      }
+    ]
+  },
+
+  "errorHandling": {
+    "selectionErrors": [
+      "No products selected",
+      "Too many products selected (> 100)",
+      "Selected products no longer exist"
+    ],
+    
+    "operationErrors": [
+      "Invalid parameters provided",
+      "Insufficient permissions",
+      "Network connectivity issues",
+      "Server processing errors"
+    ],
+    
+    "recoveryStrategies": [
+      "Retry failed operations",
+      "Skip failed items and continue",
+      "Rollback completed operations",
+      "Provide manual correction options"
+    ]
+  },
+
+  "testing": {
+    "functionality": [
+      "Product selection works correctly",
+      "Select all functions properly",
+      "Bulk operations complete successfully",
+      "Progress tracking is accurate",
+      "Error handling works correctly",
+      "Undo functionality works (where applicable)"
+    ],
+
+    "ui": [
+      "Toolbar appears/disappears correctly",
+      "Progress indicators are clear",
+      "Confirmation dialogs are intuitive",
+      "Selection state is visually obvious",
+      "Responsive design works on all devices"
+    ],
+
+    "performance": [
+      "Large selections don't slow down UI",
+      "Bulk operations process efficiently",
+      "Progress updates don't cause lag",
+      "Memory usage stays reasonable"
+    ],
+
+    "edge_cases": [
+      "All products selected then filtered",
+      "Network interruption during operation",
+      "Concurrent operations by different users",
+      "Products deleted during bulk operation"
+    ]
+  },
+
+  "acceptanceCriteria": [
+    "✅ Enhanced selection system with visual feedback",
+    "✅ Floating toolbar appears when products are selected",
+    "✅ All bulk operations work correctly",
+    "✅ Progress tracking shows real-time updates",
+    "✅ Error handling provides clear feedback",
+    "✅ Confirmation dialogs prevent accidental operations",
+    "✅ Undo functionality works for applicable operations",
+    "✅ Selection state persists across page interactions",
+    "✅ Bulk operations handle large product sets efficiently",
+    "✅ UI remains responsive during operations"
+  ],
+
+  "notes": [
+    "Implement proper rate limiting for bulk operations",
+    "Consider adding operation scheduling for large batches",
+    "Add analytics tracking for bulk operation usage",
+    "Ensure bulk operations work with filtered product views",
+    "Test with products that have complex variant structures",
+    "Consider adding bulk operation templates for common tasks"
+  ]
+} 

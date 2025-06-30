@@ -1,0 +1,493 @@
+{
+  "step": 6,
+  "title": "Inventory Management Features",
+  "description": "Add comprehensive inventory tracking, alerts, and management tools",
+  "priority": "MEDIUM",
+  "estimatedTime": "3-4 days",
+  "dependencies": ["step1-product-detail-modal", "step2-enhanced-product-cards"],
+  
+  "files": {
+    "modify": [
+      {
+        "path": "frontend/src/pages/vendor/VendorProducts.jsx",
+        "changes": "Add inventory indicators and alerts"
+      },
+      {
+        "path": "frontend/src/services/vendorService.js",
+        "changes": "Add inventory management API methods"
+      }
+    ],
+    "create": [
+      {
+        "path": "frontend/src/components/inventory/StockLevelIndicator.jsx",
+        "type": "React Component",
+        "purpose": "Visual stock level indicators with color coding"
+      },
+      {
+        "path": "frontend/src/components/inventory/LowStockAlert.jsx",
+        "type": "React Component",
+        "purpose": "Alert component for low stock items"
+      },
+      {
+        "path": "frontend/src/components/inventory/StockHistoryChart.jsx",
+        "type": "React Component",
+        "purpose": "Chart showing stock movement over time"
+      },
+      {
+        "path": "frontend/src/components/inventory/QuickStockUpdate.jsx",
+        "type": "React Component",
+        "purpose": "Quick stock update interface"
+      },
+      {
+        "path": "frontend/src/components/inventory/ReorderSuggestions.jsx",
+        "type": "React Component",
+        "purpose": "Reorder point recommendations"
+      },
+      {
+        "path": "frontend/src/hooks/useInventoryManagement.js",
+        "type": "Custom Hook",
+        "purpose": "Hook for inventory state management"
+      }
+    ]
+  },
+
+  "implementation": {
+    "stockLevels": {
+      "categories": [
+        {
+          "name": "High Stock",
+          "condition": "currentStock > lowStockThreshold * 3",
+          "color": "green",
+          "icon": "FiCheckCircle",
+          "badge": "bg-green-100 text-green-800"
+        },
+        {
+          "name": "Medium Stock",
+          "condition": "currentStock > lowStockThreshold && currentStock <= lowStockThreshold * 3",
+          "color": "yellow",
+          "icon": "FiAlertTriangle",
+          "badge": "bg-yellow-100 text-yellow-800"
+        },
+        {
+          "name": "Low Stock",
+          "condition": "currentStock > 0 && currentStock <= lowStockThreshold",
+          "color": "orange",
+          "icon": "FiAlertCircle",
+          "badge": "bg-orange-100 text-orange-800"
+        },
+        {
+          "name": "Out of Stock",
+          "condition": "currentStock <= 0",
+          "color": "red",
+          "icon": "FiXCircle",
+          "badge": "bg-red-100 text-red-800"
+        },
+        {
+          "name": "Overstocked",
+          "condition": "currentStock > optimalStock * 1.5",
+          "color": "purple",
+          "icon": "FiTrendingUp",
+          "badge": "bg-purple-100 text-purple-800"
+        }
+      ]
+    },
+
+    "inventoryFeatures": [
+      {
+        "name": "Real-time Stock Tracking",
+        "description": "Live updates of stock levels",
+        "implementation": "WebSocket or polling updates"
+      },
+      {
+        "name": "Low Stock Alerts",
+        "description": "Notifications when stock falls below threshold",
+        "implementation": "Alert badges and notification system"
+      },
+      {
+        "name": "Stock Movement History",
+        "description": "Track all stock changes over time",
+        "implementation": "Chart showing stock changes"
+      },
+      {
+        "name": "Reorder Point Calculation",
+        "description": "Suggest when to reorder based on sales velocity",
+        "implementation": "Algorithm based on sales data"
+      },
+      {
+        "name": "Bulk Stock Updates",
+        "description": "Update multiple products at once",
+        "implementation": "Enhanced bulk operations"
+      },
+      {
+        "name": "Variant Stock Management",
+        "description": "Track stock for product variants",
+        "implementation": "Separate tracking per variant"
+      },
+      {
+        "name": "Stock Forecasting",
+        "description": "Predict future stock needs",
+        "implementation": "Based on sales trends"
+      }
+    ],
+
+    "alertTypes": [
+      {
+        "name": "Low Stock Warning",
+        "trigger": "stock <= lowStockThreshold",
+        "severity": "medium",
+        "action": "Show warning badge"
+      },
+      {
+        "name": "Out of Stock Alert",
+        "trigger": "stock <= 0",
+        "severity": "high",
+        "action": "Show alert badge and notification"
+      },
+      {
+        "name": "Overstock Warning",
+        "trigger": "stock > optimalStock * 1.5",
+        "severity": "low",
+        "action": "Show info badge"
+      },
+      {
+        "name": "Fast Moving Item",
+        "trigger": "salesVelocity > averageVelocity * 2",
+        "severity": "medium",
+        "action": "Show trending badge"
+      },
+      {
+        "name": "Slow Moving Item",
+        "trigger": "salesVelocity < averageVelocity * 0.5",
+        "severity": "low",
+        "action": "Show warning badge"
+      }
+    ]
+  },
+
+  "uiComponents": {
+    "stockIndicator": {
+      "container": "inline-flex items-center space-x-1",
+      "dot": "w-3 h-3 rounded-full",
+      "text": "text-sm font-medium",
+      "colors": {
+        "high": "bg-green-500 text-green-700",
+        "medium": "bg-yellow-500 text-yellow-700",
+        "low": "bg-orange-500 text-orange-700",
+        "out": "bg-red-500 text-red-700",
+        "over": "bg-purple-500 text-purple-700"
+      }
+    },
+
+    "stockBadge": {
+      "high": "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800",
+      "medium": "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800",
+      "low": "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800",
+      "out": "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800",
+      "over": "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+    },
+
+    "lowStockAlert": {
+      "container": "bg-orange-50 border-l-4 border-orange-400 p-4 mb-6",
+      "content": "flex items-start",
+      "icon": "h-5 w-5 text-orange-400 mr-3 mt-0.5",
+      "text": "text-orange-800",
+      "title": "font-medium",
+      "description": "text-sm mt-1",
+      "actions": "mt-3 flex space-x-3"
+    },
+
+    "stockChart": {
+      "container": "h-32 w-full",
+      "line": "stroke-current text-blue-600 stroke-2 fill-none",
+      "area": "fill-current text-blue-100",
+      "threshold": "stroke-current text-red-400 stroke-1 stroke-dasharray-2"
+    },
+
+    "quickStockUpdate": {
+      "container": "flex items-center space-x-2 p-3 bg-gray-50 rounded-lg",
+      "input": "flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500",
+      "button": "px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium",
+      "label": "text-sm font-medium text-gray-700 min-w-0"
+    },
+
+    "reorderSuggestion": {
+      "container": "bg-blue-50 border border-blue-200 rounded-lg p-4",
+      "header": "flex items-center justify-between mb-2",
+      "title": "text-sm font-medium text-blue-900",
+      "badge": "px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs",
+      "content": "text-sm text-blue-700",
+      "actions": "mt-3 flex space-x-2"
+    }
+  },
+
+  "dataStructure": {
+    "inventoryData": {
+      "productId": "string",
+      "currentStock": "number",
+      "lowStockThreshold": "number",
+      "optimalStock": "number",
+      "reservedStock": "number",
+      "availableStock": "number",
+      "stockValue": "number",
+      "lastRestockDate": "date",
+      "lastRestockQuantity": "number",
+      "stockMovements": [
+        {
+          "date": "timestamp",
+          "type": "string (in|out|adjustment)",
+          "quantity": "number",
+          "reason": "string",
+          "reference": "string"
+        }
+      ],
+      "salesVelocity": {
+        "daily": "number",
+        "weekly": "number",
+        "monthly": "number"
+      },
+      "reorderPoint": "number",
+      "reorderQuantity": "number",
+      "daysOfStock": "number",
+      "turnoverRate": "number"
+    },
+
+    "stockAlert": {
+      "productId": "string",
+      "alertType": "string",
+      "severity": "string (low|medium|high)",
+      "message": "string",
+      "threshold": "number",
+      "currentValue": "number",
+      "createdAt": "timestamp",
+      "acknowledged": "boolean"
+    },
+
+    "reorderSuggestion": {
+      "productId": "string",
+      "currentStock": "number",
+      "suggestedQuantity": "number",
+      "reason": "string",
+      "urgency": "string (low|medium|high)",
+      "estimatedStockoutDate": "date",
+      "confidence": "number (0-1)"
+    }
+  },
+
+  "apiIntegration": {
+    "endpoints": [
+      {
+        "method": "GET",
+        "url": "/api/vendor/products/{productId}/inventory",
+        "purpose": "Get detailed inventory data for product",
+        "response": "Complete inventory information"
+      },
+      {
+        "method": "GET",
+        "url": "/api/vendor/inventory/alerts",
+        "purpose": "Get all inventory alerts",
+        "params": {
+          "severity": "filter by severity",
+          "acknowledged": "filter by acknowledgment status"
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/vendor/inventory/stock-update",
+        "purpose": "Update stock quantity",
+        "body": {
+          "productId": "string",
+          "quantity": "number",
+          "type": "string (set|increase|decrease)",
+          "reason": "string"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/vendor/inventory/reorder-suggestions",
+        "purpose": "Get reorder suggestions",
+        "response": "Array of reorder recommendations"
+      },
+      {
+        "method": "POST",
+        "url": "/api/vendor/inventory/bulk-stock-update",
+        "purpose": "Bulk update stock levels",
+        "body": {
+          "updates": [
+            {
+              "productId": "string",
+              "quantity": "number",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      {
+        "method": "PUT",
+        "url": "/api/vendor/inventory/thresholds",
+        "purpose": "Update stock thresholds",
+        "body": {
+          "productId": "string",
+          "lowStockThreshold": "number",
+          "optimalStock": "number"
+        }
+      }
+    ],
+
+    "serviceMethods": [
+      {
+        "name": "getInventoryData",
+        "implementation": "async getInventoryData(vendorId, productId) {\n  try {\n    const response = await apiClient.get(`/vendor/products/${productId}/inventory`, {\n      params: { vendorId }\n    });\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+      },
+      {
+        "name": "updateStock",
+        "implementation": "async updateStock(vendorId, productId, quantity, type, reason) {\n  try {\n    const response = await apiClient.post('/vendor/inventory/stock-update', {\n      productId,\n      quantity,\n      type,\n      reason\n    }, {\n      params: { vendorId }\n    });\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+      },
+      {
+        "name": "getInventoryAlerts",
+        "implementation": "async getInventoryAlerts(vendorId, filters = {}) {\n  try {\n    const response = await apiClient.get('/vendor/inventory/alerts', {\n      params: {\n        vendorId,\n        ...filters\n      }\n    });\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+      }
+    ]
+  },
+
+  "stateManagement": {
+    "inventoryState": {
+      "inventoryData": "object - inventory data by product ID",
+      "alerts": "array - current inventory alerts",
+      "reorderSuggestions": "array - reorder recommendations",
+      "stockUpdateLoading": "object - loading states for stock updates",
+      "alertsVisible": "boolean - alerts panel visibility",
+      "selectedProducts": "array - products for bulk stock update"
+    },
+
+    "customHook": {
+      "name": "useInventoryManagement",
+      "implementation": "export const useInventoryManagement = (vendorId) => {\n  const [inventoryData, setInventoryData] = useState({});\n  const [alerts, setAlerts] = useState([]);\n  const [reorderSuggestions, setReorderSuggestions] = useState([]);\n  const [loading, setLoading] = useState(false);\n  \n  const getStockLevel = (currentStock, lowThreshold, optimalStock) => {\n    if (currentStock <= 0) return 'out';\n    if (currentStock <= lowThreshold) return 'low';\n    if (currentStock > optimalStock * 1.5) return 'over';\n    if (currentStock <= optimalStock) return 'medium';\n    return 'high';\n  };\n  \n  const updateProductStock = async (productId, quantity, type, reason) => {\n    setLoading(true);\n    try {\n      const result = await vendorService.updateStock(vendorId, productId, quantity, type, reason);\n      if (result.success) {\n        // Update local inventory data\n        setInventoryData(prev => ({\n          ...prev,\n          [productId]: {\n            ...prev[productId],\n            currentStock: result.data.newStock,\n            lastUpdate: new Date()\n          }\n        }));\n        // Refresh alerts\n        loadAlerts();\n      }\n      return result;\n    } catch (error) {\n      return { success: false, error: error.message };\n    } finally {\n      setLoading(false);\n    }\n  };\n  \n  const loadAlerts = useCallback(async () => {\n    const result = await vendorService.getInventoryAlerts(vendorId);\n    if (result.success) {\n      setAlerts(result.data);\n    }\n  }, [vendorId]);\n  \n  const acknowledgeAlert = async (alertId) => {\n    // Implementation for acknowledging alerts\n  };\n  \n  return {\n    inventoryData,\n    alerts,\n    reorderSuggestions,\n    loading,\n    getStockLevel,\n    updateProductStock,\n    loadAlerts,\n    acknowledgeAlert\n  };\n};"
+    }
+  },
+
+  "calculationLogic": {
+    "reorderPoint": {
+      "formula": "reorderPoint = (averageDailySales * leadTimeDays) + safetyStock",
+      "factors": [
+        "Average daily sales over last 30 days",
+        "Lead time for restocking",
+        "Safety stock buffer",
+        "Seasonal variations"
+      ]
+    },
+
+    "optimalStock": {
+      "formula": "optimalStock = reorderPoint + economicOrderQuantity",
+      "factors": [
+        "Storage costs",
+        "Ordering costs",
+        "Sales velocity",
+        "Shelf life (if applicable)"
+      ]
+    },
+
+    "salesVelocity": {
+      "daily": "total sales / days in period",
+      "weekly": "total sales / weeks in period",
+      "monthly": "total sales / months in period",
+      "trending": "current period vs previous period"
+    },
+
+    "turnoverRate": {
+      "formula": "turnoverRate = cost of goods sold / average inventory value",
+      "period": "calculated over 12 months",
+      "benchmark": "compare to industry standards"
+    }
+  },
+
+  "notifications": {
+    "alertTypes": [
+      {
+        "type": "low_stock",
+        "title": "Low Stock Alert",
+        "message": "{productName} is running low ({currentStock} remaining)",
+        "action": "Reorder Now"
+      },
+      {
+        "type": "out_of_stock",
+        "title": "Out of Stock",
+        "message": "{productName} is out of stock",
+        "action": "Restock Immediately"
+      },
+      {
+        "type": "overstock",
+        "title": "Overstock Warning",
+        "message": "{productName} may be overstocked ({currentStock} units)",
+        "action": "Review Ordering"
+      },
+      {
+        "type": "reorder_suggestion",
+        "title": "Reorder Recommendation",
+        "message": "Consider reordering {suggestedQuantity} units of {productName}",
+        "action": "Create Order"
+      }
+    ],
+
+    "deliveryMethods": [
+      "In-app notifications",
+      "Email alerts",
+      "Dashboard badges",
+      "Mobile push notifications"
+    ]
+  },
+
+  "testing": {
+    "functionality": [
+      "Stock levels calculate correctly",
+      "Alerts trigger at proper thresholds",
+      "Stock updates work accurately",
+      "Reorder suggestions are reasonable",
+      "Bulk stock updates process correctly",
+      "Stock history tracks changes properly"
+    ],
+
+    "ui": [
+      "Stock indicators display correct colors",
+      "Alerts are clearly visible",
+      "Quick stock update works smoothly",
+      "Charts render stock data accurately",
+      "Mobile responsive design functions well"
+    ],
+
+    "performance": [
+      "Large inventories don't slow down UI",
+      "Real-time updates are responsive",
+      "Stock calculations are fast",
+      "Bulk operations complete efficiently"
+    ],
+
+    "edge_cases": [
+      "Products with no stock history",
+      "Products with irregular sales patterns",
+      "Products with seasonal variations",
+      "Products with very high or low stock levels"
+    ]
+  },
+
+  "acceptanceCriteria": [
+    "✅ Stock level indicators show correct status and colors",
+    "✅ Low stock alerts appear when thresholds are reached",
+    "✅ Quick stock update functionality works from product cards",
+    "✅ Stock history charts display movement over time",
+    "✅ Reorder suggestions provide helpful recommendations",
+    "✅ Bulk stock updates work for multiple products",
+    "✅ Alert notifications are clear and actionable",
+    "✅ Stock calculations are accurate and up-to-date",
+    "✅ Inventory data loads efficiently",
+    "✅ Mobile interface works well for inventory management"
+  ],
+
+  "notes": [
+    "Consider integration with external inventory management systems",
+    "Add barcode scanning capability for stock updates",
+    "Implement inventory forecasting based on historical data",
+    "Add support for product bundles and kits",
+    "Consider adding automatic reordering functionality",
+    "Test with products that have complex variant structures"
+  ]
+} 

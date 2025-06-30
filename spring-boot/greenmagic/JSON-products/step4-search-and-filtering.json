@@ -1,0 +1,522 @@
+{
+    "step": 4,
+    "title": "Advanced Search and Filtering Implementation",
+    "description": "Replace basic search with comprehensive search and filtering capabilities",
+    "priority": "MEDIUM",
+    "estimatedTime": "3-4 days",
+    "dependencies": ["step1-product-detail-modal", "step2-enhanced-product-cards"],
+    
+    "files": {
+      "modify": [
+        {
+          "path": "frontend/src/pages/vendor/VendorProducts.jsx",
+          "changes": "Replace basic search with advanced search component"
+        },
+        {
+          "path": "frontend/src/services/vendorService.js",
+          "changes": "Add advanced search and filtering API methods"
+        }
+      ],
+      "create": [
+        {
+          "path": "frontend/src/components/search/AdvancedSearch.jsx",
+          "type": "React Component",
+          "purpose": "Advanced search component with autocomplete"
+        },
+        {
+          "path": "frontend/src/components/search/FilterPanel.jsx",
+          "type": "React Component",
+          "purpose": "Comprehensive filtering interface"
+        },
+        {
+          "path": "frontend/src/components/search/FilterPresets.jsx",
+          "type": "React Component",
+          "purpose": "Saved filter combinations"
+        },
+        {
+          "path": "frontend/src/components/search/SearchSuggestions.jsx",
+          "type": "React Component",
+          "purpose": "Search suggestions and autocomplete"
+        },
+        {
+          "path": "frontend/src/hooks/useAdvancedSearch.js",
+          "type": "Custom Hook",
+          "purpose": "Hook for managing search and filter state"
+        },
+        {
+          "path": "frontend/src/utils/searchUtils.js",
+          "type": "Utility",
+          "purpose": "Search and filter utility functions"
+        }
+      ]
+    },
+  
+    "implementation": {
+      "searchCapabilities": {
+        "realTimeSearch": "Search as user types with debouncing",
+        "multiFieldSearch": "Search across name, SKU, description, tags",
+        "fuzzyMatching": "Handle typos and partial matches",
+        "searchSuggestions": "Autocomplete based on product data",
+        "searchHistory": "Remember recent searches",
+        "searchHighlighting": "Highlight matching terms in results"
+      },
+  
+      "filterCategories": [
+        {
+          "name": "Status",
+          "type": "multiSelect",
+          "options": ["Active", "Inactive", "Draft", "Out of Stock"],
+          "defaultOpen": true
+        },
+        {
+          "name": "Price Range",
+          "type": "range",
+          "min": 0,
+          "max": "dynamic",
+          "step": 1,
+          "format": "currency"
+        },
+        {
+          "name": "Stock Level",
+          "type": "multiSelect",
+          "options": ["High Stock", "Medium Stock", "Low Stock", "Out of Stock"],
+          "criteria": {
+            "high": "stock > lowThreshold * 2",
+            "medium": "stock > lowThreshold",
+            "low": "stock <= lowThreshold && stock > 0",
+            "out": "stock <= 0"
+          }
+        },
+        {
+          "name": "Categories",
+          "type": "hierarchical",
+          "source": "categories API",
+          "multiSelect": true,
+          "searchable": true
+        },
+        {
+          "name": "Date Created",
+          "type": "dateRange",
+          "presets": ["Today", "This Week", "This Month", "Last 30 Days", "Custom"]
+        },
+        {
+          "name": "Date Modified",
+          "type": "dateRange",
+          "presets": ["Today", "This Week", "This Month", "Last 30 Days", "Custom"]
+        },
+        {
+          "name": "Sales Performance",
+          "type": "multiSelect",
+          "options": ["High Performers", "Average Performers", "Low Performers", "No Sales"],
+          "requiresAnalytics": true
+        },
+        {
+          "name": "Customer Rating",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 0.5,
+          "format": "stars"
+        },
+        {
+          "name": "Tags",
+          "type": "multiSelect",
+          "source": "tags API",
+          "searchable": true,
+          "allowCustom": true
+        }
+      ],
+  
+      "sortOptions": [
+        {
+          "label": "Recently Added",
+          "value": "createdAt_desc",
+          "default": true
+        },
+        {
+          "label": "Recently Modified",
+          "value": "updatedAt_desc"
+        },
+        {
+          "label": "Name A-Z",
+          "value": "name_asc"
+        },
+        {
+          "label": "Name Z-A",
+          "value": "name_desc"
+        },
+        {
+          "label": "Price Low to High",
+          "value": "price_asc"
+        },
+        {
+          "label": "Price High to Low",
+          "value": "price_desc"
+        },
+        {
+          "label": "Stock Level",
+          "value": "stock_desc"
+        },
+        {
+          "label": "Best Selling",
+          "value": "salesCount_desc",
+          "requiresAnalytics": true
+        },
+        {
+          "label": "Highest Rated",
+          "value": "rating_desc",
+          "requiresAnalytics": true
+        }
+      ],
+  
+      "filterPresets": [
+        {
+          "name": "Active Products",
+          "filters": {
+            "status": ["Active"],
+            "stockLevel": ["High Stock", "Medium Stock", "Low Stock"]
+          },
+          "isDefault": true
+        },
+        {
+          "name": "Low Stock Alert",
+          "filters": {
+            "status": ["Active"],
+            "stockLevel": ["Low Stock"]
+          },
+          "badge": "warning"
+        },
+        {
+          "name": "Out of Stock",
+          "filters": {
+            "status": ["Active"],
+            "stockLevel": ["Out of Stock"]
+          },
+          "badge": "error"
+        },
+        {
+          "name": "Draft Products",
+          "filters": {
+            "status": ["Draft"]
+          }
+        },
+        {
+          "name": "High Value Products",
+          "filters": {
+            "priceRange": {
+              "min": 1000
+            }
+          }
+        },
+        {
+          "name": "Recent Additions",
+          "filters": {
+            "dateCreated": "last_7_days"
+          },
+          "badge": "new"
+        }
+      ]
+    },
+  
+    "uiComponents": {
+      "searchInterface": {
+        "container": "relative flex-1 max-w-2xl",
+        "inputWrapper": "relative rounded-md shadow-sm",
+        "input": "block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-lg",
+        "searchIcon": "absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400",
+        "clearButton": "absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-gray-600 cursor-pointer",
+        "placeholder": "Search products by name, SKU, description..."
+      },
+  
+      "searchSuggestions": {
+        "container": "absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none",
+        "suggestion": "cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-gray-50",
+        "suggestionText": "block truncate",
+        "suggestionType": "text-xs text-gray-500 mt-1",
+        "noResults": "relative cursor-default select-none py-2 pl-3 pr-9 text-gray-700"
+      },
+  
+      "filterPanel": {
+        "container": "bg-white rounded-lg shadow-sm border border-gray-200 p-6",
+        "header": "flex items-center justify-between mb-6",
+        "title": "text-lg font-semibold text-gray-900",
+        "clearButton": "text-sm text-blue-600 hover:text-blue-700 font-medium",
+        "filterGrid": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+      },
+  
+      "filterSection": {
+        "container": "space-y-3",
+        "label": "text-sm font-medium text-gray-700 mb-2",
+        "content": "space-y-2"
+      },
+  
+      "filterTypes": {
+        "multiSelect": {
+          "container": "space-y-2",
+          "option": "flex items-center",
+          "checkbox": "h-4 w-4 text-blue-600 rounded border-gray-300",
+          "label": "ml-2 text-sm text-gray-700"
+        },
+        
+        "range": {
+          "container": "space-y-3",
+          "inputs": "flex items-center space-x-2",
+          "input": "flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm",
+          "separator": "text-gray-500",
+          "slider": "w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+        },
+        
+        "dateRange": {
+          "container": "space-y-3",
+          "presets": "flex flex-wrap gap-2 mb-3",
+          "preset": "px-3 py-1 text-xs rounded-full border border-gray-300 hover:bg-gray-50 cursor-pointer",
+          "activePreset": "bg-blue-100 border-blue-300 text-blue-700",
+          "customInputs": "grid grid-cols-2 gap-2"
+        }
+      },
+  
+      "filterPresets": {
+        "container": "flex flex-wrap gap-2 mb-6",
+        "preset": "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium cursor-pointer transition-colors",
+        "default": "bg-gray-100 text-gray-800 hover:bg-gray-200",
+        "active": "bg-blue-100 text-blue-800 hover:bg-blue-200",
+        "badge": "ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium"
+      },
+  
+      "activeFilters": {
+        "container": "flex flex-wrap gap-2 mb-4",
+        "filter": "inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800",
+        "removeButton": "ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200"
+      }
+    },
+  
+    "dataStructure": {
+      "searchQuery": {
+        "text": "string - search text",
+        "fields": "array - fields to search in",
+        "fuzzy": "boolean - enable fuzzy matching",
+        "suggestions": "boolean - return suggestions"
+      },
+  
+      "filterState": {
+        "status": "array",
+        "priceRange": {
+          "min": "number",
+          "max": "number"
+        },
+        "stockLevel": "array",
+        "categories": "array",
+        "dateCreated": {
+          "start": "date",
+          "end": "date"
+        },
+        "dateModified": {
+          "start": "date",
+          "end": "date"
+        },
+        "salesPerformance": "array",
+        "rating": {
+          "min": "number",
+          "max": "number"
+        },
+        "tags": "array"
+      },
+  
+      "searchResult": {
+        "products": "array",
+        "totalCount": "number",
+        "facets": {
+          "categories": "array with counts",
+          "tags": "array with counts",
+          "priceRanges": "array with counts"
+        },
+        "suggestions": "array",
+        "searchTime": "number (ms)"
+      }
+    },
+  
+    "apiIntegration": {
+      "endpoints": [
+        {
+          "method": "GET",
+          "url": "/api/vendor/products/search",
+          "purpose": "Advanced product search",
+          "params": {
+            "q": "search query",
+            "filters": "JSON object with filter criteria",
+            "sort": "sort option",
+            "page": "page number",
+            "size": "page size",
+            "facets": "boolean - include facet counts"
+          }
+        },
+        {
+          "method": "GET",
+          "url": "/api/vendor/products/suggestions",
+          "purpose": "Search suggestions",
+          "params": {
+            "q": "partial search query",
+            "limit": "number of suggestions"
+          }
+        },
+        {
+          "method": "GET",
+          "url": "/api/vendor/products/facets",
+          "purpose": "Get available filter options",
+          "response": "Available categories, tags, price ranges, etc."
+        },
+        {
+          "method": "POST",
+          "url": "/api/vendor/search/presets",
+          "purpose": "Save custom filter preset",
+          "body": "{ name: 'preset name', filters: {} }"
+        },
+        {
+          "method": "GET",
+          "url": "/api/vendor/search/presets",
+          "purpose": "Get saved filter presets",
+          "response": "Array of saved presets"
+        }
+      ],
+  
+      "serviceMethods": [
+        {
+          "name": "searchProducts",
+          "implementation": "async searchProducts(vendorId, searchParams) {\n  try {\n    const response = await apiClient.get('/vendor/products/search', {\n      params: {\n        vendorId,\n        ...searchParams\n      }\n    });\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+        },
+        {
+          "name": "getSearchSuggestions",
+          "implementation": "async getSearchSuggestions(vendorId, query) {\n  try {\n    const response = await apiClient.get('/vendor/products/suggestions', {\n      params: {\n        vendorId,\n        q: query,\n        limit: 10\n      }\n    });\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+        },
+        {
+          "name": "getFilterFacets",
+          "implementation": "async getFilterFacets(vendorId) {\n  try {\n    const response = await apiClient.get('/vendor/products/facets', {\n      params: { vendorId }\n    });\n    return { success: true, data: response.data };\n  } catch (error) {\n    return { success: false, error: error.message };\n  }\n}"
+        }
+      ]
+    },
+  
+    "stateManagement": {
+      "searchState": {
+        "searchQuery": "string - current search text",
+        "filters": "object - active filter values",
+        "sortBy": "string - current sort option",
+        "suggestions": "array - search suggestions",
+        "showSuggestions": "boolean - suggestions visibility",
+        "searchHistory": "array - recent searches",
+        "activePreset": "string - active filter preset",
+        "facets": "object - available filter options"
+      },
+  
+      "customHook": {
+        "name": "useAdvancedSearch",
+        "implementation": "export const useAdvancedSearch = () => {\n  const [searchQuery, setSearchQuery] = useState('');\n  const [filters, setFilters] = useState({});\n  const [sortBy, setSortBy] = useState('createdAt_desc');\n  const [suggestions, setSuggestions] = useState([]);\n  const [showSuggestions, setShowSuggestions] = useState(false);\n  const [searchHistory, setSearchHistory] = useState([]);\n  const [facets, setFacets] = useState({});\n  \n  const debouncedSearch = useCallback(\n    debounce((query) => {\n      if (query.length > 2) {\n        loadSuggestions(query);\n      }\n    }, 300),\n    []\n  );\n  \n  const updateFilter = (filterKey, value) => {\n    setFilters(prev => ({\n      ...prev,\n      [filterKey]: value\n    }));\n  };\n  \n  const clearFilters = () => {\n    setFilters({});\n  };\n  \n  const applyPreset = (preset) => {\n    setFilters(preset.filters);\n  };\n  \n  return {\n    searchQuery,\n    filters,\n    sortBy,\n    suggestions,\n    showSuggestions,\n    searchHistory,\n    facets,\n    setSearchQuery,\n    updateFilter,\n    clearFilters,\n    setSortBy,\n    applyPreset,\n    debouncedSearch\n  };\n};"
+      }
+    },
+  
+    "searchOptimization": {
+      "debouncing": {
+        "searchInput": "300ms delay for search queries",
+        "filterChanges": "500ms delay for filter updates",
+        "suggestions": "200ms delay for suggestion requests"
+      },
+  
+      "caching": {
+        "searchResults": "Cache results for 5 minutes",
+        "suggestions": "Cache suggestions for 10 minutes",
+        "facets": "Cache facet data for 30 minutes"
+      },
+  
+      "performance": {
+        "virtualScrolling": "For large result sets",
+        "lazyLoading": "Load additional results on scroll",
+        "indexedSearch": "Use search indices for fast queries"
+      }
+    },
+  
+    "userExperience": {
+      "searchFlow": [
+        "User starts typing in search box",
+        "Suggestions appear after 2+ characters",
+        "User can select suggestion or continue typing",
+        "Search executes automatically after typing stops",
+        "Results update in real-time",
+        "User can refine with filters",
+        "Search state persists across navigation"
+      ],
+  
+      "filterFlow": [
+        "User opens filter panel",
+        "Available options load dynamically",
+        "User selects filter criteria",
+        "Results update immediately",
+        "Active filters show as badges",
+        "User can save filter combination as preset",
+        "Filters persist in URL for sharing"
+      ],
+  
+      "keyboardShortcuts": {
+        "focusSearch": "Ctrl+F or /",
+        "clearSearch": "Escape",
+        "nextSuggestion": "Arrow Down",
+        "previousSuggestion": "Arrow Up",
+        "selectSuggestion": "Enter",
+        "openFilters": "Ctrl+Shift+F"
+      }
+    },
+  
+    "testing": {
+      "functionality": [
+        "Search returns relevant results",
+        "Filters work correctly individually and combined",
+        "Suggestions are accurate and helpful",
+        "Sort options work properly",
+        "Filter presets save and load correctly",
+        "Search history functions properly"
+      ],
+  
+      "performance": [
+        "Search responds quickly (< 500ms)",
+        "Large result sets don't slow down UI",
+        "Debouncing prevents excessive API calls",
+        "Caching improves repeat search performance"
+      ],
+  
+      "usability": [
+        "Search interface is intuitive",
+        "Filter options are clearly labeled",
+        "Active filters are easily visible",
+        "Clear and reset functions work well",
+        "Mobile experience is smooth"
+      ],
+  
+      "edge_cases": [
+        "Empty search results",
+        "Special characters in search",
+        "Very long search queries",
+        "Network errors during search",
+        "Conflicting filter combinations"
+      ]
+    },
+  
+    "acceptanceCriteria": [
+      "✅ Real-time search with debouncing works smoothly",
+      "✅ Search suggestions appear and are selectable",
+      "✅ All filter types function correctly",
+      "✅ Filter combinations work as expected",
+      "✅ Sort options change result ordering",
+      "✅ Filter presets save and load properly",
+      "✅ Active filters display as removable badges",
+      "✅ Search and filters work together seamlessly",
+      "✅ Performance is acceptable with large datasets",
+      "✅ Mobile responsive design works well"
+    ],
+  
+    "notes": [
+      "Implement proper URL state management for shareable searches",
+      "Consider adding advanced search operators (AND, OR, NOT)",
+      "Add analytics tracking for search patterns",
+      "Implement search result highlighting",
+      "Consider adding saved searches functionality",
+      "Test with various data sizes and edge cases"
+    ]
+  }

@@ -128,34 +128,31 @@ const vendorService = {
   },
 
   async createProduct(vendorId, productData) {
-    // Transform the form data to match the backend DTO structure
-    const transformedData = {
-      ...productData,
-      // Ensure arrays are properly structured
-      bulkPricingTiers: productData.bulkPricingTiers || [],
-      galleryImages: productData.galleryImages || [],
-      imageAltTags: productData.imageAltTags || [],
-      keyFeatures: productData.keyFeatures || [],
-      productHighlights: productData.productHighlights || [],
-      allergenInfo: productData.allergenInfo || [],
-      qualityCertifications: productData.qualityCertifications || [],
-      returnConditions: productData.returnConditions || [],
-      searchKeywords: productData.searchKeywords || [],
+    try {
+      const response = await apiClient.post(`/vendor/products`, productData, {
+        params: { vendorId }
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      // Handle 409 Conflict (URL slug exists) specifically
+      if (error.response?.status === 409) {
+        return {
+          success: false,
+          message: error.response.data.message || 'A product with this name already exists. Please try a different product name or provide a custom URL slug.'
+        };
+      }
       
-      // Transform nutritional info if present
-      nutritionalInfo: productData.nutritionalInfo?.servingSize ? productData.nutritionalInfo : null,
+      // Handle other errors
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error 
+        || error.message 
+        || 'Failed to create product';
       
-      // Transform organic certification if present
-      organicCertification: productData.organicCertification?.certificateNumber ? productData.organicCertification : null,
-      
-      // Ensure dimensions object
-      dimensions: productData.dimensions?.length ? productData.dimensions : null
-    };
-
-    const response = await apiClient.post(`/vendor/products`, transformedData, {
-      params: { vendorId }
-    });
-    return response.data;
+      return {
+        success: false,
+        message: errorMessage
+      };
+    }
   },
 
   async updateProduct(vendorId, productId, productData) {

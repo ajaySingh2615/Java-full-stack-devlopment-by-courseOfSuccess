@@ -729,6 +729,14 @@ public class VendorManagementService {
                 .orElseThrow(() -> new RuntimeException("Vendor not found with ID: " + vendorId));
             System.out.println("=== DEBUG: Vendor found: " + vendor.getName());
 
+            // Additional validations for ACTIVE status
+            if ("ACTIVE".equals(request.getStatus())) {
+                List<String> errors = validateProductForPublishing(request);
+                if (!errors.isEmpty()) {
+                    throw new IllegalArgumentException("Please fix the following issues before publishing:\n" + String.join("\n", errors));
+                }
+            }
+
             // Generate URL slug if not provided
             String urlSlug = request.getUrlSlug();
             if (urlSlug == null || urlSlug.isEmpty()) {
@@ -782,12 +790,78 @@ public class VendorManagementService {
             
         } catch (IllegalArgumentException e) {
             System.err.println("=== ERROR in createProductFromDto: " + e.getMessage());
-            throw e; // Re-throw to preserve the specific error message
+            throw e;
         } catch (Exception e) {
             System.err.println("=== ERROR in createProductFromDto: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Failed to create product: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Validate all required fields for publishing a product
+     */
+    private List<String> validateProductForPublishing(ProductCreateRequestDto request) {
+        List<String> errors = new ArrayList<>();
+
+        // Basic Information
+        if (request.getProductTitle() == null || request.getProductTitle().trim().length() < 10) {
+            errors.add("Product title must be at least 10 characters long");
+        }
+        if (request.getCategoryId() == null) {
+            errors.add("Category is required");
+        }
+        if (request.getBrandName() == null || request.getBrandName().trim().isEmpty()) {
+            errors.add("Brand name is required");
+        }
+
+        // Pricing
+        if (request.getMrp() == null || request.getMrp().compareTo(BigDecimal.ONE) < 0) {
+            errors.add("MRP must be at least ₹1");
+        }
+        if (request.getSellingPrice() == null || request.getSellingPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            errors.add("Selling price must be greater than 0");
+        }
+        if (request.getMrp() != null && request.getSellingPrice() != null 
+            && request.getSellingPrice().compareTo(request.getMrp()) > 0) {
+            errors.add("Selling price cannot be greater than MRP");
+        }
+
+        // Inventory
+        if (request.getStockQuantity() == null || request.getStockQuantity() < 0) {
+            errors.add("Stock quantity cannot be negative");
+        }
+        if (request.getUnitOfMeasurement() == null || request.getUnitOfMeasurement().trim().isEmpty()) {
+            errors.add("Unit of measurement is required");
+        }
+
+        // Media
+        if (request.getMainImageUrl() == null || request.getMainImageUrl().trim().isEmpty()) {
+            errors.add("Main product image is required");
+        }
+
+        // Shipping
+        if (request.getWeightForShipping() == null || request.getWeightForShipping().compareTo(BigDecimal.ZERO) <= 0) {
+            errors.add("Shipping weight must be greater than 0");
+        }
+        if (request.getDeliveryTimeEstimate() == null || request.getDeliveryTimeEstimate().trim().isEmpty()) {
+            errors.add("Delivery time estimate is required");
+        }
+
+        // Descriptions
+        if (request.getShortDescription() == null || request.getShortDescription().trim().length() < 50) {
+            errors.add("Short description must be at least 50 characters");
+        }
+        if (request.getDetailedDescription() == null || request.getDetailedDescription().trim().length() < 200) {
+            errors.add("Detailed description must be at least 200 characters");
+        }
+
+        // Certifications
+        if (request.getFssaiLicense() == null || !request.getFssaiLicense().matches("^[0-9]{14}$")) {
+            errors.add("Valid 14-digit FSSAI license is required");
+        }
+
+        return errors;
     }
 
     /**

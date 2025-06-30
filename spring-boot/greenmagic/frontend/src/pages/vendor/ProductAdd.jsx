@@ -14,7 +14,8 @@ import {
   FiTruck,
   FiFileText,
   FiShield,
-  FiSearch
+  FiSearch,
+  FiAlertCircle
 } from 'react-icons/fi';
 
 /**
@@ -333,40 +334,105 @@ const ProductAdd = () => {
   };
 
   const handleSubmit = async (isDraft = false) => {
-    if (!isDraft && !validateStep(currentStep)) return;
-
     try {
       setLoading(true);
-      
-      const productData = transformFormData({
+      setErrors({});
+
+      // If publishing (not draft), validate all fields
+      if (!isDraft) {
+        const allErrors = {};
+        
+        // Basic Information
+        if (!formData.productTitle || formData.productTitle.length < 10) {
+          allErrors.productTitle = 'Product title must be at least 10 characters';
+        }
+        if (!formData.categoryId) {
+          allErrors.categoryId = 'Category is required';
+        }
+        if (!formData.brandName && !formData.customBrandName) {
+          allErrors.brandName = 'Brand name is required';
+        }
+
+        // Pricing
+        if (!formData.mrp || parseFloat(formData.mrp) < 1) {
+          allErrors.mrp = 'MRP must be at least ₹1';
+        }
+        if (!formData.sellingPrice || parseFloat(formData.sellingPrice) <= 0) {
+          allErrors.sellingPrice = 'Selling price must be greater than 0';
+        }
+        if (parseFloat(formData.sellingPrice) > parseFloat(formData.mrp)) {
+          allErrors.sellingPrice = 'Selling price cannot be greater than MRP';
+        }
+
+        // Inventory
+        if (!formData.stockQuantity || parseInt(formData.stockQuantity) < 0) {
+          allErrors.stockQuantity = 'Stock quantity cannot be negative';
+        }
+        if (!formData.unitOfMeasurement) {
+          allErrors.unitOfMeasurement = 'Unit of measurement is required';
+        }
+
+        // Media
+        if (!formData.mainImageUrl) {
+          allErrors.mainImageUrl = 'Main product image is required';
+        }
+
+        // Shipping
+        if (!formData.weightForShipping || parseFloat(formData.weightForShipping) <= 0) {
+          allErrors.weightForShipping = 'Shipping weight must be greater than 0';
+        }
+        if (!formData.deliveryTimeEstimate) {
+          allErrors.deliveryTimeEstimate = 'Delivery time estimate is required';
+        }
+
+        // Descriptions
+        if (!formData.shortDescription || formData.shortDescription.length < 50) {
+          allErrors.shortDescription = 'Short description must be at least 50 characters';
+        }
+        if (!formData.detailedDescription || formData.detailedDescription.length < 200) {
+          allErrors.detailedDescription = 'Detailed description must be at least 200 characters';
+        }
+
+        // Certifications
+        if (!formData.fssaiLicense || !formData.fssaiLicense.match(/^[0-9]{14}$/)) {
+          allErrors.fssaiLicense = 'Valid 14-digit FSSAI license is required';
+        }
+
+        // If there are any errors, show them and stop submission
+        if (Object.keys(allErrors).length > 0) {
+          setErrors(allErrors);
+          setLoading(false);
+          // Scroll to the first error message
+          const firstErrorElement = document.querySelector('.text-red-600');
+          if (firstErrorElement) {
+            firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          return;
+        }
+      }
+
+      // Set status based on isDraft
+      const finalFormData = {
         ...formData,
         status: isDraft ? 'DRAFT' : 'ACTIVE'
-      });
+      };
 
-      console.log('Raw form data before transform:', formData);
-      console.log('Submitting product data:', productData);
+      // Transform data for API
+      const transformedData = transformFormData(finalFormData);
 
-      const response = await vendorService.createProduct(vendorId, productData);
+      // Submit to API
+      const response = await vendorService.createProduct(vendorId, transformedData);
       
       if (response.success) {
         navigate('/vendor/products', {
-          state: { message: 'Product created successfully!' }
+          state: { message: `Product ${isDraft ? 'saved as draft' : 'published'} successfully` }
         });
+      } else {
+        setErrors({ submit: response.message || 'Failed to create product' });
       }
     } catch (err) {
       console.error('Error creating product:', err);
-      console.error('Error response:', err.response?.data);
-      
-      let errorMessage = 'Failed to create product. Please try again.';
-      if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.response?.data?.errors) {
-        // Handle validation errors
-        const validationErrors = err.response.data.errors;
-        errorMessage = Object.values(validationErrors).join(', ');
-      }
-      
-      setErrors({ submit: errorMessage });
+      setErrors({ submit: err.message || 'An unexpected error occurred' });
     } finally {
       setLoading(false);
     }
@@ -1199,7 +1265,7 @@ const ProductAdd = () => {
                  <button
                    type="button"
                    onClick={() => handleArrayRemove('keyFeatures', index)}
-                   className="p-2 text-red-600 hover:text-red-800"
+                   className="p-2 text-red-600 hover:bg-red-50 rounded-md"
                  >
                    <FiMinus className="h-4 w-4" />
                  </button>
@@ -1376,81 +1442,15 @@ const ProductAdd = () => {
 
    // SEO Optimization (Section 8)
    const renderSeoOptimization = () => (
-     <div className="space-y-6">
-       <div className="grid grid-cols-1 gap-6">
-         <div>
+     <div className="space-y-8">
+       <div className="bg-white p-6 rounded-lg border border-gray-200">
+         <h3 className="text-lg font-medium text-gray-900 mb-4">SEO Optimization</h3>
+         
+         {/* URL Slug */}
+         <div className="mb-6">
            <label className="block text-sm font-medium text-gray-700 mb-2">
-             SEO Title (Max 60 characters)
-           </label>
-           <div className="relative">
-             <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-             <input
-               type="text"
-               value={formData.metaTitle}
-               onChange={(e) => handleInputChange('metaTitle', e.target.value)}
-               className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-               placeholder="Title shown in search results"
-               maxLength={60}
-             />
-           </div>
-           <p className="mt-1 text-sm text-gray-500">{formData.metaTitle.length}/60 characters</p>
-         </div>
-
-         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-2">
-             SEO Description (Max 160 characters)
-           </label>
-           <textarea
-             value={formData.metaDescription}
-             onChange={(e) => handleInputChange('metaDescription', e.target.value)}
-             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-             rows={3}
-             placeholder="Description shown in search results"
-             maxLength={160}
-           />
-           <p className="mt-1 text-sm text-gray-500">{formData.metaDescription.length}/160 characters</p>
-         </div>
-
-         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-2">
-             Search Keywords (Max 20)
-           </label>
-           <div className="space-y-2">
-             {formData.searchKeywords.map((keyword, index) => (
-               <div key={index} className="flex items-center space-x-2">
-                 <input
-                   type="text"
-                   value={keyword}
-                   onChange={(e) => handleArrayUpdate('searchKeywords', index, e.target.value)}
-                   className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                   placeholder="e.g., organic rice, basmati, premium quality"
-                 />
-                 <button
-                   type="button"
-                   onClick={() => handleArrayRemove('searchKeywords', index)}
-                   className="p-2 text-red-600 hover:text-red-800"
-                 >
-                   <FiMinus className="h-4 w-4" />
-                 </button>
-               </div>
-             ))}
-             {formData.searchKeywords.length < 20 && (
-               <button
-                 type="button"
-                 onClick={() => handleArrayAdd('searchKeywords', '')}
-                 className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-               >
-                 <FiPlus className="mr-2 h-4 w-4" />
-                 Add Keyword
-               </button>
-             )}
-           </div>
-           <p className="mt-1 text-sm text-gray-500">Keywords customers might use to find your product</p>
-         </div>
-
-         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-2">
-             Product URL Slug
+             Custom URL Slug
+             <span className="ml-1 text-gray-400">(Optional)</span>
            </label>
            <div className="flex items-center">
              <span className="text-sm text-gray-500 mr-2">https://greenmagic.com/products/</span>
@@ -1459,11 +1459,92 @@ const ProductAdd = () => {
                value={formData.urlSlug}
                onChange={(e) => handleInputChange('urlSlug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'))}
                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-               placeholder="product-url-slug"
+               placeholder="your-custom-product-url"
                maxLength={100}
              />
            </div>
-           <p className="mt-1 text-sm text-gray-500">Clean URL for your product page (auto-generated from title)</p>
+           <p className="mt-2 text-sm text-gray-500">
+             By default, we'll generate a URL from your product title. You can provide a custom URL here if you want something different.
+             Use only lowercase letters, numbers, and hyphens.
+           </p>
+           {errors.urlSlug && (
+             <p className="mt-1 text-sm text-red-600">{errors.urlSlug}</p>
+           )}
+         </div>
+
+         {/* Meta Title */}
+         <div className="mb-6">
+           <label className="block text-sm font-medium text-gray-700 mb-2">
+             Meta Title
+             <span className="text-gray-400 ml-1">(Recommended)</span>
+           </label>
+           <input
+             type="text"
+             value={formData.metaTitle}
+             onChange={(e) => handleInputChange('metaTitle', e.target.value)}
+             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+             placeholder="Enter SEO title (max 60 characters)"
+             maxLength={60}
+           />
+           <p className="mt-1 text-sm text-gray-500">
+             {formData.metaTitle ? `${formData.metaTitle.length}/60 characters` : '0/60 characters'}
+           </p>
+         </div>
+
+         {/* Meta Description */}
+         <div className="mb-6">
+           <label className="block text-sm font-medium text-gray-700 mb-2">
+             Meta Description
+             <span className="text-gray-400 ml-1">(Recommended)</span>
+           </label>
+           <textarea
+             value={formData.metaDescription}
+             onChange={(e) => handleInputChange('metaDescription', e.target.value)}
+             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+             rows={3}
+             placeholder="Enter SEO description (max 160 characters)"
+             maxLength={160}
+           />
+           <p className="mt-1 text-sm text-gray-500">
+             {formData.metaDescription ? `${formData.metaDescription.length}/160 characters` : '0/160 characters'}
+           </p>
+         </div>
+
+         {/* Search Keywords */}
+         <div>
+           <label className="block text-sm font-medium text-gray-700 mb-2">
+             Search Keywords
+             <span className="text-gray-400 ml-1">(Optional)</span>
+           </label>
+           <div className="space-y-2">
+             {formData.searchKeywords.map((keyword, index) => (
+               <div key={index} className="flex items-center">
+                 <input
+                   type="text"
+                   value={keyword}
+                   onChange={(e) => handleArrayUpdate('searchKeywords', index, e.target.value)}
+                   className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                   placeholder="Enter a keyword"
+                 />
+                 <button
+                   type="button"
+                   onClick={() => handleArrayRemove('searchKeywords', index)}
+                   className="ml-2 p-2 text-red-600 hover:bg-red-50 rounded-md"
+                 >
+                   <FiMinus className="h-4 w-4" />
+                 </button>
+               </div>
+             ))}
+             <button
+               type="button"
+               onClick={() => handleArrayAdd('searchKeywords')}
+               className="flex items-center text-green-600 hover:text-green-700"
+             >
+               <FiPlus className="h-4 w-4 mr-1" />
+               Add Keyword
+             </button>
+           </div>
+           <p className="mt-2 text-sm text-gray-500">Add keywords to help customers find your product</p>
          </div>
        </div>
      </div>
@@ -1608,14 +1689,17 @@ const ProductAdd = () => {
           </button>
 
           <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
-            <button
-              type="button"
-              onClick={() => handleSubmit(true)}
-              disabled={loading}
-              className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:opacity-50 w-full sm:w-auto"
-            >
-              Save as Draft
-            </button>
+            {currentStep === totalSteps && (
+              <button
+                type="button"
+                onClick={() => handleSubmit(true)}
+                disabled={loading}
+                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:opacity-50 w-full sm:w-auto"
+              >
+                <FiSave className="mr-2 h-4 w-4 inline" />
+                Save as Draft
+              </button>
+            )}
 
             {currentStep < totalSteps ? (
               <button
@@ -1642,7 +1726,30 @@ const ProductAdd = () => {
         {/* Error Display */}
         {errors.submit && (
           <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-sm text-red-800">{errors.submit}</p>
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <FiAlertCircle className="h-5 w-5 text-red-400" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  {errors.submit.includes('URL slug') ? 'Product Name Already Exists' : 'Error'}
+                </h3>
+                <div className="mt-2 text-sm text-red-700">
+                  {errors.submit.includes('URL slug') ? (
+                    <div>
+                      <p>A product with this name already exists. You can:</p>
+                      <ul className="list-disc list-inside mt-2">
+                        <li>Use a different product name</li>
+                        <li>Add unique identifiers to your product name (e.g., size, brand, or variant)</li>
+                        <li>Provide a custom URL slug in the SEO section</li>
+                      </ul>
+                    </div>
+                  ) : (
+                    <p>{errors.submit}</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
         </div>

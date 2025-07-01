@@ -71,11 +71,18 @@ public class ProductUpdateRequestDto {
     private List<ProductVariantDto> variants;
 
     // Media Gallery
+    @Size(max = 255, message = "Main image URL must not exceed 255 characters")
+    private String mainImageUrl;
+
     private List<String> imageUrls;
-    private List<String> videoUrls;
+    
+    @Size(max = 255, message = "Video URL must not exceed 255 characters")
+    private String videoUrl;
+    
+    private List<String> imageAltTags;
 
     // Shipping & Logistics
-    private BigDecimal weight;
+    private BigDecimal weightForShipping;
     private ProductDimensions dimensions;
     private String shippingClass;
     private Boolean freeShipping;
@@ -85,9 +92,9 @@ public class ProductUpdateRequestDto {
     private String shortDescription;
 
     @Size(max = 2000, message = "Full description cannot exceed 2000 characters")
-    private String fullDescription;
+    private String detailedDescription;
 
-    private List<String> features;
+    private List<String> keyFeatures;
 
     // Certifications & Compliance
     private List<String> certifications;

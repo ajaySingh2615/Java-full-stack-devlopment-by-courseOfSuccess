@@ -1285,32 +1285,13 @@ public class VendorManagementService {
     // Helper methods for DTO mapping
     private void mapDtoToProduct(ProductCreateRequestDto dto, Product product) {
         try {
-            System.out.println("=== DEBUG: Starting mapDtoToProduct with ROBUST conversion");
-            
-            // ===========================
             // BASIC INFORMATION
             // ===========================
             product.setName(dto.getProductTitle());
             product.setSku(dto.getSkuCode());
-            product.setBrand(dto.getBrandName() != null ? dto.getBrandName() : dto.getCustomBrandName());
-            product.setSubcategoryId(dto.getSubcategoryId());
+            product.setBrand(dto.getBrandName());
+            product.setProductType(Product.ProductType.valueOf(dto.getProductType().toUpperCase()));
             
-            // Set category if provided
-            if (dto.getCategoryId() != null) {
-                Category category = categoryRepository.findById(dto.getCategoryId().longValue()).orElse(null);
-                product.setCategory(category);
-            }
-            
-            // Set product type
-            if (dto.getProductType() != null) {
-                try {
-                    product.setProductType(Product.ProductType.valueOf(dto.getProductType()));
-                } catch (IllegalArgumentException e) {
-                    product.setProductType(Product.ProductType.SIMPLE);
-                }
-            }
-
-            // ===========================
             // PRICING STRATEGY
             // ===========================
             product.setMrp(dto.getMrp());
@@ -1318,11 +1299,10 @@ public class VendorManagementService {
             product.setCostPrice(dto.getCostPrice());
             product.setOfferStartDate(dto.getOfferStartDate());
             product.setOfferEndDate(dto.getOfferEndDate());
-
+            
             // Handle bulk pricing tiers - ROBUST CONVERSION
             product.setBulkPricingTiers(convertBulkPricingTiers(dto.getBulkPricingTiers()));
 
-            // ===========================
             // INVENTORY MANAGEMENT
             // ===========================
             product.setQuantity(dto.getStockQuantity());
@@ -1333,60 +1313,32 @@ public class VendorManagementService {
             product.setTrackQuantity(dto.getTrackQuantity());
             product.setRestockDate(dto.getRestockDate());
 
-            // ===========================
             // MEDIA GALLERY
             // ===========================
+            // Map mainImageUrl to imageUrl
             product.setImageUrl(dto.getMainImageUrl());
+            product.setVideoUrl(dto.getVideoUrl());
+            product.setImageAltTags(dto.getImageAltTags());
             
             // Handle gallery images - ROBUST CONVERSION
             product.setGalleryImages(convertGalleryImages(dto.getGalleryImages()));
-            
-            product.setVideoUrl(dto.getVideoUrl());
-            product.setImageAltTags(dto.getImageAltTags());
 
-            // ===========================
             // SHIPPING & LOGISTICS
             // ===========================
             product.setWeightForShipping(dto.getWeightForShipping());
-            if (dto.getDimensions() != null) {
-                try {
-                    String dimensionsJson = objectMapper.writeValueAsString(dto.getDimensions());
-                    product.setDimensions(dimensionsJson);
-                } catch (Exception e) {
-                    product.setDimensions(null);
-                }
-            }
+            product.setDimensions(objectMapper.writeValueAsString(dto.getDimensions()));
             product.setDeliveryTimeEstimate(dto.getDeliveryTimeEstimate());
-            
-            // Set shipping class enum
-            if (dto.getShippingClass() != null) {
-                try {
-                    product.setShippingClass(Product.ShippingClass.valueOf(dto.getShippingClass()));
-                } catch (IllegalArgumentException e) {
-                    product.setShippingClass(Product.ShippingClass.STANDARD);
-                }
-            }
-            
+            product.setShippingClass(Product.ShippingClass.valueOf(dto.getShippingClass().toUpperCase()));
             product.setColdStorageRequired(dto.getColdStorageRequired());
             product.setSpecialPackaging(dto.getSpecialPackaging());
             product.setInsuranceRequired(dto.getInsuranceRequired());
             product.setFreeShipping(dto.getFreeShipping());
             product.setFreeShippingThreshold(dto.getFreeShippingThreshold());
             product.setIsReturnable(dto.getIsReturnable());
-            
-            // Set return window enum
-            if (dto.getReturnWindow() != null) {
-                try {
-                    product.setReturnWindow(Product.ReturnWindow.valueOf(dto.getReturnWindow()));
-                } catch (IllegalArgumentException e) {
-                    product.setReturnWindow(Product.ReturnWindow.SEVEN_DAYS);
-                }
-            }
-            
+            product.setReturnWindow(Product.ReturnWindow.valueOf(dto.getReturnWindow().toUpperCase()));
             product.setReturnConditions(dto.getReturnConditions());
             product.setIsCodAvailable(dto.getIsCodAvailable());
 
-            // ===========================
             // PRODUCT DESCRIPTIONS
             // ===========================
             product.setShortDescription(dto.getShortDescription());
@@ -1396,7 +1348,6 @@ public class VendorManagementService {
             // Handle product highlights - ROBUST CONVERSION
             product.setProductHighlights(convertProductHighlights(dto.getProductHighlights()));
 
-            // ===========================
             // CERTIFICATIONS & COMPLIANCE
             // ===========================
             product.setFssaiLicense(dto.getFssaiLicense());
@@ -1404,7 +1355,6 @@ public class VendorManagementService {
             // Handle quality certifications - ROBUST CONVERSION
             product.setQualityCertifications(convertQualityCertifications(dto.getQualityCertifications()));
 
-            // ===========================
             // SEO OPTIMIZATION
             // ===========================
             product.setMetaTitle(dto.getMetaTitle());
@@ -1415,7 +1365,6 @@ public class VendorManagementService {
             // Handle structured data - ROBUST CONVERSION
             product.setStructuredData(convertStructuredData(dto.getStructuredData()));
 
-            // ===========================
             // STATUS
             // ===========================
             if (dto.getStatus() != null) {
@@ -1440,18 +1389,23 @@ public class VendorManagementService {
     private void mapUpdateDtoToProduct(ProductUpdateRequestDto dto, Product product) {
         if (dto.getProductTitle() != null) product.setName(dto.getProductTitle());
         if (dto.getSkuCode() != null) product.setSku(dto.getSkuCode());
-        if (dto.getFullDescription() != null) product.setDescription(dto.getFullDescription());
+        if (dto.getDetailedDescription() != null) product.setDescription(dto.getDetailedDescription());
         if (dto.getShortDescription() != null) product.setShortDescription(dto.getShortDescription());
         if (dto.getMrp() != null) product.setMrp(dto.getMrp());
         if (dto.getSellingPrice() != null) product.setPrice(dto.getSellingPrice());
         if (dto.getCostPrice() != null) product.setCostPrice(dto.getCostPrice());
         if (dto.getStockQuantity() != null) product.setQuantity(dto.getStockQuantity());
         if (dto.getBrandName() != null) product.setBrand(dto.getBrandName());
-        if (dto.getWeight() != null) product.setWeightForShipping(dto.getWeight());
+        if (dto.getWeightForShipping() != null) product.setWeightForShipping(dto.getWeightForShipping());
         if (dto.getDeliveryTimeEstimate() != null) product.setDeliveryTimeEstimate(dto.getDeliveryTimeEstimate());
         if (dto.getUrlSlug() != null) product.setUrlSlug(dto.getUrlSlug());
         if (dto.getMetaTitle() != null) product.setMetaTitle(dto.getMetaTitle());
         if (dto.getMetaDescription() != null) product.setMetaDescription(dto.getMetaDescription());
+        
+        // Handle media fields
+        if (dto.getMainImageUrl() != null) product.setImageUrl(dto.getMainImageUrl());
+        if (dto.getVideoUrl() != null) product.setVideoUrl(dto.getVideoUrl());
+        if (dto.getImageAltTags() != null) product.setImageAltTags(dto.getImageAltTags());
         
         // Handle gallery images
         if (dto.getImageUrls() != null) {

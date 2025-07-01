@@ -188,7 +188,7 @@ const ProductAdd = () => {
             variants: inventory.variants || [],
 
             // Media Gallery
-            mainImageUrl: media.mainImageUrl || '',
+            mainImageUrl: media.mainImageUrl || media.imageUrl || '', // Try mainImageUrl first, then fall back to imageUrl
             galleryImages: (() => {
               console.log('Raw gallery images from API:', media.galleryImages);
               try {
@@ -666,7 +666,7 @@ const ProductAdd = () => {
       minimumOrderQuantity: data.minimumOrderQuantity && data.minimumOrderQuantity !== '' ? parseInt(data.minimumOrderQuantity) : 1,
       maximumOrderQuantity: data.maximumOrderQuantity && data.maximumOrderQuantity !== '' ? parseInt(data.maximumOrderQuantity) : null,
       lowStockAlert: data.lowStockAlert && data.lowStockAlert !== '' ? parseInt(data.lowStockAlert) : 10,
-      weight: data.weightForShipping && data.weightForShipping !== '' ? parseFloat(data.weightForShipping) : null, // Map weightForShipping to weight for backend
+      weightForShipping: data.weightForShipping && data.weightForShipping !== '' ? parseFloat(data.weightForShipping) : null,
       
       // Transform dimensions object for backend
       dimensions: (() => {
@@ -691,13 +691,16 @@ const ProductAdd = () => {
       
       // Ensure arrays are properly initialized and mapped correctly
       bulkPricingTiers: data.bulkPricingTiers || [],
-      imageUrls: data.galleryImages || [], // Map galleryImages to imageUrls for backend
       imageAltTags: data.imageAltTags || [],
       keyFeatures: data.keyFeatures || [],
       productHighlights: data.productHighlights || [],
       qualityCertifications: data.qualityCertifications || [],
       returnConditions: data.returnConditions || [],
       searchKeywords: data.searchKeywords || [],
+      
+      // Media fields - clean up URLs
+      mainImageUrl: data.mainImageUrl ? cleanupUrl(data.mainImageUrl) : '',
+      videoUrl: data.videoUrl ? data.videoUrl.trim() : '',
       
       // Ensure boolean fields are properly set
       hasVariants: data.hasVariants || false,

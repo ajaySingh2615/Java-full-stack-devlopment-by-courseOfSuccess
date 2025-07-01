@@ -1379,14 +1379,17 @@ const ProductAdd = () => {
               </button>
             </div>
           ))}
-          <button
-            type="button"
-            onClick={() => handleArrayAdd('imageAltTags', '')}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            <FiPlus className="mr-2 h-4 w-4" />
-            Add Alt Tag
-          </button>
+          {formData.imageAltTags.length < 6 && (
+            <button
+              type="button"
+              onClick={() => handleArrayAdd('imageAltTags', '')}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <FiPlus className="mr-2 h-4 w-4" />
+              Add Alt Tag ({6 - formData.imageAltTags.length} remaining)
+            </button>
+          )}
+          <p className="mt-1 text-sm text-gray-500">Add up to 6 alt tags to improve SEO and accessibility</p>
         </div>
       </div>
     </div>

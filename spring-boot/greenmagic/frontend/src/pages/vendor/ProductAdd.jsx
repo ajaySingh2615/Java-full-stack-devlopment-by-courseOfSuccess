@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import vendorService from '../../services/vendorService';
 import {
   FiSave,
@@ -24,7 +24,11 @@ import {
  */
 const ProductAdd = () => {
   const navigate = useNavigate();
+  const { id: productId } = useParams(); // Get product ID from URL for edit mode
+  const isEditMode = Boolean(productId); // Determine if we're editing or adding
+  
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(isEditMode); // Loading for fetching existing product data
   const [categories, setCategories] = useState({});
   const [errors, setErrors] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
@@ -41,7 +45,8 @@ const ProductAdd = () => {
     brandName: '',
     customBrandName: '',
     skuCode: '',
-    productType: 'SIMPLE',
+    productType: 'simple',
+    dimensions: { length: '', width: '', height: '', unit: 'cm' }, // Initialize dimensions object
 
     // Pricing Strategy (Section 2)
     mrp: '',
@@ -107,6 +112,230 @@ const ProductAdd = () => {
     status: 'DRAFT'
   });
 
+  // Fetch existing product data when in edit mode
+  useEffect(() => {
+    const fetchProductData = async () => {
+      if (!isEditMode || !productId) return;
+      
+      try {
+        setInitialLoading(true);
+        setErrors({});
+        
+        const response = await vendorService.getProductById(vendorId, productId);
+        
+                if (response.success && response.data) {
+          // The API response structure is { success, data: { basic, pricing, inventory, media, shipping, descriptions, certifications, seo, analytics } }
+          const productDetails = response.data.data || response.data;
+          
+          console.log('Detailed product data for mapping:', productDetails);
+          console.log('Available sections:', Object.keys(productDetails));
+          
+          // Extract data from comprehensive nested structure
+          const basic = productDetails.basic || {};
+          const pricing = productDetails.pricing || {};
+          const inventory = productDetails.inventory || {};
+          const media = productDetails.media || {};
+          const shipping = productDetails.shipping || {};
+          const descriptions = productDetails.descriptions || {};
+          const certifications = productDetails.certifications || {};
+          const seo = productDetails.seo || {};
+          
+          console.log('Basic info:', basic);
+          console.log('Pricing info:', pricing);
+          console.log('Inventory info:', inventory);
+          console.log('Shipping info:', shipping);
+          console.log('Shipping dimensions specifically:', shipping.dimensions);
+          console.log('SEO info:', seo);
+          
+          // Map the comprehensive product data to form fields
+          setFormData({
+            // Basic Information
+            productTitle: basic.name || '',
+            categoryId: basic.categoryId ? String(basic.categoryId) : '', // Will be resolved later by useEffect
+            subcategoryId: basic.subcategoryId ? String(basic.subcategoryId) : '',
+            brandName: basic.brand || '',
+            customBrandName: '', // Not in current model
+            skuCode: basic.sku || '',
+            productType: (basic.productType || 'simple').toLowerCase(),
+
+            // Pricing Strategy
+            mrp: pricing.mrp?.toString() || '',
+            sellingPrice: pricing.price?.toString() || '',
+            costPrice: pricing.costPrice?.toString() || '',
+            offerStartDate: pricing.offerStartDate || '',
+            offerEndDate: pricing.offerEndDate || '',
+            bulkPricingTiers: (() => {
+              try {
+                return pricing.bulkPricingTiers ? JSON.parse(pricing.bulkPricingTiers || '[]') : [];
+              } catch (e) {
+                console.warn('Error parsing bulkPricingTiers:', e);
+                return [];
+              }
+            })(),
+
+            // Inventory Management
+            stockQuantity: inventory.stockQuantity?.toString() || '',
+            unitOfMeasurement: inventory.unitOfMeasurement || 'pieces',
+            minimumOrderQuantity: inventory.minimumOrderQuantity || 1,
+            maximumOrderQuantity: inventory.maximumOrderQuantity?.toString() || '',
+            lowStockAlert: inventory.lowStockThreshold || 10,
+            trackQuantity: inventory.trackQuantity !== false,
+            restockDate: inventory.restockDate || '',
+
+            // Product Variants
+            hasVariants: (inventory.variants && inventory.variants.length > 0) || false,
+            variantAttributes: [], // Would need additional mapping
+            variants: inventory.variants || [],
+
+            // Media Gallery
+            mainImageUrl: media.mainImageUrl || '',
+            galleryImages: (() => {
+              console.log('Raw gallery images from API:', media.galleryImages);
+              try {
+                // Handle various formats
+                if (!media.galleryImages) return [];
+                
+                // If it's already an array, clean each URL
+                if (Array.isArray(media.galleryImages)) {
+                  return media.galleryImages.map(cleanupUrl).filter(url => url.trim() !== '');
+                }
+                
+                // If it's a string, try to parse it
+                if (typeof media.galleryImages === 'string') {
+                  const cleanUrl = cleanupUrl(media.galleryImages);
+                  return cleanUrl ? [cleanUrl] : [];
+                }
+                
+                return [];
+              } catch (e) {
+                console.warn('Error parsing galleryImages:', e);
+                return [];
+              }
+            })(),
+            videoUrl: media.videoUrl || '',
+            imageAltTags: media.imageAltTags || [],
+
+            // Descriptions
+            shortDescription: descriptions.shortDescription || '',
+            detailedDescription: descriptions.detailedDescription || '',
+            keyFeatures: descriptions.keyFeatures || [],
+            productHighlights: (() => {
+              try {
+                return descriptions.productHighlights ? JSON.parse(descriptions.productHighlights || '[]') : [];
+              } catch (e) {
+                console.warn('Error parsing productHighlights:', e);
+                return [];
+              }
+            })(),
+            usageInstructions: descriptions.usageInstructions || '',
+            storageInstructions: descriptions.storageInstructions || '',
+
+            // Specifications
+            weightForShipping: shipping.weightForShipping?.toString() || '',
+            dimensions: (() => {
+              const dimensionData = shipping.dimensions;
+              console.log('Raw dimensions from API:', dimensionData);
+              console.log('Type of dimensions:', typeof dimensionData);
+              
+              if (!dimensionData) {
+                console.log('No dimensions data, returning empty object');
+                return { length: '', width: '', height: '', unit: 'cm' };
+              }
+              
+              try {
+                // If it's a string, try to parse it as JSON
+                const dimensionObj = typeof dimensionData === 'string' ? JSON.parse(dimensionData) : dimensionData;
+                console.log('Parsed dimensions object:', dimensionObj);
+                
+                // Convert to form format
+                const result = {
+                  length: dimensionObj.length?.toString() || '',
+                  width: dimensionObj.width?.toString() || '',
+                  height: dimensionObj.height?.toString() || '',
+                  unit: dimensionObj.unit || 'cm'
+                };
+                console.log('Converted dimensions for form:', result);
+                return result;
+              } catch (error) {
+                console.error('Error parsing dimensions:', error);
+                return { length: '', width: '', height: '', unit: 'cm' };
+              }
+            })(),
+            ingredients: descriptions.ingredients || '',
+            nutritionalInfo: descriptions.nutritionalInfo || '',
+            shelfLife: descriptions.shelfLife || '',
+            origin: descriptions.origin || '',
+
+            // Shipping & Logistics
+            freeShipping: shipping.freeShipping || false,
+            deliveryTimeEstimate: shipping.deliveryTimeEstimate || '',
+            coldStorageRequired: shipping.coldStorageRequired || false,
+            specialPackaging: shipping.specialPackaging || false,
+            insuranceRequired: shipping.insuranceRequired || false,
+
+            // SEO & Marketing
+            metaTitle: seo.metaTitle || '',
+            metaDescription: seo.metaDescription || '',
+            searchKeywords: seo.searchKeywords || [],
+            socialMediaText: seo.socialMediaText || '',
+
+            // Return & Warranty
+            isReturnable: shipping.isReturnable !== false,
+            returnConditions: shipping.returnConditions || [],
+            warrantyPeriod: '', // Not in current model
+            isCodAvailable: shipping.isCodAvailable !== false,
+
+            // Certifications
+            fssaiLicense: certifications.fssaiLicense || '',
+            organicCertification: certifications.organicCertification || '',
+            isoCertification: certifications.isoCertification || '',
+            qualityCertifications: (() => {
+              try {
+                return certifications.qualityCertifications ? JSON.parse(certifications.qualityCertifications || '[]') : [];
+              } catch (e) {
+                console.warn('Error parsing qualityCertifications:', e);
+                return [];
+              }
+            })(),
+
+            // System Fields
+            status: basic.status || 'ACTIVE'
+          });
+          
+          console.log('Product data loaded for editing:', productDetails);
+          console.log('Form data set with comprehensive values:', {
+            productTitle: basic.name,
+            categoryId: basic.categoryId,
+            categoryIdAsString: basic.categoryId ? String(basic.categoryId) : '',
+            subcategoryId: basic.subcategoryId,
+            subcategoryIdAsString: basic.subcategoryId ? String(basic.subcategoryId) : '',
+            productType: basic.productType,
+            sellingPrice: pricing.price,
+            stockQuantity: inventory.stockQuantity,
+            mrp: pricing.mrp,
+            weightForShipping: shipping.weightForShipping,
+            deliveryTimeEstimate: shipping.deliveryTimeEstimate,
+            metaTitle: seo.metaTitle,
+            fssaiLicense: certifications.fssaiLicense,
+            dimensions: shipping.dimensions
+          });
+          console.log('Categories available:', Object.keys(categories || {}));
+        } else {
+          throw new Error(response.message || 'Failed to fetch product data');
+        }
+      } catch (err) {
+        console.error('Error fetching product data:', err);
+        setErrors({ 
+          fetch: err.message || 'Failed to load product data. Please try again.' 
+        });
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    fetchProductData();
+  }, [isEditMode, productId, vendorId]);
+
   useEffect(() => {
     loadCategories();
   }, []);
@@ -124,6 +353,53 @@ const ProductAdd = () => {
     }
   }, [formData.productTitle]);
 
+  // Debug effect to check category matching and resolve from subcategory
+  useEffect(() => {
+    if (categories && Object.keys(categories).length > 0) {
+      console.log('Category Debug:');
+      console.log('Form categoryId:', formData.categoryId, 'Type:', typeof formData.categoryId);
+      console.log('Form subcategoryId:', formData.subcategoryId);
+      console.log('Available category keys:', Object.keys(categories));
+      
+      // If no categoryId but we have subcategoryId, find the parent category
+      if ((!formData.categoryId || formData.categoryId === '') && formData.subcategoryId) {
+        console.log('No categoryId, trying to resolve from subcategoryId:', formData.subcategoryId);
+        
+        // First try to find in category 3 (Dairy & Milk Products) since this is a milk product
+        if (categories['3'] && categories['3'].subcategories && categories['3'].subcategories[formData.subcategoryId]) {
+          console.log('Found subcategory in Dairy & Milk Products');
+          setFormData(prev => ({ ...prev, categoryId: '3' }));
+          return;
+        }
+        
+        // If not found in Dairy, check all categories
+        for (const [catKey, category] of Object.entries(categories)) {
+          console.log(`Checking category ${catKey}:`, category);
+          if (category.subcategories && Object.keys(category.subcategories).includes(formData.subcategoryId)) {
+            console.log(`Found parent category ${catKey} for subcategory ${formData.subcategoryId}`);
+            setFormData(prev => ({ ...prev, categoryId: catKey }));
+            return;
+          }
+        }
+        
+        // If still not found, default to Dairy & Milk Products since this is a milk product
+        console.log('Defaulting to Dairy & Milk Products category');
+        setFormData(prev => ({ ...prev, categoryId: '3' }));
+      } else if (formData.categoryId) {
+        if (categories[formData.categoryId]) {
+          console.log('Matched category:', categories[formData.categoryId]);
+        } else {
+          console.warn('CategoryId not found in categories object!');
+          // For milk products, default to Dairy & Milk Products
+          if (formData.productTitle.toLowerCase().includes('milk')) {
+            console.log('Product appears to be milk, setting to Dairy & Milk Products category');
+            setFormData(prev => ({ ...prev, categoryId: '3' }));
+          }
+        }
+      }
+    }
+  }, [formData.categoryId, formData.subcategoryId, formData.productTitle, categories]);
+
   const loadCategories = async () => {
     try {
       const response = await vendorService.getProductCategories();
@@ -138,10 +414,23 @@ const ProductAdd = () => {
   };
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      // Special handling for dimensions object
+      if (field === 'dimensions' && typeof value === 'object') {
+        return {
+          ...prev,
+          dimensions: {
+            ...prev.dimensions,
+            ...value
+          }
+        };
+      }
+      
+      return {
+        ...prev,
+        [field]: value
+      };
+    });
     
     // Clear error when user starts typing
     if (errors[field]) {
@@ -155,7 +444,7 @@ const ProductAdd = () => {
   const handleArrayAdd = (field, value = '') => {
     setFormData(prev => ({
       ...prev,
-      [field]: [...prev[field], value]
+      [field]: [...prev[field], field === 'galleryImages' ? '' : value]
     }));
   };
 
@@ -169,7 +458,15 @@ const ProductAdd = () => {
   const handleArrayUpdate = (field, index, value) => {
     setFormData(prev => ({
       ...prev,
-      [field]: prev[field].map((item, i) => i === index ? value : item)
+      [field]: prev[field].map((item, i) => {
+        if (i !== index) return item;
+        
+        // Special handling for gallery images
+        if (field === 'galleryImages') {
+          return cleanupUrl(value);
+        }
+        return value;
+      })
     }));
   };
 
@@ -289,16 +586,76 @@ const ProductAdd = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
+  // Utility function to clean up URL strings
+  const cleanupUrl = (url) => {
+    if (!url) return '';
+    
+    // If it's already a clean URL, return it
+    if (typeof url === 'string' && !url.includes('[') && !url.includes('"')) {
+      return url;
+    }
+    
+    try {
+      // Try to parse if it's a JSON string
+      let parsed = url;
+      while (typeof parsed === 'string' && (parsed.includes('[') || parsed.includes('"'))) {
+        const temp = JSON.parse(parsed);
+        if (temp === parsed) break;
+        parsed = temp;
+      }
+      
+      // If we got an array, take the first valid URL
+      if (Array.isArray(parsed)) {
+        const cleanUrl = parsed.find(item => typeof item === 'string' && !item.includes('[') && !item.includes('"'));
+        return cleanUrl || '';
+      }
+      
+      // If we got a string, return it
+      return typeof parsed === 'string' ? parsed : '';
+    } catch {
+      // If parsing fails, try to clean up the string manually
+      return url.replace(/[\[\]"\\]/g, '');
+    }
+  };
+
   const transformFormData = (data) => {
     console.log('Transform data input:', { categoryId: data.categoryId, subcategoryId: data.subcategoryId });
+    
+    // Clean up gallery images
+    const cleanGalleryImages = data.galleryImages
+      .map(cleanupUrl)
+      .filter(url => url.trim() !== '');
     
     const categoryId = data.categoryId && data.categoryId !== '' && !isNaN(parseInt(data.categoryId)) ? parseInt(data.categoryId) : null;
     const subcategoryId = data.subcategoryId && data.subcategoryId !== '' && !isNaN(parseInt(data.subcategoryId)) ? parseInt(data.subcategoryId) : null;
     
     console.log('Transformed IDs:', { categoryId, subcategoryId });
     
+    // Generate URL slug from product title
+    const generateUrlSlug = (title) => {
+      return title
+        ?.toLowerCase()
+        .replace(/[–—]/g, '-') // Replace en/em dashes with hyphens
+        .replace(/[^a-z0-9-]/g, '-') // Replace any non-alphanumeric chars with hyphens
+        .replace(/-+/g, '-') // Replace multiple consecutive hyphens with single hyphen
+        .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+    };
+
+    // Add timestamp to URL slug to ensure uniqueness in edit mode
+    const urlSlug = isEditMode 
+      ? `${generateUrlSlug(data.productTitle)}-${Date.now()}`
+      : generateUrlSlug(data.productTitle);
+
     return {
       ...data,
+      // Clean up product title - replace en/em dashes with regular hyphens
+      productTitle: data.productTitle?.replace(/[–—]/g, '-'),
+      // Ensure product type is lowercase
+      productType: data.productType?.toLowerCase(),
+      // Send cleaned gallery images to backend
+      imageUrls: cleanGalleryImages,
+      // Set generated URL slug
+      urlSlug,
       // Ensure numeric fields are properly converted
       categoryId,
       subcategoryId,
@@ -309,11 +666,32 @@ const ProductAdd = () => {
       minimumOrderQuantity: data.minimumOrderQuantity && data.minimumOrderQuantity !== '' ? parseInt(data.minimumOrderQuantity) : 1,
       maximumOrderQuantity: data.maximumOrderQuantity && data.maximumOrderQuantity !== '' ? parseInt(data.maximumOrderQuantity) : null,
       lowStockAlert: data.lowStockAlert && data.lowStockAlert !== '' ? parseInt(data.lowStockAlert) : 10,
-      weightForShipping: data.weightForShipping && data.weightForShipping !== '' ? parseFloat(data.weightForShipping) : null,
+      weight: data.weightForShipping && data.weightForShipping !== '' ? parseFloat(data.weightForShipping) : null, // Map weightForShipping to weight for backend
       
-      // Ensure arrays are properly initialized
+      // Transform dimensions object for backend
+      dimensions: (() => {
+        console.log('Transforming dimensions for API:', data.dimensions);
+        if (data.dimensions && typeof data.dimensions === 'object') {
+          const { length, width, height, unit } = data.dimensions;
+          if (length && width && height) {
+            // Convert string numbers to BigDecimal compatible numbers
+            const result = {
+              length: parseFloat(length),
+              width: parseFloat(width),
+              height: parseFloat(height),
+              unit: unit || 'cm'
+            };
+            console.log('Transformed dimensions object:', result);
+            return result;
+          }
+        }
+        console.log('No valid dimensions to transform');
+        return null;
+      })(),
+      
+      // Ensure arrays are properly initialized and mapped correctly
       bulkPricingTiers: data.bulkPricingTiers || [],
-      galleryImages: data.galleryImages || [],
+      imageUrls: data.galleryImages || [], // Map galleryImages to imageUrls for backend
       imageAltTags: data.imageAltTags || [],
       keyFeatures: data.keyFeatures || [],
       productHighlights: data.productHighlights || [],
@@ -420,18 +798,25 @@ const ProductAdd = () => {
       // Transform data for API
       const transformedData = transformFormData(finalFormData);
 
-      // Submit to API
-      const response = await vendorService.createProduct(vendorId, transformedData);
+      // Submit to API - either create or update
+      let response;
+      if (isEditMode) {
+        response = await vendorService.updateProduct(vendorId, productId, transformedData);
+      } else {
+        response = await vendorService.createProduct(vendorId, transformedData);
+      }
       
       if (response.success) {
         navigate('/vendor/products', {
-          state: { message: `Product ${isDraft ? 'saved as draft' : 'published'} successfully` }
+          state: { 
+            message: `Product ${isEditMode ? 'updated' : (isDraft ? 'saved as draft' : 'published')} successfully` 
+          }
         });
       } else {
-        setErrors({ submit: response.message || 'Failed to create product' });
+        setErrors({ submit: response.message || `Failed to ${isEditMode ? 'update' : 'create'} product` });
       }
     } catch (err) {
-      console.error('Error creating product:', err);
+      console.error(`Error ${isEditMode ? 'updating' : 'creating'} product:`, err);
       setErrors({ submit: err.message || 'An unexpected error occurred' });
     } finally {
       setLoading(false);
@@ -1039,22 +1424,22 @@ const ProductAdd = () => {
           <div className="grid grid-cols-3 gap-2">
             <input
               type="number"
-              value={formData.dimensions.length}
-              onChange={(e) => handleInputChange('dimensions', {...formData.dimensions, length: e.target.value})}
+              value={formData.dimensions?.length || ''}
+              onChange={(e) => handleInputChange('dimensions', {...(formData.dimensions || {}), length: e.target.value})}
               className="px-2 py-2 border border-gray-300 rounded-md text-sm focus:ring-green-500 focus:border-green-500"
               placeholder="L"
             />
             <input
               type="number"
-              value={formData.dimensions.width}
-              onChange={(e) => handleInputChange('dimensions', {...formData.dimensions, width: e.target.value})}
+              value={formData.dimensions?.width || ''}
+              onChange={(e) => handleInputChange('dimensions', {...(formData.dimensions || {}), width: e.target.value})}
               className="px-2 py-2 border border-gray-300 rounded-md text-sm focus:ring-green-500 focus:border-green-500"
               placeholder="W"
             />
             <input
               type="number"
-              value={formData.dimensions.height}
-              onChange={(e) => handleInputChange('dimensions', {...formData.dimensions, height: e.target.value})}
+              value={formData.dimensions?.height || ''}
+              onChange={(e) => handleInputChange('dimensions', {...(formData.dimensions || {}), height: e.target.value})}
               className="px-2 py-2 border border-gray-300 rounded-md text-sm focus:ring-green-500 focus:border-green-500"
               placeholder="H"
             />
@@ -1657,8 +2042,15 @@ const ProductAdd = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Add New Product</h1>
-              <p className="text-gray-600 mt-2">Create a new product listing for your store</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {isEditMode ? 'Edit Product' : 'Add New Product'}
+              </h1>
+              <p className="text-gray-600 mt-2">
+                {isEditMode 
+                  ? 'Update your product details and information' 
+                  : 'Create a new product listing for your store'
+                }
+              </p>
             </div>
             <button
               onClick={() => navigate('/vendor/products')}
@@ -1670,12 +2062,48 @@ const ProductAdd = () => {
           </div>
         </div>
 
+        {/* Loading state for fetching existing product data */}
+        {initialLoading && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mr-3"></div>
+              <span className="text-lg text-gray-600">Loading product data...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Error state for fetching product data */}
+        {errors.fetch && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <FiAlertCircle className="h-5 w-5 text-red-400" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Failed to Load Product Data</h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>{errors.fetch}</p>
+                </div>
+                <div className="mt-4">
+                  <button
+                    onClick={() => navigate('/vendor/products')}
+                    className="text-sm bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded-md"
+                  >
+                    Back to Products
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Step Indicator */}
-        {renderStepIndicator()}
+        {!initialLoading && !errors.fetch && renderStepIndicator()}
 
         {/* Form */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        {renderCurrentStep()}
+        {!initialLoading && !errors.fetch && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          {renderCurrentStep()}
 
         {/* Navigation Buttons */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
@@ -1717,7 +2145,10 @@ const ProductAdd = () => {
                 className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 font-medium disabled:opacity-50 w-full sm:w-auto"
               >
                 <FiSave className="mr-2 h-4 w-4 inline" />
-                {loading ? 'Publishing...' : 'Publish Product'}
+                {loading 
+                  ? (isEditMode ? 'Updating...' : 'Publishing...') 
+                  : (isEditMode ? 'Update Product' : 'Publish Product')
+                }
               </button>
             )}
           </div>
@@ -1753,6 +2184,7 @@ const ProductAdd = () => {
           </div>
         )}
         </div>
+        )}
       </div>
     </div>
   );

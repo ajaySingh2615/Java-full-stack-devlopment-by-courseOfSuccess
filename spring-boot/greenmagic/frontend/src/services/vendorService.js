@@ -181,10 +181,19 @@ const vendorService = {
   },
 
   async getProductById(vendorId, productId) {
-    const response = await apiClient.get(`/vendor/products/${productId}`, {
-      params: { vendorId }
-    });
-    return response.data;
+    try {
+      // Use the detailed endpoint for editing to get more comprehensive data
+      const response = await apiClient.get(`/vendor/products/${productId}/details`, {
+        params: { vendorId }
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error fetching product by ID:', error);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || error.message || 'Failed to fetch product data'
+      };
+    }
   },
 
   async getProductDetails(vendorId, productId) {
@@ -264,10 +273,18 @@ const vendorService = {
   },
 
   async updateProduct(vendorId, productId, productData) {
-    const response = await apiClient.put(`/vendor/products/${productId}`, productData, {
-      params: { vendorId }
-    });
-    return response.data;
+    try {
+      const response = await apiClient.put(`/vendor/products/${productId}`, productData, {
+        params: { vendorId }
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error updating product:', error);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || error.message || 'Failed to update product'
+      };
+    }
   },
 
   async deleteProduct(vendorId, productId) {

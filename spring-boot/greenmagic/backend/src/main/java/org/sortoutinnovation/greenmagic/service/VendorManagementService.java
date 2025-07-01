@@ -657,7 +657,7 @@ public class VendorManagementService {
     }
 
     private List<Object[]> getTopProducts(Integer vendorId, LocalDate startDate, LocalDate endDate) {
-        // Implementation would return top selling products
+        // Implementation would return top-selling products
         return new ArrayList<>();
     }
 
@@ -923,7 +923,7 @@ public class VendorManagementService {
     }
 
     /**
-     * Get detailed product information for modal
+     * Get detailed product information for comprehensive editing
      */
     public Map<String, Object> getProductDetails(Integer vendorId, Integer productId) {
         Product product = productRepository.findById(productId.longValue())
@@ -936,38 +936,56 @@ public class VendorManagementService {
         
         Map<String, Object> details = new HashMap<>();
         
-        // Basic product information
+        // ===========================
+        // BASIC INFORMATION
+        // ===========================
         Map<String, Object> basic = new HashMap<>();
         basic.put("productId", product.getProductId());
         basic.put("name", product.getName());
         basic.put("description", product.getDescription());
+        basic.put("shortDescription", product.getShortDescription());
         basic.put("sku", product.getSku());
-        basic.put("category", product.getCategory() != null ? product.getCategory().getName() : "Uncategorized");
+        basic.put("categoryId", product.getCategory() != null ? product.getCategory().getCategoryId() : null);
+        basic.put("categoryName", product.getCategory() != null ? product.getCategory().getName() : "Uncategorized");
+        basic.put("subcategoryId", product.getSubcategoryId());
         basic.put("brand", product.getBrand());
-        basic.put("status", product.getStatus() != null ? product.getStatus().toString().toLowerCase() : "active");
+        basic.put("productType", product.getProductType() != null ? product.getProductType().toString() : "SIMPLE");
+        basic.put("status", product.getStatus() != null ? product.getStatus().toString() : "ACTIVE");
         basic.put("createdAt", product.getCreatedAt());
         basic.put("updatedAt", product.getCreatedAt()); // Using createdAt since updatedAt doesn't exist
         details.put("basic", basic);
         
-        // Pricing information
+        // ===========================
+        // PRICING STRATEGY
+        // ===========================
         Map<String, Object> pricing = new HashMap<>();
         pricing.put("price", product.getPrice());
         pricing.put("mrp", product.getMrp());
         pricing.put("costPrice", product.getCostPrice());
+        pricing.put("offerStartDate", product.getOfferStartDate());
+        pricing.put("offerEndDate", product.getOfferEndDate());
+        pricing.put("bulkPricingTiers", product.getBulkPricingTiers());
         pricing.put("comparePrice", product.getMrp()); // Use MRP as compare price
         pricing.put("margin", calculateMargin(product.getPrice(), product.getCostPrice()));
         details.put("pricing", pricing);
         
-        // Inventory information
+        // ===========================
+        // INVENTORY MANAGEMENT
+        // ===========================
         Map<String, Object> inventory = new HashMap<>();
         inventory.put("stockQuantity", product.getQuantity());
-        inventory.put("lowStockThreshold", product.getMinStockAlert() != null ? product.getMinStockAlert() : 10);
-        inventory.put("trackQuantity", true);
         inventory.put("unitOfMeasurement", product.getUnitOfMeasurement());
+        inventory.put("minimumOrderQuantity", product.getMinimumOrderQuantity());
+        inventory.put("maximumOrderQuantity", product.getMaximumOrderQuantity());
+        inventory.put("lowStockThreshold", product.getMinStockAlert() != null ? product.getMinStockAlert() : 10);
+        inventory.put("trackQuantity", product.getTrackQuantity());
+        inventory.put("restockDate", product.getRestockDate());
         inventory.put("variants", getProductVariants(vendorId, productId));
         details.put("inventory", inventory);
         
-        // Media information
+        // ===========================
+        // MEDIA GALLERY
+        // ===========================
         Map<String, Object> media = new HashMap<>();
         List<String> images = new ArrayList<>();
         if (product.getImageUrl() != null && !product.getImageUrl().isEmpty()) {
@@ -988,9 +1006,70 @@ public class VendorManagementService {
             }
         }
         media.put("images", images);
+        media.put("mainImageUrl", product.getImageUrl());
+        media.put("galleryImages", images.size() > 1 ? images.subList(1, images.size()) : new ArrayList<>());
+        media.put("videoUrl", product.getVideoUrl());
+        media.put("imageAltTags", product.getImageAltTags() != null ? product.getImageAltTags() : new ArrayList<>());
         media.put("videos", new ArrayList<>());
         media.put("documents", new ArrayList<>());
         details.put("media", media);
+        
+        // ===========================
+        // SHIPPING & LOGISTICS
+        // ===========================
+        Map<String, Object> shipping = new HashMap<>();
+        shipping.put("weightForShipping", product.getWeightForShipping());
+        shipping.put("dimensions", product.getDimensions());
+        shipping.put("deliveryTimeEstimate", product.getDeliveryTimeEstimate());
+        shipping.put("shippingClass", product.getShippingClass() != null ? product.getShippingClass().toString() : "STANDARD");
+        shipping.put("coldStorageRequired", product.getColdStorageRequired());
+        shipping.put("specialPackaging", product.getSpecialPackaging());
+        shipping.put("insuranceRequired", product.getInsuranceRequired());
+        shipping.put("freeShipping", product.getFreeShipping());
+        shipping.put("freeShippingThreshold", product.getFreeShippingThreshold());
+        shipping.put("isReturnable", product.getIsReturnable());
+        shipping.put("returnWindow", product.getReturnWindow() != null ? product.getReturnWindow().toString() : "SEVEN_DAYS");
+        shipping.put("returnConditions", product.getReturnConditions() != null ? product.getReturnConditions() : new ArrayList<>());
+        shipping.put("isCodAvailable", product.getIsCodAvailable());
+        details.put("shipping", shipping);
+        
+        // ===========================
+        // PRODUCT DESCRIPTIONS
+        // ===========================
+        Map<String, Object> descriptions = new HashMap<>();
+        descriptions.put("shortDescription", product.getShortDescription());
+        descriptions.put("detailedDescription", product.getDescription());
+        descriptions.put("keyFeatures", product.getKeyFeatures() != null ? product.getKeyFeatures() : new ArrayList<>());
+        descriptions.put("productHighlights", product.getProductHighlights());
+        descriptions.put("usageInstructions", ""); // Not in current model
+        descriptions.put("storageInstructions", ""); // Not in current model
+        descriptions.put("ingredients", ""); // Not in current model
+        descriptions.put("nutritionalInfo", ""); // Not in current model
+        descriptions.put("shelfLife", ""); // Not in current model
+        descriptions.put("origin", ""); // Not in current model
+        details.put("descriptions", descriptions);
+        
+        // ===========================
+        // CERTIFICATIONS & COMPLIANCE
+        // ===========================
+        Map<String, Object> certifications = new HashMap<>();
+        certifications.put("fssaiLicense", product.getFssaiLicense());
+        certifications.put("organicCertification", ""); // Not in current model
+        certifications.put("isoCertification", ""); // Not in current model
+        certifications.put("qualityCertifications", product.getQualityCertifications());
+        details.put("certifications", certifications);
+        
+        // ===========================
+        // SEO & MARKETING
+        // ===========================
+        Map<String, Object> seo = new HashMap<>();
+        seo.put("metaTitle", product.getMetaTitle());
+        seo.put("metaDescription", product.getMetaDescription());
+        seo.put("searchKeywords", product.getSearchKeywords() != null ? product.getSearchKeywords() : new ArrayList<>());
+        seo.put("urlSlug", product.getUrlSlug());
+        seo.put("structuredData", product.getStructuredData());
+        seo.put("socialMediaText", ""); // Not in current model
+        details.put("seo", seo);
         
         // Analytics placeholder
         details.put("analytics", getProductAnalytics(vendorId, productId));
@@ -1373,6 +1452,38 @@ public class VendorManagementService {
         if (dto.getUrlSlug() != null) product.setUrlSlug(dto.getUrlSlug());
         if (dto.getMetaTitle() != null) product.setMetaTitle(dto.getMetaTitle());
         if (dto.getMetaDescription() != null) product.setMetaDescription(dto.getMetaDescription());
+        
+        // Handle gallery images
+        if (dto.getImageUrls() != null) {
+            try {
+                System.out.println("Received imageUrls: " + dto.getImageUrls());
+                List<String> cleanUrls = new ArrayList<>();
+                
+                // Clean up each URL in the list
+                for (String url : dto.getImageUrls()) {
+                    try {
+                        // If the URL is a JSON string, parse it
+                        if (url.startsWith("[")) {
+                            List<String> parsed = objectMapper.readValue(url, List.class);
+                            cleanUrls.addAll(parsed);
+                        } else {
+                            cleanUrls.add(url);
+                        }
+                    } catch (Exception e) {
+                        cleanUrls.add(url);
+                    }
+                }
+                
+                System.out.println("Cleaned URLs: " + cleanUrls);
+                String galleryImagesJson = objectMapper.writeValueAsString(cleanUrls);
+                System.out.println("Final gallery JSON: " + galleryImagesJson);
+                product.setGalleryImages(galleryImagesJson);
+            } catch (Exception e) {
+                // Keep existing gallery images if JSON conversion fails
+                System.err.println("Error converting gallery images to JSON: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
         
         // Update category if provided
         if (dto.getCategoryId() != null) {

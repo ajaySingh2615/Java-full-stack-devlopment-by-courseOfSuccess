@@ -63,6 +63,12 @@ const VendorProducts = () => {
   const vendorId = vendorService.getCurrentVendorId();
 
   useEffect(() => {
+    if (!vendorId) {
+      setError('Unable to identify vendor. Please log in again.');
+      setLoading(false);
+      return;
+    }
+    
     loadProducts();
     loadStats();
     loadCategories();
@@ -72,8 +78,12 @@ const VendorProducts = () => {
     try {
       setLoading(true);
       const response = await vendorService.getVendorProducts(vendorId, filters);
+      
       if (response.success) {
-        setProducts(response.data.content || []);
+        const productsList = response.data.content || [];
+        setProducts(productsList);
+      } else {
+        setError(response.message || 'Failed to load products');
       }
     } catch (err) {
       setError('Failed to load products');
@@ -535,6 +545,43 @@ const VendorProducts = () => {
             <div className="flex items-center">
               <FiAlertCircle className="h-5 w-5 text-red-400 mr-3" />
               <span className="text-red-800">{error}</span>
+            </div>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+            <FiPackage className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">No products found</h3>
+            <p className="text-gray-500 mb-6">
+              {filters.search || filters.status || filters.category 
+                ? 'No products match your current filters. Try adjusting your search criteria.' 
+                : 'You haven\'t added any products yet. Start by creating your first product.'}
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                to="/vendor/products/add"
+                className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 font-medium inline-flex items-center"
+              >
+                <FiPlus className="h-5 w-5 mr-2" />
+                Add Your First Product
+              </Link>
+              {(filters.search || filters.status || filters.category) && (
+                <button
+                  onClick={() => {
+                    setFilters({
+                      search: '',
+                      status: '',
+                      category: '',
+                      page: 0,
+                      size: 10,
+                      sortBy: 'createdAt',
+                      sortDir: 'desc'
+                    });
+                  }}
+                  className="text-green-600 hover:text-green-700 font-medium"
+                >
+                  Clear Filters
+                </button>
+              )}
             </div>
           </div>
         ) : (

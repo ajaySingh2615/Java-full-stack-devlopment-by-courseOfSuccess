@@ -142,12 +142,45 @@ public class VendorManagementService {
      * Get vendor products with filtering
      */
     public Page<ProductResponseDto> getVendorProducts(Integer vendorId, Pageable pageable, String status, String category, String search) {
-        // Implementation would use custom query or specification pattern
-        // For now, basic implementation
-        Page<Product> products = productRepository.findByCreatedByUserId(vendorId, pageable);
+        Page<Product> products;
         
-        // Convert entities to DTOs to avoid serialization issues
-        return products.map(product -> productMapper.toDto(product));
+        try {
+            // Parse status if provided
+            Product.ProductStatus productStatus = null;
+            if (status != null && !status.isEmpty()) {
+                try {
+                    productStatus = Product.ProductStatus.valueOf(status.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    // Invalid status value, ignore and continue
+                }
+            }
+            
+            // Parse category if provided
+            Long categoryId = null;
+            if (category != null && !category.isEmpty()) {
+                try {
+                    categoryId = Long.valueOf(category);
+                } catch (NumberFormatException e) {
+                    // Invalid category ID, ignore and continue
+                }
+            }
+            
+            // Use appropriate repository method based on provided filters
+            if (search != null && !search.isEmpty()) {
+                products = productRepository.findByVendorIdWithSearch(vendorId, search, pageable);
+            } else if (productStatus != null || categoryId != null) {
+                products = productRepository.findByVendorIdWithFilters(vendorId, productStatus, categoryId, pageable);
+            } else {
+                products = productRepository.findByCreatedByUserId(vendorId, pageable);
+            }
+            
+            // Convert entities to DTOs to avoid serialization issues
+            return products.map(product -> productMapper.toDto(product));
+            
+        } catch (Exception e) {
+            // Return empty page on error
+            return Page.empty(pageable);
+        }
     }
 
     /**

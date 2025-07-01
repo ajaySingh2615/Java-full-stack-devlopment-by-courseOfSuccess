@@ -131,6 +131,7 @@ public class VendorManagementController {
             Pageable pageable = PageRequest.of(page, size, sort);
             
             Page<ProductResponseDto> products = vendorManagementService.getVendorProducts(vendorId, pageable, status, category, search);
+            
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Products retrieved successfully", products));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

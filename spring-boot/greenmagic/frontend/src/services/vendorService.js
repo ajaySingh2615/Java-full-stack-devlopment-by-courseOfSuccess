@@ -438,8 +438,18 @@ const vendorService = {
   // ===========================
 
   getCurrentVendorId() {
-    const user = JSON.parse(localStorage.getItem('greenmagic_user') || '{}');
-    return user.userId;
+    try {
+      const user = JSON.parse(localStorage.getItem('greenmagic_user') || '{}');
+      
+      if (!user.userId) {
+        return null;
+      }
+      
+      return user.userId;
+    } catch (error) {
+      console.error('getCurrentVendorId - Error parsing user data:', error);
+      return null;
+    }
   },
 
   isVendor() {

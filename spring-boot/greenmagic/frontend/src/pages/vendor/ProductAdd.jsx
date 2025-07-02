@@ -477,15 +477,21 @@ const ProductAdd = () => {
   const handleArrayAdd = (field, value = '') => {
     console.log('handleArrayAdd called:', { field, value });
     setFormData(prev => {
+      // If value is provided, use it directly
+      if (value && typeof value === 'object') {
+        const newArray = [...(prev[field] || []), value];
+        console.log('Updated array with provided value:', { field, newArray });
+        return { ...prev, [field]: newArray };
+      }
+      
+      // Otherwise, handle field-specific defaults
       let newValue = value;
       
       // Special handling for bulk pricing tiers
       if (field === 'bulkPricingTiers') {
         newValue = {
           minQuantity: '',
-          maxQuantity: '',
-          price: '',
-          discountType: 'fixed_amount',
+          discountType: 'percentage',
           discountValue: ''
         };
       }
@@ -512,16 +518,6 @@ const ProductAdd = () => {
       if (field === 'bulkPricingTiers') {
         const tier = newArray[index];
         const updatedTier = { ...tier, ...value };
-        
-        // If price is updated, calculate discount value
-        if ('price' in value && value.price && prev.mrp) {
-          const price = parseFloat(value.price);
-          const mrp = parseFloat(prev.mrp);
-          if (!isNaN(price) && !isNaN(mrp) && price > 0 && mrp > 0) {
-            updatedTier.discountValue = Math.max(0, mrp - price).toString();
-          }
-        }
-        
         newArray[index] = updatedTier;
       } else {
         newArray[index] = value;
@@ -622,36 +618,39 @@ const ProductAdd = () => {
 
         // Validate bulk pricing tiers
         if (formData.bulkPricingTiers.length > 0) {
-          let lastMaxQty = 0;
+          let lastMinQty = 0;
           
           formData.bulkPricingTiers.forEach((tier, index) => {
             const minQty = parseInt(tier.minQuantity);
-            const maxQty = parseInt(tier.maxQuantity);
-            const price = parseFloat(tier.price);
+            const discountValue = parseFloat(tier.discountValue);
             const tierErrors = [];
             
             if (!minQty || isNaN(minQty) || minQty <= 0) {
               tierErrors.push('Min quantity must be greater than 0');
             }
             
-            if (!maxQty || isNaN(maxQty) || maxQty <= 0) {
-              tierErrors.push('Max quantity must be greater than 0');
+            if (minQty && minQty <= lastMinQty) {
+              tierErrors.push('Min quantity must be greater than previous tier\'s min quantity');
             }
             
-            if (minQty && maxQty && minQty >= maxQty) {
-              tierErrors.push('Max quantity must be greater than min quantity');
+            if (!tier.discountType || !['percentage', 'fixed_amount', 'fixed_price'].includes(tier.discountType)) {
+              tierErrors.push('Please select a valid discount type');
             }
             
-            if (minQty && minQty <= lastMaxQty) {
-              tierErrors.push('Min quantity must be greater than previous tier\'s max quantity');
+            if (!discountValue || isNaN(discountValue) || discountValue < 0) {
+              tierErrors.push('Discount value must be greater than or equal to 0');
             }
             
-            if (!price || isNaN(price) || price <= 0) {
-              tierErrors.push('Price must be greater than 0');
+            if (tier.discountType === 'percentage' && discountValue > 100) {
+              tierErrors.push('Percentage discount cannot exceed 100%');
             }
             
-            if (price && price >= parseFloat(formData.mrp)) {
-              tierErrors.push('Bulk price must be less than MRP');
+            if (tier.discountType === 'fixed_price' && discountValue >= parseFloat(formData.mrp)) {
+              tierErrors.push('Fixed price must be less than MRP');
+            }
+            
+            if (tier.discountType === 'fixed_amount' && discountValue >= parseFloat(formData.mrp)) {
+              tierErrors.push('Fixed amount discount cannot exceed MRP');
             }
             
             if (tierErrors.length > 0) {
@@ -659,7 +658,7 @@ const ProductAdd = () => {
               newErrors.bulkPricingTiers[index] = tierErrors;
             }
             
-            if (maxQty) lastMaxQty = maxQty;
+            if (minQty) lastMinQty = minQty;
           });
         }
         break;
@@ -817,29 +816,18 @@ const ProductAdd = () => {
     // Transform bulk pricing tiers to match backend DTO structure
     const transformedBulkPricingTiers = data.bulkPricingTiers
       .filter(tier => {
-        // Validate tier has all required fields and they are valid numbers
+        // Validate tier has all required fields
         const minQty = parseInt(tier.minQuantity);
-        const maxQty = parseInt(tier.maxQuantity);
-        const price = parseFloat(tier.price);
-        const mrpPrice = parseFloat(data.mrp);
-        
-        return !isNaN(minQty) && !isNaN(maxQty) && !isNaN(price) && 
-               minQty > 0 && maxQty > minQty && price > 0 && mrpPrice > 0;
+        const discountValue = parseFloat(tier.discountValue);
+        return !isNaN(minQty) && !isNaN(discountValue) && 
+               minQty > 0 && discountValue >= 0 &&
+               tier.discountType && ['percentage', 'fixed_amount', 'fixed_price'].includes(tier.discountType);
       })
-      .map(tier => {
-        const minQty = parseInt(tier.minQuantity);
-        const price = parseFloat(tier.price);
-        const mrpPrice = parseFloat(data.mrp);
-        
-        // Calculate discount value based on MRP
-        const discountValue = mrpPrice - price;
-        
-        return {
-          minQuantity: minQty,
-          discountType: 'fixed_amount',
-          discountValue: discountValue
-        };
-      })
+      .map(tier => ({
+        minQuantity: parseInt(tier.minQuantity),
+        discountType: tier.discountType,
+        discountValue: parseFloat(tier.discountValue)
+      }))
       .sort((a, b) => a.minQuantity - b.minQuantity);
 
     // Transform the data to match the backend DTO structure
@@ -847,7 +835,7 @@ const ProductAdd = () => {
       ...data,
       productTitle: data.productTitle?.trim(),
       categoryId: categoryId,
-      bulkPricing: transformedBulkPricingTiers,
+      bulkPricing: transformedBulkPricingTiers, // Changed from bulkPricingTiers to bulkPricing to match backend DTO
       offerStartDate: formatDate(data.offerStartDate),
       offerEndDate: formatDate(data.offerEndDate),
       // Convert numeric fields
@@ -871,7 +859,7 @@ const ProductAdd = () => {
         offerStartDate: transformedData.offerStartDate,
         offerEndDate: transformedData.offerEndDate
       },
-      bulkPricing: transformedData.bulkPricing
+      bulkPricing: transformedData.bulkPricingTiers
     });
 
     return transformedData;
@@ -1273,7 +1261,11 @@ const ProductAdd = () => {
             onClick={() => {
               console.log('=== ADD BULK PRICING TIER ===');
               console.log('Current bulkPricingTiers:', formData.bulkPricingTiers);
-              handleArrayAdd('bulkPricingTiers');
+              handleArrayAdd('bulkPricingTiers', {
+                minQuantity: '',
+                discountType: 'percentage',
+                discountValue: ''
+              });
               console.log('After handleArrayAdd call');
             }}
             className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200"
@@ -1289,51 +1281,44 @@ const ProductAdd = () => {
             return (
               <div key={index} className="space-y-2 mb-4">
                 <div className="flex items-center space-x-4">
-                  <input
-                    type="number"
-                    placeholder="Min Qty"
-                    value={tier.minQuantity || ''}
-                    onChange={(e) => {
-                      console.log(`=== TIER ${index} MIN QTY CHANGE ===`);
-                      console.log('New value:', e.target.value);
-                      console.log('Current tier:', tier);
-                      handleArrayUpdate('bulkPricingTiers', index, { ...tier, minQuantity: e.target.value });
-                    }}
-                    className={`w-24 px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
-                      errors.bulkPricingTiers?.[index] ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Max Qty"
-                    value={tier.maxQuantity || ''}
-                    onChange={(e) => {
-                      console.log(`=== TIER ${index} MAX QTY CHANGE ===`);
-                      console.log('New value:', e.target.value);
-                      console.log('Current tier:', tier);
-                      handleArrayUpdate('bulkPricingTiers', index, { ...tier, maxQuantity: e.target.value });
-                    }}
-                    className={`w-24 px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
-                      errors.bulkPricingTiers?.[index] ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                  />
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="Price"
-                    value={tier.price || ''}
-                    onChange={(e) => {
-                      console.log(`=== TIER ${index} PRICE CHANGE ===`);
-                      console.log('New value:', e.target.value);
-                      console.log('Current tier:', tier);
-                      handleArrayUpdate('bulkPricingTiers', index, { ...tier, price: e.target.value });
-                    }}
-                    className={`w-32 px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
-                      errors.bulkPricingTiers?.[index] ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                  />
-                  <div className="text-sm text-gray-500">
-                    Discount: {tier.discountValue ? `₹${tier.discountValue}` : '-'}
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      placeholder="Min Qty"
+                      value={tier.minQuantity || ''}
+                      onChange={(e) => {
+                        console.log(`=== TIER ${index} MIN QTY CHANGE ===`);
+                        console.log('New value:', e.target.value);
+                        console.log('Current tier:', tier);
+                        handleArrayUpdate('bulkPricingTiers', index, { ...tier, minQuantity: e.target.value });
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <select
+                      value={tier.discountType || 'percentage'}
+                      onChange={(e) => {
+                        handleArrayUpdate('bulkPricingTiers', index, { ...tier, discountType: e.target.value });
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                    >
+                      <option value="percentage">Percentage Off</option>
+                      <option value="fixed_amount">Fixed Amount Off</option>
+                      <option value="fixed_price">Fixed Price</option>
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder={tier.discountType === 'percentage' ? 'Discount %' : 'Amount'}
+                      value={tier.discountValue || ''}
+                      onChange={(e) => {
+                        handleArrayUpdate('bulkPricingTiers', index, { ...tier, discountValue: e.target.value });
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                    />
                   </div>
                   <button
                     type="button"
@@ -1343,23 +1328,22 @@ const ProductAdd = () => {
                     }}
                     className="p-2 text-red-600 hover:text-red-800"
                   >
-                    <FiMinus className="h-4 w-4" />
+                    <FiX className="h-5 w-5" />
                   </button>
                 </div>
-                {errors.bulkPricingTiers?.[index] && (
-                  <div className="text-sm text-red-600 pl-2">
-                    {errors.bulkPricingTiers[index].map((error, errorIndex) => (
-                      <div key={errorIndex}>{error}</div>
-                    ))}
-                  </div>
-                )}
+                <p className="text-sm text-gray-500">
+                  {tier.discountType === 'percentage' ? 
+                    `${tier.discountValue || 0}% off for orders of ${tier.minQuantity || 0}+ units` :
+                    tier.discountType === 'fixed_amount' ?
+                    `₹${tier.discountValue || 0} off for orders of ${tier.minQuantity || 0}+ units` :
+                    `Fixed price of ₹${tier.discountValue || 0} for orders of ${tier.minQuantity || 0}+ units`
+                  }
+                </p>
               </div>
             );
           })
         ) : (
-          <div className="text-sm text-gray-500 italic">
-            No bulk pricing tiers added yet. Click "Add Tier" to create one.
-          </div>
+          <p className="text-sm text-gray-500">No bulk pricing tiers added yet.</p>
         )}
       </div>
     </div>

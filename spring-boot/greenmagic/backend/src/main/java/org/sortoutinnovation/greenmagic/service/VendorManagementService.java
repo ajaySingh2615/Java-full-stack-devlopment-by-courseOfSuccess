@@ -1649,6 +1649,18 @@ public class VendorManagementService {
                 // Keep existing status if invalid
             }
         }
+        
+        // Handle bulk pricing tiers
+        if (dto.getBulkPricing() != null) {
+            try {
+                String bulkPricingJson = objectMapper.writeValueAsString(dto.getBulkPricing());
+                System.out.println("=== DEBUG: Setting bulk pricing tiers: " + bulkPricingJson);
+                product.setBulkPricingTiers(bulkPricingJson);
+            } catch (Exception e) {
+                System.err.println("=== ERROR: Failed to update bulk pricing tiers: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
     }
 
     private void copyProductFields(Product source, Product target) {

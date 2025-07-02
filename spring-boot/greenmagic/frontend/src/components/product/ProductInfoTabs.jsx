@@ -86,7 +86,7 @@ const ProductInfoTabs = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-gray-500">Category</label>
-                  <p className="text-sm font-medium text-gray-900">{product?.category || 'Uncategorized'}</p>
+                  <p className="text-sm font-medium text-gray-900">{product?.category?.name || 'Uncategorized'}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Status</label>

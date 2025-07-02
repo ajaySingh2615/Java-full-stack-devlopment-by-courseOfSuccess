@@ -347,7 +347,7 @@ const VendorProducts = () => {
 
         <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
           <span>Stock: {product.stockQuantity}</span>
-          <span>{product.category}</span>
+          <span>{product.category?.name || 'Uncategorized'}</span>
         </div>
 
         <div className="flex items-center justify-between border-t pt-3">

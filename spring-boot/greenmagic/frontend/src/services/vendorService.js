@@ -359,7 +359,7 @@ const vendorService = {
   async getProductCategories() {
     try {
       // Use the new category service for cleaner data
-      const response = await apiClient.get(`/api/categories`);
+      const response = await apiClient.get(`/categories`);
       const categories = response.data.data || response.data;
       
       // Transform to the format expected by the product form

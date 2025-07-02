@@ -1,13 +1,14 @@
 import axios from 'axios';
 
 // Create axios instance for category operations
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Include cookies/session for authentication
 });
 
 // Add request interceptor to include auth token
@@ -52,7 +53,7 @@ const categoryService = {
    */
   async getAllCategories() {
     try {
-      const response = await apiClient.get('/api/categories');
+      const response = await apiClient.get('/categories');
       return {
         success: true,
         data: response.data.data || response.data
@@ -71,7 +72,7 @@ const categoryService = {
    */
   async getCategoryById(categoryId) {
     try {
-      const response = await apiClient.get(`/api/categories/${categoryId}`);
+      const response = await apiClient.get(`/categories/${categoryId}`);
       return {
         success: true,
         data: response.data.data || response.data
@@ -90,7 +91,7 @@ const categoryService = {
    */
   async createCategory(categoryData) {
     try {
-      const response = await apiClient.post('/api/categories', categoryData);
+      const response = await apiClient.post('/categories', categoryData);
       return {
         success: true,
         data: response.data.data || response.data,
@@ -110,7 +111,7 @@ const categoryService = {
    */
   async updateCategory(categoryId, categoryData) {
     try {
-      const response = await apiClient.put(`/api/categories/${categoryId}`, categoryData);
+      const response = await apiClient.put(`/categories/${categoryId}`, categoryData);
       return {
         success: true,
         data: response.data.data || response.data,
@@ -130,7 +131,7 @@ const categoryService = {
    */
   async deleteCategory(categoryId) {
     try {
-      const response = await apiClient.delete(`/api/categories/${categoryId}`);
+      const response = await apiClient.delete(`/categories/${categoryId}`);
       return {
         success: true,
         message: response.data.message || 'Category deleted successfully'

@@ -725,12 +725,94 @@ public class VendorManagementService {
         return 0;
     }
 
+    /**
+     * Generate SKU in format GM[XX][000][0000]
+     * XX = 2 letters from category name (e.g., FR for Fruits)
+     * 000 = 3-digit vendor ID
+     * 0000 = 4-digit sequential product number
+     */
     private String generateSKU(Integer vendorId, Product product) {
-        // Generate SKU in format: GM-V{vendorId}-{categoryCode}-{sequence}
-        String categoryCode = product.getCategory() != null ? 
-            product.getCategory().getName().substring(0, Math.min(3, product.getCategory().getName().length())).toUpperCase() : "GEN";
+        // Get category code (2 letters)
+        String categoryCode = "GM"; // Default if no category
+        if (product.getCategory() != null && product.getCategory().getName() != null) {
+            String categoryName = product.getCategory().getName().toUpperCase();
+            // Remove any non-alphabetic characters
+            categoryName = categoryName.replaceAll("[^A-Z]", "");
+            // Take first two letters, or pad with 'X' if needed
+            if (categoryName.length() >= 2) {
+                categoryCode = categoryName.substring(0, 2);
+            } else if (categoryName.length() == 1) {
+                categoryCode = categoryName + "X";
+            }
+        }
+        
+        // Format vendor ID to 3 digits
+        String vendorCode = String.format("%03d", vendorId);
+        
+        // Get sequential number based on existing products count
         long sequence = getProductCount(vendorId) + 1;
-        return String.format("GM-V%d-%s-%04d", vendorId, categoryCode, sequence);
+        String productNumber = String.format("%04d", sequence);
+        
+        return "GM" + categoryCode + vendorCode + productNumber;
+    }
+
+    /**
+     * Generate SKU from DTO
+     */
+    private String generateSkuFromDto(Integer vendorId, String productTitle, Integer categoryId) {
+        // Get category code (2 letters)
+        String categoryCode = "GM"; // Default if no category
+        if (categoryId != null) {
+            Category category = categoryRepository.findById(categoryId.longValue()).orElse(null);
+            if (category != null && category.getName() != null) {
+                String categoryName = category.getName().toUpperCase();
+                // Remove any non-alphabetic characters
+                categoryName = categoryName.replaceAll("[^A-Z]", "");
+                // Take first two letters, or pad with 'X' if needed
+                if (categoryName.length() >= 2) {
+                    categoryCode = categoryName.substring(0, 2);
+                } else if (categoryName.length() == 1) {
+                    categoryCode = categoryName + "X";
+                }
+            }
+        }
+        
+        // Format vendor ID to 3 digits
+        String vendorCode = String.format("%03d", vendorId);
+        
+        // Get sequential number based on existing products count
+        long sequence = getProductCount(vendorId) + 1;
+        String productNumber = String.format("%04d", sequence);
+        
+        return "GM" + categoryCode + vendorCode + productNumber;
+    }
+
+    /**
+     * Generate SKU for public API
+     */
+    public String generateSku(Integer vendorId, String category, String subcategory) {
+        // Get category code (2 letters)
+        String categoryCode = "GM"; // Default if no category
+        if (category != null && !category.isEmpty()) {
+            String categoryName = category.toUpperCase();
+            // Remove any non-alphabetic characters
+            categoryName = categoryName.replaceAll("[^A-Z]", "");
+            // Take first two letters, or pad with 'X' if needed
+            if (categoryName.length() >= 2) {
+                categoryCode = categoryName.substring(0, 2);
+            } else if (categoryName.length() == 1) {
+                categoryCode = categoryName + "X";
+            }
+        }
+        
+        // Format vendor ID to 3 digits
+        String vendorCode = String.format("%03d", vendorId);
+        
+        // Get sequential number based on existing products count
+        long sequence = getProductCount(vendorId) + 1;
+        String productNumber = String.format("%04d", sequence);
+        
+        return "GM" + categoryCode + vendorCode + productNumber;
     }
 
     private String generateVariantSKU(Product product, ProductVariant variant) {
@@ -1326,17 +1408,6 @@ public class VendorManagementService {
         return categories;
     }
 
-    /**
-     * Generate SKU
-     */
-    public String generateSku(Integer vendorId, String category, String subcategory) {
-        String categoryCode = category != null ? category.substring(0, Math.min(2, category.length())).toUpperCase() : "GM";
-        String vendorCode = String.format("%03d", vendorId);
-        String productNumber = String.format("%04d", (int) (Math.random() * 9999) + 1);
-        
-        return "GM" + categoryCode + vendorCode + productNumber;
-    }
-
     // Helper methods for DTO mapping
     private void mapDtoToProduct(ProductCreateRequestDto dto, Product product) {
         try {
@@ -1565,21 +1636,6 @@ public class VendorManagementService {
         target.setCategory(source.getCategory());
         target.setCreatedBy(source.getCreatedBy());
         target.setStatus(Product.ProductStatus.DRAFT); // New product starts as draft
-    }
-
-    private String generateSkuFromDto(Integer vendorId, String productTitle, Integer categoryId) {
-        String categoryCode = "GM";
-        if (categoryId != null) {
-            Category category = categoryRepository.findById(categoryId.longValue()).orElse(null);
-            if (category != null && category.getName() != null) {
-                categoryCode = category.getName().substring(0, Math.min(2, category.getName().length())).toUpperCase();
-            }
-        }
-        
-        String vendorCode = String.format("%03d", vendorId);
-        String productNumber = String.format("%04d", (int) (Math.random() * 9999) + 1);
-        
-        return "GM" + categoryCode + vendorCode + productNumber;
     }
 
     private String generateSkuFromProduct(Integer vendorId, Product product) {

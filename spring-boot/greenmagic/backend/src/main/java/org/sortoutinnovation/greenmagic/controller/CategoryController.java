@@ -13,7 +13,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/categories")
+@RequestMapping("/api/categories")
 @CrossOrigin(origins = "*")
 public class CategoryController {
 
@@ -67,6 +67,36 @@ public class CategoryController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to create category: " + e.getMessage(), null));
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponseDto<CategoryResponseDto>> updateCategory(
+            @PathVariable Long id, 
+            @Valid @RequestBody Category categoryRequest) {
+        try {
+            CategoryResponseDto updatedCategory = categoryService.updateCategory(id, categoryRequest);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Category updated successfully", updatedCategory));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(new ApiResponseDto<>(false, e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to update category: " + e.getMessage(), null));
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponseDto<Void>> deleteCategory(@PathVariable Long id) {
+        try {
+            categoryService.deleteCategory(id);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Category deleted successfully", null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(new ApiResponseDto<>(false, e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to delete category: " + e.getMessage(), null));
         }
     }
 

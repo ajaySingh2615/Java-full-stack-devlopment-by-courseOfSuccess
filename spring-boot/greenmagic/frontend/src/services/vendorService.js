@@ -357,14 +357,37 @@ const vendorService = {
   },
 
   async getProductCategories() {
-    const response = await apiClient.get(`/vendor/products/categories`);
-    return response.data;
+    try {
+      // Use the new category service for cleaner data
+      const response = await apiClient.get(`/api/categories`);
+      const categories = response.data.data || response.data;
+      
+      // Transform to the format expected by the product form
+      const transformedCategories = {};
+      categories.forEach(category => {
+        transformedCategories[category.categoryId] = {
+          id: category.categoryId,
+          name: category.name
+        };
+      });
+      
+      return {
+        success: true,
+        data: transformedCategories
+      };
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      // Fallback to empty categories
+      return {
+        success: true,
+        data: {}
+      };
+    }
   },
 
-  async generateSku(vendorId, category, subcategory) {
+  async generateSku(vendorId, category) {
     const response = await apiClient.post(`/vendor/products/generate-sku`, {
-      category,
-      subcategory
+      category
     }, {
       params: { vendorId }
     });

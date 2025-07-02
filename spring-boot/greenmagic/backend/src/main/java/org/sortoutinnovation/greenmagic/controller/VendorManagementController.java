@@ -496,9 +496,9 @@ public class VendorManagementController {
             @RequestBody Map<String, String> request) {
         try {
             String category = request.get("category");
-            String subcategory = request.get("subcategory");
+            // No subcategory support - admin controls categories only
             
-            String sku = vendorManagementService.generateSku(vendorId, category, subcategory);
+            String sku = vendorManagementService.generateSku(vendorId, category, null);
             Map<String, String> result = Map.of("sku", sku);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "SKU generated successfully", result));
         } catch (Exception e) {

@@ -32,8 +32,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Import the vendor service
+// Import services
 import vendorService from '../../services/vendorService';
+import categoryService from '../../services/categoryService';
 
 /**
  * Admin Dashboard Component
@@ -69,6 +70,16 @@ const AdminDashboard = () => {
   // Confirmation modal
   const [confirmAction, setConfirmAction] = useState(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  
+  // Category management state
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [categoryModalMode, setCategoryModalMode] = useState('add'); // 'add' or 'edit'
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] = useState(false);
   
   // Check if user is authenticated and has admin role
   useEffect(() => {
@@ -116,7 +127,31 @@ const AdminDashboard = () => {
     };
     
     fetchVendors();
+    fetchCategories();
   }, [isAuthenticated, isAdmin]);
+
+  // Fetch categories for category management
+  const fetchCategories = async () => {
+    try {
+      if (!isAuthenticated() || !isAdmin()) {
+        return;
+      }
+      
+      setCategoriesLoading(true);
+      const response = await categoryService.getAllCategories();
+      if (response.success) {
+        setCategories(response.data);
+      } else {
+        console.error('Failed to fetch categories:', response.error);
+        setCategories([]);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setCategories([]);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
   
   // Filter vendors based on status, search query, and date range
   const getFilteredVendors = () => {
@@ -302,6 +337,81 @@ const AdminDashboard = () => {
     
     setConfirmAction(action);
     setIsConfirmModalOpen(true);
+  };
+
+  // ===========================
+  // CATEGORY MANAGEMENT FUNCTIONS
+  // ===========================
+
+  const openCategoryModal = (mode, category = null) => {
+    setCategoryModalMode(mode);
+    setSelectedCategory(category);
+    setIsCategoryModalOpen(true);
+  };
+
+  const closeCategoryModal = () => {
+    setIsCategoryModalOpen(false);
+    setSelectedCategory(null);
+    setCategoryModalMode('add');
+  };
+
+  const openDeleteCategoryModal = (category) => {
+    setCategoryToDelete(category);
+    setIsDeleteCategoryModalOpen(true);
+  };
+
+  const closeDeleteCategoryModal = () => {
+    setIsDeleteCategoryModalOpen(false);
+    setCategoryToDelete(null);
+  };
+
+  const handleCategorySubmit = async (categoryData) => {
+    try {
+      let response;
+      if (categoryModalMode === 'add') {
+        response = await categoryService.createCategory(categoryData);
+      } else {
+        response = await categoryService.updateCategory(selectedCategory.categoryId, categoryData);
+      }
+
+      if (response.success) {
+        await fetchCategories(); // Refresh the list
+        closeCategoryModal();
+        // You could add a success toast here
+      } else {
+        // Handle error - you could show an error toast here
+        console.error('Category operation failed:', response.error);
+      }
+    } catch (error) {
+      console.error('Error in category operation:', error);
+    }
+  };
+
+  const handleDeleteCategory = async () => {
+    try {
+      const response = await categoryService.deleteCategory(categoryToDelete.categoryId);
+      if (response.success) {
+        await fetchCategories(); // Refresh the list
+        closeDeleteCategoryModal();
+        // You could add a success toast here
+      } else {
+        // Handle error - you could show an error toast here
+        console.error('Category deletion failed:', response.error);
+      }
+    } catch (error) {
+      console.error('Error deleting category:', error);
+    }
+  };
+
+  // Filter categories based on search query
+  const getFilteredCategories = () => {
+    return categories.filter(category => {
+      if (categorySearchQuery) {
+        const query = categorySearchQuery.toLowerCase();
+        return category.name?.toLowerCase().includes(query);
+      }
+      return true;
+    }).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   };
   
   // Vendor detail modal component
@@ -1121,6 +1231,17 @@ const AdminDashboard = () => {
             </button>
             <button 
               className={`flex items-center px-6 py-4 text-sm font-medium transition-colors ${
+                activeTab === 'categories' 
+                  ? 'bg-green-50 text-green-700 border-b-2 border-green-600' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+              onClick={() => setActiveTab('categories')}
+            >
+              <Tag className="h-5 w-5 mr-2" />
+              Categories
+            </button>
+            <button 
+              className={`flex items-center px-6 py-4 text-sm font-medium transition-colors ${
                 activeTab === 'orders' 
                   ? 'bg-green-50 text-green-700 border-b-2 border-green-600' 
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
@@ -1611,6 +1732,166 @@ const AdminDashboard = () => {
           </div>
         )}
         
+        {/* Categories Tab */}
+        {activeTab === 'categories' && (
+          <div>
+            {/* Categories Header */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                    <Tag className="h-5 w-5 mr-2 text-gray-600" />
+                    Categories Management
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Manage product categories that vendors can use for their products.
+                  </p>
+                </div>
+                <button
+                  onClick={() => openCategoryModal('add')}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                >
+                  <Tag className="h-4 w-4 mr-2" />
+                  Add Category
+                </button>
+              </div>
+            </div>
+
+            {/* Search and Filter */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                <div className="flex-1 max-w-lg">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <input
+                      type="text"
+                      placeholder="Search categories..."
+                      value={categorySearchQuery}
+                      onChange={(e) => setCategorySearchQuery(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-700">
+                    {getFilteredCategories().length} {getFilteredCategories().length === 1 ? 'category' : 'categories'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Categories Table */}
+            {categoriesLoading ? (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading categories...</p>
+              </div>
+            ) : getFilteredCategories().length > 0 ? (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Category Name
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          ID
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Products Count
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Created Date
+                        </th>
+                        <th scope="col" className="relative px-6 py-3">
+                          <span className="sr-only">Actions</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {getFilteredCategories().map((category) => (
+                        <tr key={category.categoryId} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-8 w-8">
+                                <div className="h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center">
+                                  <Tag className="h-4 w-4 text-green-600" />
+                                </div>
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {category.name}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            #{category.categoryId}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {category.productCount || 0} products
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {category.createdAt ? formatDate(category.createdAt) : 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                            <button
+                              onClick={() => openCategoryModal('edit', category)}
+                              className="text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-md transition-colors"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => openDeleteCategoryModal(category)}
+                              className="text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-md transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-6 py-12 text-center">
+                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Tag className="h-10 w-10 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No categories found</h3>
+                  <p className="text-gray-500 mb-8 max-w-md mx-auto">
+                    {categorySearchQuery 
+                      ? 'No categories match your search criteria. Try adjusting your search terms.'
+                      : 'No categories have been created yet. Add your first category to get started.'
+                    }
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    {categorySearchQuery && (
+                      <button 
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        onClick={() => setCategorySearchQuery('')}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Clear Search
+                      </button>
+                    )}
+                    <button 
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                      onClick={() => openCategoryModal('add')}
+                    >
+                      <Tag className="h-4 w-4 mr-2" />
+                      Add First Category
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'settings' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div className="px-6 py-12 text-center">
@@ -1649,8 +1930,249 @@ const AdminDashboard = () => {
           onCancel={() => setIsConfirmModalOpen(false)}
         />
       )}
+      
+      {/* Category Modal */}
+      {isCategoryModalOpen && (
+        <CategoryModal 
+          mode={categoryModalMode}
+          category={selectedCategory}
+          onSubmit={handleCategorySubmit}
+          onCancel={closeCategoryModal}
+        />
+      )}
+      
+      {/* Delete Category Confirmation Modal */}
+      {isDeleteCategoryModalOpen && (
+        <DeleteCategoryModal 
+          category={categoryToDelete}
+          onConfirm={handleDeleteCategory}
+          onCancel={closeDeleteCategoryModal}
+        />
+      )}
     </div>
   );
+
+  // ===========================
+  // CATEGORY MODAL COMPONENTS
+  // ===========================
+
+  // Category Add/Edit Modal
+  function CategoryModal({ mode, category, onSubmit, onCancel }) {
+    const [formData, setFormData] = useState({
+      name: category?.name || ''
+    });
+    const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      
+      // Validate form
+      const validationError = categoryService.validateCategoryName(formData.name);
+      if (validationError) {
+        setErrors({ name: validationError });
+        return;
+      }
+
+      setIsSubmitting(true);
+      setErrors({});
+
+      try {
+        await onSubmit(formData);
+      } catch (error) {
+        setErrors({ submit: 'Failed to save category. Please try again.' });
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    const handleChange = (e) => {
+      const { name, value } = e.target;
+      setFormData(prev => ({ ...prev, [name]: value }));
+      // Clear errors on change
+      if (errors[name]) {
+        setErrors(prev => ({ ...prev, [name]: null }));
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+          <form onSubmit={handleSubmit}>
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {mode === 'add' ? 'Add New Category' : 'Edit Category'}
+              </h3>
+              <button 
+                type="button"
+                onClick={onCancel}
+                className="text-gray-400 hover:text-gray-600 focus:outline-none"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="px-6 py-4">
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Category Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter category name"
+                    className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm ${
+                      errors.name ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    required
+                  />
+                  {errors.name && (
+                    <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                  )}
+                </div>
+
+                {errors.submit && (
+                  <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                    <p className="text-sm text-red-600">{errors.submit}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </div>
+                ) : (
+                  mode === 'add' ? 'Add Category' : 'Update Category'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Delete Category Confirmation Modal
+  function DeleteCategoryModal({ category, onConfirm, onCancel }) {
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleConfirm = async () => {
+      setIsDeleting(true);
+      try {
+        await onConfirm();
+      } finally {
+        setIsDeleting(false);
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Delete Category</h3>
+            <button 
+              onClick={onCancel}
+              className="text-gray-400 hover:text-gray-600 focus:outline-none"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          {/* Modal Body */}
+          <div className="px-6 py-4">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                </div>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-900">
+                  Are you sure you want to delete this category?
+                </h4>
+                <p className="mt-1 text-sm text-gray-500">
+                  This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center space-x-3">
+                <Tag className="h-5 w-5 text-gray-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {category?.name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    ID: #{category?.categoryId}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Warning about products */}
+            <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-md p-3">
+              <div className="flex">
+                <AlertTriangle className="h-5 w-5 text-yellow-400 mr-2 flex-shrink-0" />
+                <p className="text-sm text-yellow-700">
+                  <strong>Warning:</strong> Products using this category will become uncategorized. 
+                  Make sure to reassign products to other categories before deleting.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Modal Footer */}
+          <div className="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200">
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={isDeleting}
+              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isDeleting ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Deleting...
+                </div>
+              ) : (
+                'Delete Category'
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 };
 
 export default AdminDashboard; 

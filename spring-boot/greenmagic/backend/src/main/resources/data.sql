@@ -28,12 +28,15 @@ CREATE TABLE IF NOT EXISTS vendor_profiles (
 INSERT IGNORE INTO users (user_id, username, email, password, role_id) 
 VALUES (999, 'testvendor', 'vendor@test.com', '$2a$12$example.hash.here', 2);
 
--- Insert sample categories
-INSERT IGNORE INTO categories (category_id, name, description, parent_category_id) 
+-- Insert sample categories (fixed structure - removed non-existent columns)
+INSERT IGNORE INTO categories (category_id, name) 
 VALUES 
-(1, 'Vegetables', 'Fresh organic vegetables', NULL),
-(2, 'Fruits', 'Fresh seasonal fruits', NULL),
-(3, 'Grains', 'Organic grains and cereals', NULL);
+(1, 'Vegetables'),
+(2, 'Fruits'),
+(3, 'Grains'),
+(4, 'Dairy Products'),
+(5, 'Pulses & Legumes'),
+(6, 'Spices & Condiments');
 
 -- Insert sample vendor profile
 INSERT IGNORE INTO vendor_profiles (vendor_id, user_id, business_name, gst_number, business_phone, business_email, address, store_description, status, created_at)

@@ -41,7 +41,6 @@ const ProductAdd = () => {
     // Basic Information (Section 1)
     productTitle: '',
     categoryId: '',
-    subcategoryId: '',
     brandName: '',
     customBrandName: '',
     skuCode: '',
@@ -152,7 +151,6 @@ const ProductAdd = () => {
             // Basic Information
             productTitle: basic.name || '',
             categoryId: basic.categoryId ? String(basic.categoryId) : '', // Will be resolved later by useEffect
-            subcategoryId: basic.subcategoryId ? String(basic.subcategoryId) : '',
             brandName: basic.brand || '',
             customBrandName: '', // Not in current model
             skuCode: basic.sku || '',
@@ -307,8 +305,6 @@ const ProductAdd = () => {
             productTitle: basic.name,
             categoryId: basic.categoryId,
             categoryIdAsString: basic.categoryId ? String(basic.categoryId) : '',
-            subcategoryId: basic.subcategoryId,
-            subcategoryIdAsString: basic.subcategoryId ? String(basic.subcategoryId) : '',
             productType: basic.productType,
             sellingPrice: pricing.price,
             stockQuantity: inventory.stockQuantity,
@@ -353,52 +349,22 @@ const ProductAdd = () => {
     }
   }, [formData.productTitle]);
 
-  // Debug effect to check category matching and resolve from subcategory
+  // Validate category selection
   useEffect(() => {
-    if (categories && Object.keys(categories).length > 0) {
-      console.log('Category Debug:');
+    if (categories && Object.keys(categories).length > 0 && formData.categoryId) {
+      console.log('Category validation:');
       console.log('Form categoryId:', formData.categoryId, 'Type:', typeof formData.categoryId);
-      console.log('Form subcategoryId:', formData.subcategoryId);
       console.log('Available category keys:', Object.keys(categories));
       
-      // If no categoryId but we have subcategoryId, find the parent category
-      if ((!formData.categoryId || formData.categoryId === '') && formData.subcategoryId) {
-        console.log('No categoryId, trying to resolve from subcategoryId:', formData.subcategoryId);
-        
-        // First try to find in category 3 (Dairy & Milk Products) since this is a milk product
-        if (categories['3'] && categories['3'].subcategories && categories['3'].subcategories[formData.subcategoryId]) {
-          console.log('Found subcategory in Dairy & Milk Products');
-          setFormData(prev => ({ ...prev, categoryId: '3' }));
-          return;
-        }
-        
-        // If not found in Dairy, check all categories
-        for (const [catKey, category] of Object.entries(categories)) {
-          console.log(`Checking category ${catKey}:`, category);
-          if (category.subcategories && Object.keys(category.subcategories).includes(formData.subcategoryId)) {
-            console.log(`Found parent category ${catKey} for subcategory ${formData.subcategoryId}`);
-            setFormData(prev => ({ ...prev, categoryId: catKey }));
-            return;
-          }
-        }
-        
-        // If still not found, default to Dairy & Milk Products since this is a milk product
-        console.log('Defaulting to Dairy & Milk Products category');
-        setFormData(prev => ({ ...prev, categoryId: '3' }));
-      } else if (formData.categoryId) {
-        if (categories[formData.categoryId]) {
-          console.log('Matched category:', categories[formData.categoryId]);
-        } else {
-          console.warn('CategoryId not found in categories object!');
-          // For milk products, default to Dairy & Milk Products
-          if (formData.productTitle.toLowerCase().includes('milk')) {
-            console.log('Product appears to be milk, setting to Dairy & Milk Products category');
-            setFormData(prev => ({ ...prev, categoryId: '3' }));
-          }
-        }
+      if (categories[formData.categoryId]) {
+        console.log('Valid category selected:', categories[formData.categoryId]);
+      } else {
+        console.warn('CategoryId not found in categories object!');
+        // Clear invalid category
+        setFormData(prev => ({ ...prev, categoryId: '' }));
       }
     }
-  }, [formData.categoryId, formData.subcategoryId, formData.productTitle, categories]);
+  }, [formData.categoryId, categories]);
 
   const loadCategories = async () => {
     try {
@@ -477,7 +443,7 @@ const ProductAdd = () => {
         return;
       }
       
-      const response = await vendorService.generateSku(vendorId, formData.categoryId, formData.subcategoryId);
+      const response = await vendorService.generateSku(vendorId, formData.categoryId);
       if (response.success) {
         handleInputChange('skuCode', response.data.sku);
       }
@@ -619,7 +585,7 @@ const ProductAdd = () => {
   };
 
   const transformFormData = (data) => {
-    console.log('Transform data input:', { categoryId: data.categoryId, subcategoryId: data.subcategoryId });
+    console.log('Transform data input:', { categoryId: data.categoryId });
     
     // Clean up gallery images
     const cleanGalleryImages = data.galleryImages
@@ -627,9 +593,8 @@ const ProductAdd = () => {
       .filter(url => url.trim() !== '');
     
     const categoryId = data.categoryId && data.categoryId !== '' && !isNaN(parseInt(data.categoryId)) ? parseInt(data.categoryId) : null;
-    const subcategoryId = data.subcategoryId && data.subcategoryId !== '' && !isNaN(parseInt(data.subcategoryId)) ? parseInt(data.subcategoryId) : null;
     
-    console.log('Transformed IDs:', { categoryId, subcategoryId });
+    console.log('Transformed IDs:', { categoryId });
     
     // Generate URL slug from product title
     const generateUrlSlug = (title) => {
@@ -658,7 +623,6 @@ const ProductAdd = () => {
       urlSlug,
       // Ensure numeric fields are properly converted
       categoryId,
-      subcategoryId,
       mrp: data.mrp && data.mrp !== '' ? parseFloat(data.mrp) : null,
       sellingPrice: data.sellingPrice && data.sellingPrice !== '' ? parseFloat(data.sellingPrice) : null,
       costPrice: data.costPrice && data.costPrice !== '' ? parseFloat(data.costPrice) : null,
@@ -996,23 +960,7 @@ const ProductAdd = () => {
           )}
         </div>
 
-        {formData.categoryId && categories[formData.categoryId]?.subcategories && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Subcategory
-            </label>
-            <select
-              value={formData.subcategoryId}
-              onChange={(e) => handleInputChange('subcategoryId', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-            >
-              <option value="">Select Subcategory</option>
-              {Object.entries(categories[formData.categoryId].subcategories).map(([key, subcat]) => (
-                <option key={key} value={key}>{subcat.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
+
       </div>
     </div>
   );

@@ -1265,41 +1265,63 @@ public class VendorManagementService {
     }
 
     /**
-     * Get product categories
+     * Get product categories from database
+     * SIMPLIFIED: Returns only categories (no subcategories)
      */
     public Map<String, Object> getProductCategories() {
-        // This would return the product categories structure from product-categories.json
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // Get real categories from database
+            List<Category> dbCategories = categoryRepository.findAll();
+            
+            for (Category category : dbCategories) {
+                Map<String, Object> categoryData = new HashMap<>();
+                categoryData.put("id", category.getCategoryId());
+                categoryData.put("name", category.getName());
+                // No subcategories - admin controls categories only
+                
+                result.put(String.valueOf(category.getCategoryId()), categoryData);
+            }
+            
+            // If no categories found in database, return default ones
+            if (result.isEmpty()) {
+                System.out.println("=== WARNING: No categories found in database, returning defaults");
+                return getDefaultCategories();
+            }
+            
+            System.out.println("=== DEBUG: Retrieved " + result.size() + " categories from database");
+            return result;
+            
+        } catch (Exception e) {
+            System.err.println("=== ERROR: Failed to retrieve categories from database: " + e.getMessage());
+            e.printStackTrace();
+            // Fallback to default categories
+            return getDefaultCategories();
+        }
+    }
+    
+    /**
+     * Fallback method for default categories (no subcategories)
+     */
+    private Map<String, Object> getDefaultCategories() {
         Map<String, Object> categories = new HashMap<>();
         
-        Map<String, Object> organicGrains = new HashMap<>();
-        organicGrains.put("name", "Organic Grains & Cereals");
-        organicGrains.put("id", 1);
-        Map<String, Object> subcategories = new HashMap<>();
-        subcategories.put("101", Map.of("name", "Wheat & Wheat Products", "hsn", "1001", "gst", 0, "id", 101));
-        subcategories.put("102", Map.of("name", "Rice & Rice Products", "hsn", "1006", "gst", 0, "id", 102));
-        subcategories.put("103", Map.of("name", "Corn & Corn Products", "hsn", "1005", "gst", 0, "id", 103));
-        organicGrains.put("subcategories", subcategories);
+        Map<String, Object> vegetables = new HashMap<>();
+        vegetables.put("name", "Vegetables");
+        vegetables.put("id", 1);
         
-        Map<String, Object> pulses = new HashMap<>();
-        pulses.put("name", "Pulses & Legumes");
-        pulses.put("id", 2);
-        Map<String, Object> pulseSubcategories = new HashMap<>();
-        pulseSubcategories.put("201", Map.of("name", "Lentils (Dal)", "hsn", "0713", "gst", 0, "id", 201));
-        pulseSubcategories.put("202", Map.of("name", "Whole Pulses", "hsn", "0713", "gst", 0, "id", 202));
-        pulses.put("subcategories", pulseSubcategories);
+        Map<String, Object> fruits = new HashMap<>();
+        fruits.put("name", "Fruits");
+        fruits.put("id", 2);
         
-        Map<String, Object> dairy = new HashMap<>();
-        dairy.put("name", "Dairy & Milk Products");
-        dairy.put("id", 3);
-        Map<String, Object> dairySubcategories = new HashMap<>();
-        dairySubcategories.put("301", Map.of("name", "Fresh Milk", "hsn", "0401", "gst", 0, "id", 301));
-        dairySubcategories.put("302", Map.of("name", "Yogurt & Curd", "hsn", "0403", "gst", 5, "id", 302));
-        dairySubcategories.put("303", Map.of("name", "Cheese & Paneer", "hsn", "0406", "gst", 12, "id", 303));
-        dairy.put("subcategories", dairySubcategories);
+        Map<String, Object> grains = new HashMap<>();
+        grains.put("name", "Grains");
+        grains.put("id", 3);
         
-        categories.put("1", organicGrains);
-        categories.put("2", pulses);
-        categories.put("3", dairy);
+        categories.put("1", vegetables);
+        categories.put("2", fruits);
+        categories.put("3", grains);
         
         return categories;
     }
@@ -1324,6 +1346,25 @@ public class VendorManagementService {
             product.setSku(dto.getSkuCode());
             product.setBrand(dto.getBrandName());
             product.setProductType(Product.ProductType.valueOf(dto.getProductType().toUpperCase()));
+            
+            // CATEGORY MAPPING - FIX MISSING IMPLEMENTATION
+            // ===========================
+            if (dto.getCategoryId() != null) {
+                try {
+                    Category category = categoryRepository.findById(dto.getCategoryId().longValue())
+                        .orElseThrow(() -> new RuntimeException("Category not found with ID: " + dto.getCategoryId()));
+                    product.setCategory(category);
+                    System.out.println("=== DEBUG: Category set successfully: " + category.getName());
+                } catch (Exception e) {
+                    System.err.println("=== ERROR: Failed to set category: " + e.getMessage());
+                    throw new RuntimeException("Invalid category ID: " + dto.getCategoryId(), e);
+                }
+            }
+            
+            // SUBCATEGORY - Store as integer for now (no Subcategory entity exists)
+            if (dto.getSubcategoryId() != null) {
+                product.setSubcategoryId(dto.getSubcategoryId());
+            }
             
             // PRICING STRATEGY
             // ===========================
@@ -1481,11 +1522,20 @@ public class VendorManagementService {
             }
         }
         
-        // Update category if provided
+        // Update category if provided - FIXED IMPLEMENTATION
         if (dto.getCategoryId() != null) {
-            Category category = categoryRepository.findById(dto.getCategoryId().longValue()).orElse(null);
-            product.setCategory(category);
+            try {
+                Category category = categoryRepository.findById(dto.getCategoryId().longValue())
+                    .orElseThrow(() -> new RuntimeException("Category not found with ID: " + dto.getCategoryId()));
+                product.setCategory(category);
+                System.out.println("=== DEBUG: Category updated successfully: " + category.getName());
+            } catch (Exception e) {
+                System.err.println("=== ERROR: Failed to update category: " + e.getMessage());
+                // Keep existing category if invalid
+            }
         }
+        
+        // NOTE: Subcategory support removed - admin controls categories only
         
         // Update status
         if (dto.getStatus() != null) {

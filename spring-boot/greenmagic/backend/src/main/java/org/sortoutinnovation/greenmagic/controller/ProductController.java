@@ -236,7 +236,6 @@ public class ProductController {
             @RequestParam BigDecimal maxPrice,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
         try {
             Pageable pageable = PageRequest.of(page, size);
             Page<Product> products = productService.getProductsByPriceRange(minPrice, maxPrice, pageable);

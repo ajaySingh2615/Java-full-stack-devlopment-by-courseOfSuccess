@@ -1435,6 +1435,15 @@ public class VendorManagementService {
         if (dto.getMetaTitle() != null) product.setMetaTitle(dto.getMetaTitle());
         if (dto.getMetaDescription() != null) product.setMetaDescription(dto.getMetaDescription());
         
+        // Handle product type
+        if (dto.getProductType() != null) {
+            try {
+                product.setProductType(Product.ProductType.valueOf(dto.getProductType().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                // Keep existing product type if invalid value is provided
+            }
+        }
+        
         // Handle media fields
         if (dto.getMainImageUrl() != null) product.setImageUrl(dto.getMainImageUrl());
         if (dto.getVideoUrl() != null) product.setVideoUrl(dto.getVideoUrl());

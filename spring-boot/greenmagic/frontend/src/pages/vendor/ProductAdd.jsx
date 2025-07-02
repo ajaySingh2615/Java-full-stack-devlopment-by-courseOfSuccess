@@ -45,7 +45,7 @@ const ProductAdd = () => {
     brandName: '',
     customBrandName: '',
     skuCode: '',
-    productType: 'simple',
+    productType: 'SIMPLE',
     dimensions: { length: '', width: '', height: '', unit: 'cm' }, // Initialize dimensions object
 
     // Pricing Strategy (Section 2)
@@ -156,7 +156,7 @@ const ProductAdd = () => {
             brandName: basic.brand || '',
             customBrandName: '', // Not in current model
             skuCode: basic.sku || '',
-            productType: (basic.productType || 'simple').toLowerCase(),
+            productType: (basic.productType || 'SIMPLE').toUpperCase(),
 
             // Pricing Strategy
             mrp: pricing.mrp?.toString() || '',
@@ -650,8 +650,8 @@ const ProductAdd = () => {
       ...data,
       // Clean up product title - replace en/em dashes with regular hyphens
       productTitle: data.productTitle?.replace(/[–—]/g, '-'),
-      // Ensure product type is lowercase
-      productType: data.productType?.toLowerCase(),
+      // Ensure product type is uppercase to match backend enum
+      productType: data.productType?.toUpperCase(),
       // Send cleaned gallery images to backend
       imageUrls: cleanGalleryImages,
       // Set generated URL slug

@@ -35,7 +35,7 @@ public class ProductUpdateRequestDto {
     @Pattern(regexp = "^GM[A-Z]{2}[0-9]{3}[0-9]{4}$", message = "Invalid SKU format")
     private String skuCode;
 
-    @Pattern(regexp = "^(simple|variable)$", message = "Product type must be 'simple' or 'variable'")
+    @Pattern(regexp = "^(SIMPLE|VARIABLE)$", message = "Product type must be 'SIMPLE' or 'VARIABLE'")
     private String productType;
 
     // Pricing Strategy

@@ -863,14 +863,15 @@ public class VendorManagementService {
                 throw new IllegalArgumentException("A product with URL slug '" + urlSlug + "' already exists. Please provide a different product title or custom URL slug.");
             }
 
-            // Create new product
+            // Create new product and set vendor first
             Product product = new Product();
+            product.setCreatedBy(vendor);
+            product.setCreatedAt(LocalDateTime.now());
             
             // Map DTO to Product using our fixed method
             mapDtoToProduct(request, product);
             
             // Set system fields
-            product.setCreatedBy(vendor);
             product.setUrlSlug(urlSlug);
             
             System.out.println("=== DEBUG: About to save product");
@@ -997,7 +998,7 @@ public class VendorManagementService {
     /**
      * Update product from DTO
      */
-    public ProductResponseDto updateProductFromDto(Integer vendorId, Integer productId, ProductUpdateRequestDto request) {
+    public ProductResponseDto updateProductFromDto(Integer vendorId, Integer productId, ProductUpdateRequestDto dto) {
         Product existingProduct = productRepository.findById(productId.longValue())
             .orElseThrow(() -> new RuntimeException("Product not found"));
         
@@ -1006,9 +1007,15 @@ public class VendorManagementService {
             throw new RuntimeException("Unauthorized to update this product");
         }
         
-        mapUpdateDtoToProduct(request, existingProduct);
-        // Note: Product model doesn't have updatedAt field, relying on JPA @LastModifiedDate if needed
+        // Handle SKU - Generate if not provided
+        if (dto.getSkuCode() == null || dto.getSkuCode().trim().isEmpty()) {
+            // Generate new SKU using existing product data
+            String newSku = generateSkuFromProduct(vendorId, existingProduct);
+            dto.setSkuCode(newSku);
+            System.out.println("=== DEBUG: Generated new SKU for update: " + newSku);
+        }
         
+        mapUpdateDtoToProduct(dto, existingProduct);
         Product savedProduct = productRepository.save(existingProduct);
         return productMapper.toDto(savedProduct);
     }
@@ -1414,7 +1421,23 @@ public class VendorManagementService {
             // BASIC INFORMATION
             // ===========================
             product.setName(dto.getProductTitle());
-            product.setSku(dto.getSkuCode());
+            
+            // Handle SKU - Generate if not provided
+            String sku = dto.getSkuCode();
+            if (sku == null || sku.trim().isEmpty()) {
+                // Get vendor ID from the context
+                User vendor = product.getCreatedBy();
+                if (vendor == null || vendor.getUserId() == null) {
+                    throw new RuntimeException("Vendor information is required to generate SKU");
+                }
+                
+                // Generate SKU using category if available
+                Integer categoryId = dto.getCategoryId();
+                sku = generateSkuFromDto(vendor.getUserId().intValue(), dto.getProductTitle(), categoryId);
+                System.out.println("=== DEBUG: Generated SKU: " + sku);
+            }
+            product.setSku(sku);
+            
             product.setBrand(dto.getBrandName());
             product.setProductType(Product.ProductType.valueOf(dto.getProductType().toUpperCase()));
             
@@ -1547,6 +1570,16 @@ public class VendorManagementService {
         if (dto.getMetaTitle() != null) product.setMetaTitle(dto.getMetaTitle());
         if (dto.getMetaDescription() != null) product.setMetaDescription(dto.getMetaDescription());
         
+        // Handle offer dates
+        if (dto.getOfferStartDate() != null) {
+            System.out.println("=== DEBUG: Setting offer start date: " + dto.getOfferStartDate());
+            product.setOfferStartDate(dto.getOfferStartDate());
+        }
+        if (dto.getOfferEndDate() != null) {
+            System.out.println("=== DEBUG: Setting offer end date: " + dto.getOfferEndDate());
+            product.setOfferEndDate(dto.getOfferEndDate());
+        }
+        
         // Handle product type
         if (dto.getProductType() != null) {
             try {
@@ -1598,7 +1631,7 @@ public class VendorManagementService {
             try {
                 Category category = categoryRepository.findById(dto.getCategoryId().longValue())
                     .orElseThrow(() -> new RuntimeException("Category not found with ID: " + dto.getCategoryId()));
-                product.setCategory(category);
+            product.setCategory(category);
                 System.out.println("=== DEBUG: Category updated successfully: " + category.getName());
             } catch (Exception e) {
                 System.err.println("=== ERROR: Failed to update category: " + e.getMessage());

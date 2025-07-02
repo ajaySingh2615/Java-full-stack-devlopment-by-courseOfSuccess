@@ -160,11 +160,71 @@ const ProductAdd = () => {
             mrp: pricing.mrp?.toString() || '',
             sellingPrice: pricing.price?.toString() || '',
             costPrice: pricing.costPrice?.toString() || '',
-            offerStartDate: pricing.offerStartDate || '',
-            offerEndDate: pricing.offerEndDate || '',
+            offerStartDate: (() => {
+              if (!pricing.offerStartDate) return '';
+              try {
+                // Convert ISO string to local datetime-local format
+                const date = new Date(pricing.offerStartDate);
+                if (!(date instanceof Date) || isNaN(date)) return '';
+                
+                // Format to YYYY-MM-DDTHH:mm
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+              } catch (e) {
+                console.warn('Error parsing offerStartDate:', e);
+                return '';
+              }
+            })(),
+            offerEndDate: (() => {
+              if (!pricing.offerEndDate) return '';
+              try {
+                // Convert ISO string to local datetime-local format
+                const date = new Date(pricing.offerEndDate);
+                if (!(date instanceof Date) || isNaN(date)) return '';
+                
+                // Format to YYYY-MM-DDTHH:mm
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+              } catch (e) {
+                console.warn('Error parsing offerEndDate:', e);
+                return '';
+              }
+            })(),
             bulkPricingTiers: (() => {
               try {
-                return pricing.bulkPricingTiers ? JSON.parse(pricing.bulkPricingTiers || '[]') : [];
+                // Handle both string and array formats
+                let tiers = pricing.bulkPricingTiers || [];
+                
+                // If it's a string, try to parse it
+                if (typeof tiers === 'string') {
+                  tiers = JSON.parse(tiers);
+                }
+                
+                // Ensure it's an array and transform to form format
+                return Array.isArray(tiers) ? tiers.map(tier => ({
+                  minQuantity: tier.minQuantity?.toString() || '',
+                  maxQuantity: tier.maxQuantity?.toString() || '',
+                  price: (() => {
+                    const mrp = parseFloat(pricing.mrp);
+                    const discountValue = parseFloat(tier.discountValue);
+                    if (!isNaN(mrp) && !isNaN(discountValue)) {
+                      return (mrp - discountValue).toString();
+                    }
+                    return '';
+                  })(),
+                  discountType: tier.discountType || 'fixed_amount',
+                  discountValue: tier.discountValue?.toString() || ''
+                })) : [];
               } catch (e) {
                 console.warn('Error parsing bulkPricingTiers:', e);
                 return [];
@@ -380,22 +440,29 @@ const ProductAdd = () => {
   };
 
   const handleInputChange = (field, value) => {
+    console.log('handleInputChange called:', { field, value });
+    
     setFormData(prev => {
       // Special handling for dimensions object
       if (field === 'dimensions' && typeof value === 'object') {
-        return {
+        const newData = {
           ...prev,
           dimensions: {
             ...prev.dimensions,
             ...value
           }
         };
+        console.log('Updated form data (dimensions):', { 
+          field, 
+          oldValue: prev.dimensions, 
+          newValue: newData.dimensions 
+        });
+        return newData;
       }
       
-      return {
-        ...prev,
-        [field]: value
-      };
+      const newData = { ...prev, [field]: value };
+      console.log('Updated form data:', { field, oldValue: prev[field], newValue: value });
+      return newData;
     });
     
     // Clear error when user starts typing
@@ -408,10 +475,25 @@ const ProductAdd = () => {
   };
 
   const handleArrayAdd = (field, value = '') => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: [...prev[field], field === 'galleryImages' ? '' : value]
-    }));
+    console.log('handleArrayAdd called:', { field, value });
+    setFormData(prev => {
+      let newValue = value;
+      
+      // Special handling for bulk pricing tiers
+      if (field === 'bulkPricingTiers') {
+        newValue = {
+          minQuantity: '',
+          maxQuantity: '',
+          price: '',
+          discountType: 'fixed_amount',
+          discountValue: ''
+        };
+      }
+      
+      const newArray = [...(prev[field] || []), newValue];
+      console.log('Updated array:', { field, newArray });
+      return { ...prev, [field]: newArray };
+    });
   };
 
   const handleArrayRemove = (field, index) => {
@@ -422,18 +504,46 @@ const ProductAdd = () => {
   };
 
   const handleArrayUpdate = (field, index, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: prev[field].map((item, i) => {
-        if (i !== index) return item;
+    console.log('handleArrayUpdate called:', { field, index, value });
+    setFormData(prev => {
+      const newArray = [...prev[field]];
+      
+      // Special handling for bulk pricing tiers
+      if (field === 'bulkPricingTiers') {
+        const tier = newArray[index];
+        const updatedTier = { ...tier, ...value };
         
-        // Special handling for gallery images
-        if (field === 'galleryImages') {
-          return cleanupUrl(value);
+        // If price is updated, calculate discount value
+        if ('price' in value && value.price && prev.mrp) {
+          const price = parseFloat(value.price);
+          const mrp = parseFloat(prev.mrp);
+          if (!isNaN(price) && !isNaN(mrp) && price > 0 && mrp > 0) {
+            updatedTier.discountValue = Math.max(0, mrp - price).toString();
+          }
         }
-        return value;
-      })
-    }));
+        
+        newArray[index] = updatedTier;
+      } else {
+        newArray[index] = value;
+      }
+      
+      console.log('Updated array item:', { field, index, oldValue: prev[field][index], newValue: newArray[index] });
+      return { ...prev, [field]: newArray };
+    });
+
+    // Clear errors for bulk pricing tiers when user updates values
+    if (field === 'bulkPricingTiers' && errors.bulkPricingTiers?.[index]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        if (newErrors.bulkPricingTiers) {
+          delete newErrors.bulkPricingTiers[index];
+          if (Object.keys(newErrors.bulkPricingTiers).length === 0) {
+            delete newErrors.bulkPricingTiers;
+          }
+        }
+        return newErrors;
+      });
+    }
   };
 
   const generateSku = async () => {
@@ -476,10 +586,81 @@ const ProductAdd = () => {
         break;
       
       case 2: // Pricing Strategy
-        if (!formData.mrp || formData.mrp === '' || parseFloat(formData.mrp) <= 0) newErrors.mrp = 'MRP is required and must be greater than 0';
-        if (!formData.sellingPrice || formData.sellingPrice === '' || parseFloat(formData.sellingPrice) <= 0) newErrors.sellingPrice = 'Selling price is required and must be greater than 0';
-        if (formData.mrp && formData.sellingPrice && parseFloat(formData.sellingPrice) > parseFloat(formData.mrp)) {
-          newErrors.sellingPrice = 'Selling price cannot be higher than MRP';
+        if (!formData.mrp || isNaN(parseFloat(formData.mrp)) || parseFloat(formData.mrp) <= 0) {
+          newErrors.mrp = 'Please enter a valid MRP greater than 0';
+        }
+
+        if (!formData.sellingPrice || isNaN(parseFloat(formData.sellingPrice)) || parseFloat(formData.sellingPrice) <= 0) {
+          newErrors.sellingPrice = 'Please enter a valid selling price greater than 0';
+        } else if (parseFloat(formData.sellingPrice) > parseFloat(formData.mrp)) {
+          newErrors.sellingPrice = 'Selling price cannot be greater than MRP';
+        }
+
+        if (formData.costPrice && (isNaN(parseFloat(formData.costPrice)) || parseFloat(formData.costPrice) < 0)) {
+          newErrors.costPrice = 'Cost price must be a valid number greater than or equal to 0';
+        }
+
+        // Validate offer dates
+        if (formData.offerStartDate && formData.offerEndDate) {
+          const startDate = new Date(formData.offerStartDate);
+          const endDate = new Date(formData.offerEndDate);
+          
+          if (!(startDate instanceof Date) || isNaN(startDate)) {
+            newErrors.offerStartDate = 'Please enter a valid start date';
+          }
+          
+          if (!(endDate instanceof Date) || isNaN(endDate)) {
+            newErrors.offerEndDate = 'Please enter a valid end date';
+          }
+          
+          if (startDate >= endDate) {
+            newErrors.offerEndDate = 'End date must be after start date';
+          }
+        } else if ((formData.offerStartDate && !formData.offerEndDate) || (!formData.offerStartDate && formData.offerEndDate)) {
+          newErrors.offerEndDate = 'Both start and end dates must be set for an offer';
+        }
+
+        // Validate bulk pricing tiers
+        if (formData.bulkPricingTiers.length > 0) {
+          let lastMaxQty = 0;
+          
+          formData.bulkPricingTiers.forEach((tier, index) => {
+            const minQty = parseInt(tier.minQuantity);
+            const maxQty = parseInt(tier.maxQuantity);
+            const price = parseFloat(tier.price);
+            const tierErrors = [];
+            
+            if (!minQty || isNaN(minQty) || minQty <= 0) {
+              tierErrors.push('Min quantity must be greater than 0');
+            }
+            
+            if (!maxQty || isNaN(maxQty) || maxQty <= 0) {
+              tierErrors.push('Max quantity must be greater than 0');
+            }
+            
+            if (minQty && maxQty && minQty >= maxQty) {
+              tierErrors.push('Max quantity must be greater than min quantity');
+            }
+            
+            if (minQty && minQty <= lastMaxQty) {
+              tierErrors.push('Min quantity must be greater than previous tier\'s max quantity');
+            }
+            
+            if (!price || isNaN(price) || price <= 0) {
+              tierErrors.push('Price must be greater than 0');
+            }
+            
+            if (price && price >= parseFloat(formData.mrp)) {
+              tierErrors.push('Bulk price must be less than MRP');
+            }
+            
+            if (tierErrors.length > 0) {
+              if (!newErrors.bulkPricingTiers) newErrors.bulkPricingTiers = {};
+              newErrors.bulkPricingTiers[index] = tierErrors;
+            }
+            
+            if (maxQty) lastMaxQty = maxQty;
+          });
         }
         break;
       
@@ -585,7 +766,11 @@ const ProductAdd = () => {
   };
 
   const transformFormData = (data) => {
-    console.log('Transform data input:', { categoryId: data.categoryId });
+    console.log('Transform data input:', {
+      offerStartDate: data.offerStartDate,
+      offerEndDate: data.offerEndDate,
+      bulkPricingTiers: data.bulkPricingTiers
+    });
     
     // Clean up gallery images
     const cleanGalleryImages = data.galleryImages
@@ -596,157 +781,125 @@ const ProductAdd = () => {
     
     console.log('Transformed IDs:', { categoryId });
     
+    // Format dates to match backend's expected format
+    const formatDate = (dateStr) => {
+      if (!dateStr) {
+        console.log('formatDate: No date provided');
+        return null;
+      }
+      try {
+        console.log('formatDate input:', dateStr);
+        const date = new Date(dateStr);
+        if (!(date instanceof Date) || isNaN(date)) {
+          console.log('formatDate: Invalid date');
+          return null;
+        }
+        const isoString = date.toISOString();
+        console.log('formatDate output:', isoString);
+        return isoString;
+      } catch (e) {
+        console.warn('Error formatting date:', e);
+        return null;
+      }
+    };
+
     // Generate URL slug from product title
     const generateUrlSlug = (title) => {
+      if (!title) return '';
       return title
-        ?.toLowerCase()
+        .toLowerCase()
         .replace(/[–—]/g, '-') // Replace en/em dashes with hyphens
         .replace(/[^a-z0-9-]/g, '-') // Replace any non-alphanumeric chars with hyphens
         .replace(/-+/g, '-') // Replace multiple consecutive hyphens with single hyphen
         .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
     };
 
-    // Add timestamp to URL slug to ensure uniqueness in edit mode
-    const urlSlug = isEditMode 
-      ? `${generateUrlSlug(data.productTitle)}-${Date.now()}`
-      : generateUrlSlug(data.productTitle);
+    // Transform bulk pricing tiers to match backend DTO structure
+    const transformedBulkPricingTiers = data.bulkPricingTiers
+      .filter(tier => {
+        // Validate tier has all required fields and they are valid numbers
+        const minQty = parseInt(tier.minQuantity);
+        const maxQty = parseInt(tier.maxQuantity);
+        const price = parseFloat(tier.price);
+        const mrpPrice = parseFloat(data.mrp);
+        
+        return !isNaN(minQty) && !isNaN(maxQty) && !isNaN(price) && 
+               minQty > 0 && maxQty > minQty && price > 0 && mrpPrice > 0;
+      })
+      .map(tier => {
+        const minQty = parseInt(tier.minQuantity);
+        const price = parseFloat(tier.price);
+        const mrpPrice = parseFloat(data.mrp);
+        
+        // Calculate discount value based on MRP
+        const discountValue = mrpPrice - price;
+        
+        return {
+          minQuantity: minQty,
+          discountType: 'fixed_amount',
+          discountValue: discountValue
+        };
+      })
+      .sort((a, b) => a.minQuantity - b.minQuantity);
 
-    return {
+    // Transform the data to match the backend DTO structure
+    const transformedData = {
       ...data,
-      // Clean up product title - replace en/em dashes with regular hyphens
-      productTitle: data.productTitle?.replace(/[–—]/g, '-'),
-      // Ensure product type is uppercase to match backend enum
-      productType: data.productType?.toUpperCase(),
-      // Send cleaned gallery images to backend
-      imageUrls: cleanGalleryImages,
-      // Set generated URL slug
-      urlSlug,
-      // Ensure numeric fields are properly converted
-      categoryId,
+      productTitle: data.productTitle?.trim(),
+      categoryId: categoryId,
+      bulkPricing: transformedBulkPricingTiers,
+      offerStartDate: formatDate(data.offerStartDate),
+      offerEndDate: formatDate(data.offerEndDate),
+      // Convert numeric fields
       mrp: data.mrp && data.mrp !== '' ? parseFloat(data.mrp) : null,
       sellingPrice: data.sellingPrice && data.sellingPrice !== '' ? parseFloat(data.sellingPrice) : null,
       costPrice: data.costPrice && data.costPrice !== '' ? parseFloat(data.costPrice) : null,
       stockQuantity: data.stockQuantity && data.stockQuantity !== '' ? parseInt(data.stockQuantity) : null,
-      minimumOrderQuantity: data.minimumOrderQuantity && data.minimumOrderQuantity !== '' ? parseInt(data.minimumOrderQuantity) : 1,
-      maximumOrderQuantity: data.maximumOrderQuantity && data.maximumOrderQuantity !== '' ? parseInt(data.maximumOrderQuantity) : null,
-      lowStockAlert: data.lowStockAlert && data.lowStockAlert !== '' ? parseInt(data.lowStockAlert) : 10,
-      weightForShipping: data.weightForShipping && data.weightForShipping !== '' ? parseFloat(data.weightForShipping) : null,
-      
-      // Transform dimensions object for backend
-      dimensions: (() => {
-        console.log('Transforming dimensions for API:', data.dimensions);
-        if (data.dimensions && typeof data.dimensions === 'object') {
-          const { length, width, height, unit } = data.dimensions;
-          if (length && width && height) {
-            // Convert string numbers to BigDecimal compatible numbers
-            const result = {
-              length: parseFloat(length),
-              width: parseFloat(width),
-              height: parseFloat(height),
-              unit: unit || 'cm'
-            };
-            console.log('Transformed dimensions object:', result);
-            return result;
-          }
-        }
-        console.log('No valid dimensions to transform');
-        return null;
-      })(),
-      
-      // Ensure arrays are properly initialized and mapped correctly
-      bulkPricingTiers: data.bulkPricingTiers || [],
-      imageAltTags: data.imageAltTags || [],
-      keyFeatures: data.keyFeatures || [],
-      productHighlights: data.productHighlights || [],
-      qualityCertifications: data.qualityCertifications || [],
-      returnConditions: data.returnConditions || [],
-      searchKeywords: data.searchKeywords || [],
-      
-      // Media fields - clean up URLs
-      mainImageUrl: data.mainImageUrl ? cleanupUrl(data.mainImageUrl) : '',
-      videoUrl: data.videoUrl ? data.videoUrl.trim() : '',
-      
-      // Ensure boolean fields are properly set
-      hasVariants: data.hasVariants || false,
-      coldStorageRequired: data.coldStorageRequired || false,
-      specialPackaging: data.specialPackaging || false,
-      insuranceRequired: data.insuranceRequired || false,
-      freeShipping: data.freeShipping || false,
-      isReturnable: data.isReturnable !== false,
-      isCodAvailable: data.isCodAvailable !== false,
-      trackQuantity: data.trackQuantity !== false,
+      // Clean up gallery images
+      imageUrls: cleanGalleryImages,
+      // Set URL slug
+      urlSlug: isEditMode ? `${generateUrlSlug(data.productTitle)}-${Date.now()}` : generateUrlSlug(data.productTitle)
     };
+
+    console.log('Raw form data dates:', {
+      offerStartDate: data.offerStartDate,
+      offerEndDate: data.offerEndDate
+    });
+
+    console.log('Transformed data:', {
+      dates: {
+        offerStartDate: transformedData.offerStartDate,
+        offerEndDate: transformedData.offerEndDate
+      },
+      bulkPricing: transformedData.bulkPricing
+    });
+
+    return transformedData;
   };
 
   const handleSubmit = async (isDraft = false) => {
+    console.log('Submitting form with data:', {
+      offerStartDate: formData.offerStartDate,
+      offerEndDate: formData.offerEndDate,
+      bulkPricingTiers: formData.bulkPricingTiers
+    });
+    
     try {
       setLoading(true);
       setErrors({});
 
-      // If publishing (not draft), validate all fields
+      // Validate all steps if not a draft
       if (!isDraft) {
-        const allErrors = {};
-        
-        // Basic Information
-        if (!formData.productTitle || formData.productTitle.length < 10) {
-          allErrors.productTitle = 'Product title must be at least 10 characters';
-        }
-        if (!formData.categoryId) {
-          allErrors.categoryId = 'Category is required';
-        }
-        if (!formData.brandName && !formData.customBrandName) {
-          allErrors.brandName = 'Brand name is required';
+        let isValid = true;
+        for (let step = 1; step <= totalSteps; step++) {
+          if (!validateStep(step)) {
+            isValid = false;
+            setCurrentStep(step);
+            break;
+          }
         }
 
-        // Pricing
-        if (!formData.mrp || parseFloat(formData.mrp) < 1) {
-          allErrors.mrp = 'MRP must be at least ₹1';
-        }
-        if (!formData.sellingPrice || parseFloat(formData.sellingPrice) <= 0) {
-          allErrors.sellingPrice = 'Selling price must be greater than 0';
-        }
-        if (parseFloat(formData.sellingPrice) > parseFloat(formData.mrp)) {
-          allErrors.sellingPrice = 'Selling price cannot be greater than MRP';
-        }
-
-        // Inventory
-        if (!formData.stockQuantity || parseInt(formData.stockQuantity) < 0) {
-          allErrors.stockQuantity = 'Stock quantity cannot be negative';
-        }
-        if (!formData.unitOfMeasurement) {
-          allErrors.unitOfMeasurement = 'Unit of measurement is required';
-        }
-
-        // Media
-        if (!formData.mainImageUrl) {
-          allErrors.mainImageUrl = 'Main product image is required';
-        }
-
-        // Shipping
-        if (!formData.weightForShipping || parseFloat(formData.weightForShipping) <= 0) {
-          allErrors.weightForShipping = 'Shipping weight must be greater than 0';
-        }
-        if (!formData.deliveryTimeEstimate) {
-          allErrors.deliveryTimeEstimate = 'Delivery time estimate is required';
-        }
-
-        // Descriptions
-        if (!formData.shortDescription || formData.shortDescription.length < 50) {
-          allErrors.shortDescription = 'Short description must be at least 50 characters';
-        }
-        if (!formData.detailedDescription || formData.detailedDescription.length < 200) {
-          allErrors.detailedDescription = 'Detailed description must be at least 200 characters';
-        }
-
-        // Certifications
-        if (!formData.fssaiLicense || !formData.fssaiLicense.match(/^[0-9]{14}$/)) {
-          allErrors.fssaiLicense = 'Valid 14-digit FSSAI license is required';
-        }
-
-        // If there are any errors, show them and stop submission
-        if (Object.keys(allErrors).length > 0) {
-          setErrors(allErrors);
-          setLoading(false);
+        if (!isValid) {
           // Scroll to the first error message
           const firstErrorElement = document.querySelector('.text-red-600');
           if (firstErrorElement) {
@@ -762,8 +915,32 @@ const ProductAdd = () => {
         status: isDraft ? 'DRAFT' : 'ACTIVE'
       };
 
+      // Generate SKU if not provided
+      if (!finalFormData.skuCode || finalFormData.skuCode.trim() === '') {
+        try {
+          const skuResponse = await vendorService.generateSku(vendorId, finalFormData.categoryId);
+          if (skuResponse.success) {
+            finalFormData.skuCode = skuResponse.data.sku;
+          } else {
+            throw new Error('Failed to generate SKU');
+          }
+        } catch (err) {
+          console.error('Error generating SKU:', err);
+          // Generate a fallback SKU
+          const timestamp = Date.now().toString().slice(-4);
+          const categoryCode = finalFormData.categoryId ? finalFormData.categoryId.toString().padStart(3, '0') : '001';
+          finalFormData.skuCode = `GM${categoryCode}${timestamp}`;
+        }
+      }
+
       // Transform data for API
       const transformedData = transformFormData(finalFormData);
+      
+      console.log('Data being sent to API:', {
+        url: isEditMode ? `/api/vendor/products/${productId}?vendorId=${vendorId}` : `/api/vendor/products?vendorId=${vendorId}`,
+        method: isEditMode ? 'PUT' : 'POST',
+        data: transformedData
+      });
 
       // Submit to API - either create or update
       let response;
@@ -965,7 +1142,16 @@ const ProductAdd = () => {
     </div>
   );
 
-  const renderPricingStrategy = () => (
+  const renderPricingStrategy = () => {
+    console.log('=== RENDER PRICING STRATEGY ===');
+    console.log('Current formData state:', {
+      offerStartDate: formData.offerStartDate,
+      offerEndDate: formData.offerEndDate,
+      bulkPricingTiers: formData.bulkPricingTiers,
+      bulkPricingTiersLength: formData.bulkPricingTiers?.length
+    });
+    
+    return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div>
@@ -1039,10 +1225,19 @@ const ProductAdd = () => {
           </label>
           <input
             type="datetime-local"
-            value={formData.offerStartDate}
-            onChange={(e) => handleInputChange('offerStartDate', e.target.value)}
+            value={formData.offerStartDate || ''}
+            onChange={(e) => {
+              console.log('=== OFFER START DATE CHANGE ===');
+              console.log('Event target value:', e.target.value);
+              console.log('Current formData.offerStartDate:', formData.offerStartDate);
+              handleInputChange('offerStartDate', e.target.value);
+              console.log('After handleInputChange call');
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
           />
+          {errors.offerStartDate && (
+            <p className="mt-1 text-sm text-red-600">{errors.offerStartDate}</p>
+          )}
         </div>
 
         <div>
@@ -1051,10 +1246,19 @@ const ProductAdd = () => {
           </label>
           <input
             type="datetime-local"
-            value={formData.offerEndDate}
-            onChange={(e) => handleInputChange('offerEndDate', e.target.value)}
+            value={formData.offerEndDate || ''}
+            onChange={(e) => {
+              console.log('=== OFFER END DATE CHANGE ===');
+              console.log('Event target value:', e.target.value);
+              console.log('Current formData.offerEndDate:', formData.offerEndDate);
+              handleInputChange('offerEndDate', e.target.value);
+              console.log('After handleInputChange call');
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
           />
+          {errors.offerEndDate && (
+            <p className="mt-1 text-sm text-red-600">{errors.offerEndDate}</p>
+          )}
         </div>
       </div>
 
@@ -1066,7 +1270,12 @@ const ProductAdd = () => {
           </label>
           <button
             type="button"
-            onClick={() => handleArrayAdd('bulkPricingTiers', { minQuantity: '', maxQuantity: '', price: '' })}
+            onClick={() => {
+              console.log('=== ADD BULK PRICING TIER ===');
+              console.log('Current bulkPricingTiers:', formData.bulkPricingTiers);
+              handleArrayAdd('bulkPricingTiers');
+              console.log('After handleArrayAdd call');
+            }}
             className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200"
           >
             <FiPlus className="mr-1 h-4 w-4" />
@@ -1074,42 +1283,88 @@ const ProductAdd = () => {
           </button>
         </div>
         
-        {formData.bulkPricingTiers.map((tier, index) => (
-          <div key={index} className="flex items-center space-x-4 mb-3">
-            <input
-              type="number"
-              placeholder="Min Qty"
-              value={tier.minQuantity}
-              onChange={(e) => handleArrayUpdate('bulkPricingTiers', index, { ...tier, minQuantity: e.target.value })}
-              className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-            />
-            <input
-              type="number"
-              placeholder="Max Qty"
-              value={tier.maxQuantity}
-              onChange={(e) => handleArrayUpdate('bulkPricingTiers', index, { ...tier, maxQuantity: e.target.value })}
-              className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-            />
-            <input
-              type="number"
-              step="0.01"
-              placeholder="Price"
-              value={tier.price}
-              onChange={(e) => handleArrayUpdate('bulkPricingTiers', index, { ...tier, price: e.target.value })}
-              className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-            />
-            <button
-              type="button"
-              onClick={() => handleArrayRemove('bulkPricingTiers', index)}
-              className="p-2 text-red-600 hover:text-red-800"
-            >
-              <FiMinus className="h-4 w-4" />
-            </button>
+        {formData.bulkPricingTiers && formData.bulkPricingTiers.length > 0 ? (
+          formData.bulkPricingTiers.map((tier, index) => {
+            console.log(`=== RENDERING TIER ${index} ===`, tier);
+            return (
+              <div key={index} className="space-y-2 mb-4">
+                <div className="flex items-center space-x-4">
+                  <input
+                    type="number"
+                    placeholder="Min Qty"
+                    value={tier.minQuantity || ''}
+                    onChange={(e) => {
+                      console.log(`=== TIER ${index} MIN QTY CHANGE ===`);
+                      console.log('New value:', e.target.value);
+                      console.log('Current tier:', tier);
+                      handleArrayUpdate('bulkPricingTiers', index, { ...tier, minQuantity: e.target.value });
+                    }}
+                    className={`w-24 px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
+                      errors.bulkPricingTiers?.[index] ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Max Qty"
+                    value={tier.maxQuantity || ''}
+                    onChange={(e) => {
+                      console.log(`=== TIER ${index} MAX QTY CHANGE ===`);
+                      console.log('New value:', e.target.value);
+                      console.log('Current tier:', tier);
+                      handleArrayUpdate('bulkPricingTiers', index, { ...tier, maxQuantity: e.target.value });
+                    }}
+                    className={`w-24 px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
+                      errors.bulkPricingTiers?.[index] ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                  />
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Price"
+                    value={tier.price || ''}
+                    onChange={(e) => {
+                      console.log(`=== TIER ${index} PRICE CHANGE ===`);
+                      console.log('New value:', e.target.value);
+                      console.log('Current tier:', tier);
+                      handleArrayUpdate('bulkPricingTiers', index, { ...tier, price: e.target.value });
+                    }}
+                    className={`w-32 px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
+                      errors.bulkPricingTiers?.[index] ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                  />
+                  <div className="text-sm text-gray-500">
+                    Discount: {tier.discountValue ? `₹${tier.discountValue}` : '-'}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      console.log(`=== REMOVE TIER ${index} ===`);
+                      handleArrayRemove('bulkPricingTiers', index);
+                    }}
+                    className="p-2 text-red-600 hover:text-red-800"
+                  >
+                    <FiMinus className="h-4 w-4" />
+                  </button>
+                </div>
+                {errors.bulkPricingTiers?.[index] && (
+                  <div className="text-sm text-red-600 pl-2">
+                    {errors.bulkPricingTiers[index].map((error, errorIndex) => (
+                      <div key={errorIndex}>{error}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div className="text-sm text-gray-500 italic">
+            No bulk pricing tiers added yet. Click "Add Tier" to create one.
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
+  };
 
   const renderInventoryManagement = () => (
     <div className="space-y-6">

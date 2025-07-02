@@ -3,6 +3,9 @@ package org.sortoutinnovation.greenmagic.mapper;
 import org.sortoutinnovation.greenmagic.dto.ProductResponseDto;
 import org.sortoutinnovation.greenmagic.model.Product;
 import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -12,6 +15,8 @@ import java.util.ArrayList;
  */
 @Component
 public class ProductMapper {
+
+    private static final Logger log = LoggerFactory.getLogger(ProductMapper.class);
 
     /**
      * Convert Product entity to ProductResponseDto
@@ -23,7 +28,7 @@ public class ProductMapper {
 
         ProductResponseDto dto = new ProductResponseDto();
         
-        // Basic fields that exist in both Product and ProductResponseDto
+        // Map basic fields
         dto.setProductId(product.getProductId());
         dto.setSku(product.getSku());
         dto.setName(product.getName());
@@ -36,21 +41,6 @@ public class ProductMapper {
         dto.setCostPrice(product.getCostPrice());
         dto.setQuantity(product.getQuantity());
         dto.setImageUrl(product.getImageUrl());
-        
-        // Handle JSON fields safely - now they are JSON strings
-        try {
-            if (product.getGalleryImages() != null) {
-                // Gallery images are now stored as JSON strings, so we need to parse them
-                // For now, just set to empty array to avoid frontend issues
-                dto.setGalleryImages(new ArrayList<>());
-            } else {
-                dto.setGalleryImages(new ArrayList<>());
-            }
-        } catch (Exception e) {
-            // If there's any issue with gallery images, just set to empty array
-            dto.setGalleryImages(new ArrayList<>());
-        }
-        
         dto.setDeliveryTimeEstimate(product.getDeliveryTimeEstimate());
         dto.setFreeShipping(product.getFreeShipping());
         dto.setIsReturnable(product.getIsReturnable());
@@ -59,19 +49,54 @@ public class ProductMapper {
         dto.setMetaTitle(product.getMetaTitle());
         dto.setMetaDescription(product.getMetaDescription());
         dto.setCreatedAt(product.getCreatedAt());
-
-        // Category information
-        if (product.getCategory() != null) {
-            dto.setCategoryName(product.getCategory().getName());
-            dto.setCategory(new ProductResponseDto.CategoryInfo(
-                product.getCategory().getCategoryId(),
-                product.getCategory().getName()
-            ));
+        
+        // Map offer dates
+        dto.setOfferStartDate(product.getOfferStartDate());
+        dto.setOfferEndDate(product.getOfferEndDate());
+        
+        // Map bulk pricing tiers
+        if (product.getBulkPricingTiers() != null && !product.getBulkPricingTiers().isEmpty()) {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                List<ProductResponseDto.BulkPricingTier> tiers = objectMapper.readValue(
+                    product.getBulkPricingTiers(),
+                    objectMapper.getTypeFactory().constructCollectionType(
+                        List.class,
+                        ProductResponseDto.BulkPricingTier.class
+                    )
+                );
+                dto.setBulkPricingTiers(tiers);
+            } catch (Exception e) {
+                log.error("Error parsing bulk pricing tiers: {}", e.getMessage());
+                dto.setBulkPricingTiers(new ArrayList<>());
+            }
         }
 
-        // Created by information
+        // Map category if present
+        if (product.getCategory() != null) {
+            dto.setCategoryName(product.getCategory().getName());
+            ProductResponseDto.CategoryInfo categoryInfo = new ProductResponseDto.CategoryInfo(
+                product.getCategory().getCategoryId(),
+                product.getCategory().getName()
+            );
+            dto.setCategory(categoryInfo);
+        }
+
+        // Map creator name if present
         if (product.getCreatedBy() != null) {
             dto.setCreatedByName(product.getCreatedBy().getName());
+        }
+
+        // Map gallery images
+        if (product.getGalleryImages() != null && !product.getGalleryImages().isEmpty()) {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                List<Object> images = objectMapper.readValue(product.getGalleryImages(), List.class);
+                dto.setGalleryImages(images);
+            } catch (Exception e) {
+                log.error("Error parsing gallery images: {}", e.getMessage());
+                dto.setGalleryImages(new ArrayList<>());
+            }
         }
 
         return dto;

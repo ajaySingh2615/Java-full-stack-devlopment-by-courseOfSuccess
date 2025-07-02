@@ -41,6 +41,13 @@ public class ProductResponseDto {
     private String categoryName;
     private CategoryInfo category;
     private String createdByName;
+    private List<BulkPricingTier> bulkPricingTiers;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime offerStartDate;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime offerEndDate;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
@@ -80,5 +87,15 @@ public class ProductResponseDto {
     public static class CategoryInfo {
         private Integer categoryId;
         private String name;
+    }
+    
+    // Nested class for bulk pricing tier information
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BulkPricingTier {
+        private Integer minQuantity;
+        private Integer maxQuantity;
+        private BigDecimal price;
     }
 } 

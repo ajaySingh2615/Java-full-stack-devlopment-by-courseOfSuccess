@@ -8,7 +8,7 @@ import {
   FiPlus,
   FiMinus,
   FiInfo,
-  FiDollarSign,
+  FiIndianRupee,
   FiPackage,
   FiImage,
   FiTruck,
@@ -1147,7 +1147,7 @@ const ProductAdd = () => {
             MRP (Maximum Retail Price) <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <FiIndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="number"
               step="0.01"
@@ -1169,7 +1169,7 @@ const ProductAdd = () => {
             Selling Price <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <FiIndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="number"
               step="0.01"
@@ -1191,7 +1191,7 @@ const ProductAdd = () => {
             Cost Price
           </label>
           <div className="relative">
-            <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <FiIndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="number"
               step="0.01"

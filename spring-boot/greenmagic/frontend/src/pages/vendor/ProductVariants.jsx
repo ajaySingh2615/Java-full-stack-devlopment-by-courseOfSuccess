@@ -9,7 +9,6 @@ import {
   X, 
   Copy,
   Package,
-  DollarSign,
   Image as ImageIcon,
   AlertTriangle,
   CheckCircle,

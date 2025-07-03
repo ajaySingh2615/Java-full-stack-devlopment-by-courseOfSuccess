@@ -489,6 +489,14 @@ const ProductAdd = () => {
   const handleInputChange = (field, value) => {
     console.log('handleInputChange called:', { field, value });
     
+    // Special debugging for URL slug field
+    if (field === 'urlSlug') {
+      console.log('=== URL SLUG UPDATE ===');
+      console.log('Current urlSlug:', formData.urlSlug);
+      console.log('New urlSlug value:', value);
+      console.log('Type of value:', typeof value);
+    }
+    
     setFormData(prev => {
       // Special handling for dimensions object
       if (field === 'dimensions' && typeof value === 'object') {
@@ -503,6 +511,20 @@ const ProductAdd = () => {
           field, 
           oldValue: prev.dimensions, 
           newValue: newData.dimensions 
+        });
+        return newData;
+      }
+      
+      // Special handling for URL slug
+      if (field === 'urlSlug') {
+        // If value is empty string, set to null or undefined to allow auto-generation
+        const slugValue = value.trim() === '' ? null : value;
+        const newData = { ...prev, [field]: slugValue };
+        console.log('Updated form data (URL slug):', {
+          field,
+          oldValue: prev[field],
+          newValue: slugValue,
+          fullFormData: newData
         });
         return newData;
       }
@@ -773,6 +795,18 @@ const ProductAdd = () => {
         if (formData.metaDescription && formData.metaDescription.length > 160) {
           newErrors.metaDescription = 'Meta description must not exceed 160 characters';
         }
+        // URL slug validation
+        if (formData.urlSlug) {
+          if (formData.urlSlug.length > 100) {
+            newErrors.urlSlug = 'URL slug must not exceed 100 characters';
+          }
+          if (!/^[a-z0-9-]+$/.test(formData.urlSlug)) {
+            newErrors.urlSlug = 'URL slug can only contain lowercase letters, numbers, and hyphens';
+          }
+          if (/^-|-$/.test(formData.urlSlug)) {
+            newErrors.urlSlug = 'URL slug cannot start or end with a hyphen';
+          }
+        }
         break;
 
       case 9: // Review & Publish
@@ -840,7 +874,8 @@ const ProductAdd = () => {
     console.log('Transform data input:', {
       offerStartDate: data.offerStartDate,
       offerEndDate: data.offerEndDate,
-      bulkPricingTiers: data.bulkPricingTiers
+      bulkPricingTiers: data.bulkPricingTiers,
+      urlSlug: data.urlSlug
     });
     
     // Clean up gallery images
@@ -978,10 +1013,46 @@ const ProductAdd = () => {
           certificateFileUrl: cert.certificateFileUrl || ''
         })) : [],
       
+      // SEO Optimization - MISSING FIELDS ADDED
+      metaTitle: data.metaTitle?.trim() || null,
+      metaDescription: data.metaDescription?.trim() || null,
+      keywords: Array.isArray(data.searchKeywords) ? 
+        data.searchKeywords.filter(keyword => keyword.trim() !== '') : [],
+      
       // Clean up gallery images
       imageUrls: cleanGalleryImages,
-      // Set URL slug
-      urlSlug: isEditMode ? `${generateUrlSlug(data.productTitle)}-${Date.now()}` : generateUrlSlug(data.productTitle)
+      
+      // URL Slug - FIXED to respect custom input
+      urlSlug: (() => {
+        // If user provided a custom URL slug, use it (don't modify it)
+        if (data.urlSlug && data.urlSlug.trim() !== '') {
+          const sanitizedSlug = data.urlSlug.trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9-]/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-+|-+$/g, '');
+          console.log('Using custom URL slug:', sanitizedSlug);
+          return sanitizedSlug;
+        }
+        
+        // Otherwise, generate from product title
+        const baseSlug = data.productTitle
+          .toLowerCase()
+          .replace(/[–—]/g, '-') // Replace en/em dashes with hyphens
+          .replace(/[^a-z0-9-]/g, '-') // Replace any non-alphanumeric chars with hyphens
+          .replace(/-+/g, '-') // Replace multiple consecutive hyphens with single hyphen
+          .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+        
+        console.log('Generated URL slug from title:', baseSlug);
+        
+        // For new products, append timestamp to avoid conflicts
+        if (!isEditMode) {
+          const timestamp = Date.now().toString().slice(-4);
+          return `${baseSlug}-${timestamp}`;
+        }
+        
+        return baseSlug;
+      })(),
     };
 
     console.log('Raw form data dates:', {
@@ -1003,18 +1074,22 @@ const ProductAdd = () => {
         lowStockAlert: transformedData.lowStockAlert,
         trackQuantity: transformedData.trackQuantity
       },
-      bulkPricing: transformedData.bulkPricingTiers
+      bulkPricing: transformedData.bulkPricingTiers,
+      seoFields: {
+        metaTitle: transformedData.metaTitle,
+        metaDescription: transformedData.metaDescription,
+        keywords: transformedData.keywords,
+        urlSlug: transformedData.urlSlug
+      }
     });
 
     return transformedData;
   };
 
   const handleSubmit = async (isDraft = false) => {
-    console.log('Submitting form with data:', {
-      offerStartDate: formData.offerStartDate,
-      offerEndDate: formData.offerEndDate,
-      bulkPricingTiers: formData.bulkPricingTiers
-    });
+    console.log('=== FORM SUBMISSION START ===');
+    console.log('Current URL slug:', formData.urlSlug);
+    console.log('Raw form data:', formData);
     
     try {
       setLoading(true);
@@ -1032,7 +1107,7 @@ const ProductAdd = () => {
         }
 
         if (!isValid) {
-          // Scroll to the first error message
+          console.log('Form validation failed');
           const firstErrorElement = document.querySelector('.text-red-600');
           if (firstErrorElement) {
             firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1047,40 +1122,23 @@ const ProductAdd = () => {
         status: isDraft ? 'DRAFT' : 'ACTIVE'
       };
 
-      // Generate SKU if not provided
-      if (!finalFormData.skuCode || finalFormData.skuCode.trim() === '') {
-        try {
-          const skuResponse = await vendorService.generateSku(vendorId, finalFormData.categoryId);
-          if (skuResponse.success) {
-            finalFormData.skuCode = skuResponse.data.sku;
-          } else {
-            throw new Error('Failed to generate SKU');
-          }
-        } catch (err) {
-          console.error('Error generating SKU:', err);
-          // Generate a fallback SKU
-          const timestamp = Date.now().toString().slice(-4);
-          const categoryCode = finalFormData.categoryId ? finalFormData.categoryId.toString().padStart(3, '0') : '001';
-          finalFormData.skuCode = `GM${categoryCode}${timestamp}`;
-        }
-      }
-
       // Transform data for API
       const transformedData = transformFormData(finalFormData);
+      console.log('=== TRANSFORMED DATA ===');
+      console.log('URL slug after transformation:', transformedData.urlSlug);
+      console.log('Full transformed data:', transformedData);
       
-      console.log('Data being sent to API:', {
-        url: isEditMode ? `/api/vendor/products/${productId}?vendorId=${vendorId}` : `/api/vendor/products?vendorId=${vendorId}`,
-        method: isEditMode ? 'PUT' : 'POST',
-        data: transformedData
-      });
-
       // Submit to API - either create or update
       let response;
       if (isEditMode) {
+        console.log('Updating product with data:', transformedData);
         response = await vendorService.updateProduct(vendorId, productId, transformedData);
       } else {
+        console.log('Creating product with data:', transformedData);
         response = await vendorService.createProduct(vendorId, transformedData);
       }
+      
+      console.log('API Response:', response);
       
       if (response.success) {
         navigate('/vendor/products', {
@@ -1089,6 +1147,7 @@ const ProductAdd = () => {
           }
         });
       } else {
+        console.error('API Error:', response);
         setErrors({ submit: response.message || `Failed to ${isEditMode ? 'update' : 'create'} product` });
       }
     } catch (err) {
@@ -2178,20 +2237,51 @@ const ProductAdd = () => {
              <span className="text-sm text-gray-500 mr-2">https://greenmagic.com/products/</span>
              <input
                type="text"
-               value={formData.urlSlug}
-               onChange={(e) => handleInputChange('urlSlug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'))}
-               className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+               value={formData.urlSlug || ''}
+               onChange={(e) => {
+                 console.log('=== URL SLUG INPUT CHANGE ===');
+                 console.log('Raw input value:', e.target.value);
+                 
+                 const sanitizedSlug = e.target.value
+                   .toLowerCase()
+                   .replace(/[^a-z0-9-]/g, '-')
+                   .replace(/-+/g, '-')
+                   .replace(/^-+|-+$/g, '');
+                 
+                 console.log('Sanitized slug:', sanitizedSlug);
+                 
+                 // Update form data
+                 handleInputChange('urlSlug', sanitizedSlug);
+                 
+                 // Clear URL slug error when user types
+                 if (errors.urlSlug) {
+                   setErrors(prev => ({ ...prev, urlSlug: null }));
+                 }
+               }}
+               className={`flex-1 px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
+                 errors.urlSlug ? 'border-red-300' : 'border-gray-300'
+               }`}
                placeholder="your-custom-product-url"
                maxLength={100}
              />
            </div>
-           <p className="mt-2 text-sm text-gray-500">
-             By default, we'll generate a URL from your product title. You can provide a custom URL here if you want something different.
-             Use only lowercase letters, numbers, and hyphens.
-           </p>
-           {errors.urlSlug && (
-             <p className="mt-1 text-sm text-red-600">{errors.urlSlug}</p>
-           )}
+           <div className="mt-2 space-y-1">
+             <p className="text-sm text-gray-500">
+               By default, we'll generate a URL from your product title. You can provide a custom URL here if you want something different.
+               Use only lowercase letters, numbers, and hyphens.
+             </p>
+             {errors.urlSlug && (
+               <p className="text-sm text-red-600">{errors.urlSlug}</p>
+             )}
+             {formData.urlSlug && (
+               <p className="text-sm text-green-600">
+                 Preview: https://greenmagic.com/products/{formData.urlSlug}
+               </p>
+             )}
+             <p className="text-xs text-gray-400">
+               Current value: {formData.urlSlug || 'Not set (will be generated from title)'}
+             </p>
+           </div>
          </div>
 
          {/* Meta Title */}

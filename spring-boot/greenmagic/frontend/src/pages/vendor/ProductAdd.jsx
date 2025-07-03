@@ -642,18 +642,34 @@ const ProductAdd = () => {
         alert('Please select a category first');
         return;
       }
+
+      // Set loading state
+      setLoading(true);
+
+      // Get the category name from categories object
+      const categoryObj = categories[formData.categoryId];
+      const categoryName = categoryObj ? categoryObj.name : '';
       
-      const response = await vendorService.generateSku(vendorId, formData.categoryId);
-      if (response.success) {
-        handleInputChange('skuCode', response.data.sku);
-      }
+      // Generate a unique SKU locally
+      const timestamp = Date.now().toString().slice(-4);
+      const categoryPrefix = categoryName.slice(0, 2).toUpperCase();
+      const vendorSuffix = vendorId.toString().padStart(3, '0');
+      const newSku = `GM${categoryPrefix}${vendorSuffix}${timestamp}`;
+      
+      console.log('Generated new SKU:', newSku);
+      
+      // Update form data with new SKU
+      setFormData(prev => {
+        const updated = { ...prev, skuCode: newSku };
+        console.log('Updated formData:', updated);
+        return updated;
+      });
+      
     } catch (err) {
       console.error('Error generating SKU:', err);
-      // Generate a fallback SKU if API fails
-      const timestamp = Date.now().toString().slice(-4);
-      const categoryCode = formData.categoryId ? formData.categoryId.toString().padStart(3, '0') : '001';
-      const fallbackSku = `GM${categoryCode}${timestamp}`;
-      handleInputChange('skuCode', fallbackSku);
+      alert('Failed to generate SKU. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1279,9 +1295,20 @@ const ProductAdd = () => {
             <button
               type="button"
               onClick={generateSku}
-              className="px-4 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md hover:bg-gray-200"
+              disabled={!formData.categoryId || loading}
+              className={`px-4 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md ${
+                !formData.categoryId || loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-200'
+              }`}
             >
-              Generate
+              {loading ? (
+                <span className="inline-flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Generating...
+                </span>
+              ) : 'Generate'}
             </button>
           </div>
           {errors.skuCode && (

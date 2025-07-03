@@ -59,11 +59,19 @@ public class ProductUpdateRequestDto {
     @Min(value = 0, message = "Stock quantity cannot be negative")
     private Integer stockQuantity;
 
-    @Min(value = 0, message = "Low stock threshold cannot be negative")
-    private Integer lowStockThreshold;
+    private String unitOfMeasurement;
 
-    private Boolean trackInventory;
-    private Boolean allowBackorders;
+    @Min(value = 1, message = "Minimum order quantity must be at least 1")
+    private Integer minimumOrderQuantity;
+
+    private Integer maximumOrderQuantity;
+
+    @Min(value = 1, message = "Low stock alert must be at least 1")
+    private Integer lowStockAlert;
+
+    private Boolean trackQuantity;
+
+    private java.time.LocalDate restockDate;
 
     // Product Variants (for variable products)
     private Boolean hasVariants;
@@ -84,8 +92,16 @@ public class ProductUpdateRequestDto {
     // Shipping & Logistics
     private BigDecimal weightForShipping;
     private ProductDimensions dimensions;
+    private String deliveryTimeEstimate;
     private String shippingClass;
+    private Boolean coldStorageRequired;
+    private Boolean specialPackaging;
+    private Boolean insuranceRequired;
     private Boolean freeShipping;
+    private BigDecimal freeShippingThreshold;
+    private Boolean isReturnable;
+    private String returnWindow;
+    private Boolean isCodAvailable;
 
     // Product Descriptions
     @Size(max = 200, message = "Short description cannot exceed 200 characters")
@@ -119,7 +135,6 @@ public class ProductUpdateRequestDto {
     private Boolean featured;
     private Boolean returnable;
     private Boolean codAvailable;
-    private String deliveryTimeEstimate;
 
     // Nested DTOs (same as in ProductCreateRequestDto)
     @Data

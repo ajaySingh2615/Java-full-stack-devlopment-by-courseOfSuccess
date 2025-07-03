@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import vendorService from '../../services/vendorService';
 import {
   FiPlus,
+  FiMinus,
   FiX,
   FiImage,
   FiUpload,
@@ -39,7 +40,8 @@ import {
   FiSearch,
   FiFilter,
   FiRefreshCw,
-  FiMoreVertical
+  FiMoreVertical,
+  FiShield
 } from 'react-icons/fi';
 
 /**
@@ -260,7 +262,7 @@ const ProductAdd = () => {
             unitOfMeasurement: inventory.unitOfMeasurement || 'pieces',
             minimumOrderQuantity: inventory.minimumOrderQuantity || 1,
             maximumOrderQuantity: inventory.maximumOrderQuantity?.toString() || '',
-            lowStockAlert: inventory.lowStockThreshold || 10,
+            lowStockAlert: inventory.minStockAlert || 10,
             trackQuantity: inventory.trackQuantity !== false,
             restockDate: inventory.restockDate || '',
 
@@ -349,11 +351,13 @@ const ProductAdd = () => {
             origin: descriptions.origin || '',
 
             // Shipping & Logistics
-            freeShipping: shipping.freeShipping || false,
-            deliveryTimeEstimate: shipping.deliveryTimeEstimate || '',
+            deliveryTimeEstimate: shipping.deliveryTimeEstimate || '3-5_days',
+            shippingClass: shipping.shippingClass || 'STANDARD',
             coldStorageRequired: shipping.coldStorageRequired || false,
             specialPackaging: shipping.specialPackaging || false,
             insuranceRequired: shipping.insuranceRequired || false,
+            freeShipping: shipping.freeShipping || false,
+            freeShippingThreshold: shipping.freeShippingThreshold?.toString() || '',
 
             // SEO & Marketing
             metaTitle: seo.metaTitle || '',
@@ -363,6 +367,7 @@ const ProductAdd = () => {
 
             // Return & Warranty
             isReturnable: shipping.isReturnable !== false,
+            returnWindow: shipping.returnWindow || 'SEVEN_DAYS',
             returnConditions: shipping.returnConditions || [],
             warrantyPeriod: '', // Not in current model
             isCodAvailable: shipping.isCodAvailable !== false,
@@ -826,6 +831,20 @@ const ProductAdd = () => {
       }
     };
 
+    // Format date for LocalDate fields (restock date)
+    const formatLocalDate = (dateStr) => {
+      if (!dateStr) return null;
+      try {
+        const date = new Date(dateStr);
+        if (!(date instanceof Date) || isNaN(date)) return null;
+        // Format as YYYY-MM-DD for LocalDate
+        return date.toISOString().split('T')[0];
+      } catch (e) {
+        console.warn('Error formatting local date:', e);
+        return null;
+      }
+    };
+
     // Generate URL slug from product title
     const generateUrlSlug = (title) => {
       if (!title) return '';
@@ -866,7 +885,35 @@ const ProductAdd = () => {
       mrp: data.mrp && data.mrp !== '' ? parseFloat(data.mrp) : null,
       sellingPrice: data.sellingPrice && data.sellingPrice !== '' ? parseFloat(data.sellingPrice) : null,
       costPrice: data.costPrice && data.costPrice !== '' ? parseFloat(data.costPrice) : null,
+      
+      // Inventory Management fields
       stockQuantity: data.stockQuantity && data.stockQuantity !== '' ? parseInt(data.stockQuantity) : null,
+      unitOfMeasurement: data.unitOfMeasurement || 'pieces',
+      minimumOrderQuantity: data.minimumOrderQuantity && data.minimumOrderQuantity !== '' ? parseInt(data.minimumOrderQuantity) : 1,
+      maximumOrderQuantity: data.maximumOrderQuantity && data.maximumOrderQuantity !== '' ? parseInt(data.maximumOrderQuantity) : null,
+      lowStockAlert: data.lowStockAlert && data.lowStockAlert !== '' ? parseInt(data.lowStockAlert) : 10,
+      trackQuantity: data.trackQuantity !== undefined ? data.trackQuantity : true,
+      restockDate: formatLocalDate(data.restockDate),
+      
+      // Shipping & Logistics fields
+      weightForShipping: data.weightForShipping && data.weightForShipping !== '' ? parseFloat(data.weightForShipping) : null,
+      dimensions: data.dimensions && (data.dimensions.length || data.dimensions.width || data.dimensions.height) ? {
+        length: data.dimensions.length && data.dimensions.length !== '' ? parseFloat(data.dimensions.length) : null,
+        width: data.dimensions.width && data.dimensions.width !== '' ? parseFloat(data.dimensions.width) : null,
+        height: data.dimensions.height && data.dimensions.height !== '' ? parseFloat(data.dimensions.height) : null,
+        unit: 'cm'
+      } : null,
+      deliveryTimeEstimate: data.deliveryTimeEstimate || '3-5_days',
+      shippingClass: data.shippingClass || 'STANDARD',
+      coldStorageRequired: data.coldStorageRequired !== undefined ? data.coldStorageRequired : false,
+      specialPackaging: data.specialPackaging !== undefined ? data.specialPackaging : false,
+      insuranceRequired: data.insuranceRequired !== undefined ? data.insuranceRequired : false,
+      freeShipping: data.freeShipping !== undefined ? data.freeShipping : false,
+      freeShippingThreshold: data.freeShippingThreshold && data.freeShippingThreshold !== '' ? parseFloat(data.freeShippingThreshold) : null,
+      isReturnable: data.isReturnable !== undefined ? data.isReturnable : true,
+      returnWindow: data.returnWindow || 'SEVEN_DAYS',
+      isCodAvailable: data.isCodAvailable !== undefined ? data.isCodAvailable : true,
+      
       // Clean up gallery images
       imageUrls: cleanGalleryImages,
       // Set URL slug
@@ -881,7 +928,16 @@ const ProductAdd = () => {
     console.log('Transformed data:', {
       dates: {
         offerStartDate: transformedData.offerStartDate,
-        offerEndDate: transformedData.offerEndDate
+        offerEndDate: transformedData.offerEndDate,
+        restockDate: transformedData.restockDate
+      },
+      inventory: {
+        stockQuantity: transformedData.stockQuantity,
+        unitOfMeasurement: transformedData.unitOfMeasurement,
+        minimumOrderQuantity: transformedData.minimumOrderQuantity,
+        maximumOrderQuantity: transformedData.maximumOrderQuantity,
+        lowStockAlert: transformedData.lowStockAlert,
+        trackQuantity: transformedData.trackQuantity
       },
       bulkPricing: transformedData.bulkPricingTiers
     });

@@ -1099,7 +1099,7 @@ public class VendorManagementService {
         inventory.put("unitOfMeasurement", product.getUnitOfMeasurement());
         inventory.put("minimumOrderQuantity", product.getMinimumOrderQuantity());
         inventory.put("maximumOrderQuantity", product.getMaximumOrderQuantity());
-        inventory.put("lowStockThreshold", product.getMinStockAlert() != null ? product.getMinStockAlert() : 10);
+        inventory.put("minStockAlert", product.getMinStockAlert() != null ? product.getMinStockAlert() : 10);
         inventory.put("trackQuantity", product.getTrackQuantity());
         inventory.put("restockDate", product.getRestockDate());
         inventory.put("variants", getProductVariants(vendorId, productId));
@@ -1257,8 +1257,8 @@ public class VendorManagementService {
             }
         }
         
-        if (updateFields.containsKey("lowStockThreshold")) {
-            Integer threshold = Integer.valueOf(updateFields.get("lowStockThreshold").toString());
+        if (updateFields.containsKey("minStockAlert")) {
+            Integer threshold = Integer.valueOf(updateFields.get("minStockAlert").toString());
             product.setMinStockAlert(threshold);
         }
         
@@ -1562,10 +1562,51 @@ public class VendorManagementService {
         if (dto.getMrp() != null) product.setMrp(dto.getMrp());
         if (dto.getSellingPrice() != null) product.setPrice(dto.getSellingPrice());
         if (dto.getCostPrice() != null) product.setCostPrice(dto.getCostPrice());
+        
+        // Inventory Management fields
         if (dto.getStockQuantity() != null) product.setQuantity(dto.getStockQuantity());
+        if (dto.getUnitOfMeasurement() != null) product.setUnitOfMeasurement(dto.getUnitOfMeasurement());
+        if (dto.getMinimumOrderQuantity() != null) product.setMinimumOrderQuantity(dto.getMinimumOrderQuantity());
+        if (dto.getMaximumOrderQuantity() != null) product.setMaximumOrderQuantity(dto.getMaximumOrderQuantity());
+        if (dto.getLowStockAlert() != null) product.setMinStockAlert(dto.getLowStockAlert());
+        if (dto.getTrackQuantity() != null) product.setTrackQuantity(dto.getTrackQuantity());
+        if (dto.getRestockDate() != null) product.setRestockDate(dto.getRestockDate());
+        
         if (dto.getBrandName() != null) product.setBrand(dto.getBrandName());
+        
+        // Shipping & Logistics fields
         if (dto.getWeightForShipping() != null) product.setWeightForShipping(dto.getWeightForShipping());
+        if (dto.getDimensions() != null) {
+            try {
+                String dimensionsJson = objectMapper.writeValueAsString(dto.getDimensions());
+                product.setDimensions(dimensionsJson);
+            } catch (Exception e) {
+                System.err.println("Error converting dimensions to JSON: " + e.getMessage());
+            }
+        }
         if (dto.getDeliveryTimeEstimate() != null) product.setDeliveryTimeEstimate(dto.getDeliveryTimeEstimate());
+        if (dto.getShippingClass() != null) {
+            try {
+                product.setShippingClass(Product.ShippingClass.valueOf(dto.getShippingClass().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                // Keep existing shipping class if invalid
+            }
+        }
+        if (dto.getColdStorageRequired() != null) product.setColdStorageRequired(dto.getColdStorageRequired());
+        if (dto.getSpecialPackaging() != null) product.setSpecialPackaging(dto.getSpecialPackaging());
+        if (dto.getInsuranceRequired() != null) product.setInsuranceRequired(dto.getInsuranceRequired());
+        if (dto.getFreeShipping() != null) product.setFreeShipping(dto.getFreeShipping());
+        if (dto.getFreeShippingThreshold() != null) product.setFreeShippingThreshold(dto.getFreeShippingThreshold());
+        if (dto.getIsReturnable() != null) product.setIsReturnable(dto.getIsReturnable());
+        if (dto.getReturnWindow() != null) {
+            try {
+                product.setReturnWindow(Product.ReturnWindow.valueOf(dto.getReturnWindow().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                // Keep existing return window if invalid
+            }
+        }
+        if (dto.getIsCodAvailable() != null) product.setIsCodAvailable(dto.getIsCodAvailable());
+        
         if (dto.getUrlSlug() != null) product.setUrlSlug(dto.getUrlSlug());
         if (dto.getMetaTitle() != null) product.setMetaTitle(dto.getMetaTitle());
         if (dto.getMetaDescription() != null) product.setMetaDescription(dto.getMetaDescription());
@@ -1678,7 +1719,6 @@ public class VendorManagementService {
         target.setVideoUrl(source.getVideoUrl());
         target.setMetaTitle(source.getMetaTitle());
         target.setMetaDescription(source.getMetaDescription());
-        target.setCategory(source.getCategory());
         target.setCreatedBy(source.getCreatedBy());
         target.setStatus(Product.ProductStatus.DRAFT); // New product starts as draft
     }

@@ -2,20 +2,44 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import vendorService from '../../services/vendorService';
 import {
-  FiSave,
-  FiX,
-  FiUpload,
   FiPlus,
-  FiMinus,
-  FiInfo,
-  FiIndianRupee,
-  FiPackage,
+  FiX,
   FiImage,
+  FiUpload,
+  FiTrash2,
+  FiAlertCircle,
+  FiCheckCircle,
+  FiInfo,
+  FiPackage,
+  FiTag,
+  FiSettings,
+  FiGlobe,
+  FiShoppingBag,
   FiTruck,
+  FiCreditCard,
+  FiPercent,
+  FiBarChart,
+  FiLayers,
+  FiGrid,
+  FiList,
+  FiEdit,
+  FiEye,
+  FiSave,
+  FiRotateCcw,
+  FiArrowLeft,
+  FiArrowRight,
+  FiHelpCircle,
+  FiAlertTriangle,
+  FiClock,
+  FiCalendar,
+  FiMapPin,
+  FiBox,
+  FiAward,
   FiFileText,
-  FiShield,
   FiSearch,
-  FiAlertCircle
+  FiFilter,
+  FiRefreshCw,
+  FiMoreVertical
 } from 'react-icons/fi';
 
 /**
@@ -1147,7 +1171,7 @@ const ProductAdd = () => {
             MRP (Maximum Retail Price) <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <FiIndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">₹</span>
             <input
               type="number"
               step="0.01"
@@ -1169,7 +1193,7 @@ const ProductAdd = () => {
             Selling Price <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <FiIndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">₹</span>
             <input
               type="number"
               step="0.01"
@@ -1191,7 +1215,7 @@ const ProductAdd = () => {
             Cost Price
           </label>
           <div className="relative">
-            <FiIndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">₹</span>
             <input
               type="number"
               step="0.01"

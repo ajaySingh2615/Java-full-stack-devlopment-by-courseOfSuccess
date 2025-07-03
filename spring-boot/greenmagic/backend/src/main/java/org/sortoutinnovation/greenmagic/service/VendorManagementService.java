@@ -972,9 +972,10 @@ public class VendorManagementService {
             errors.add("Detailed description must be at least 200 characters");
         }
 
-        // Certifications
-        if (request.getFssaiLicense() == null || !request.getFssaiLicense().matches("^[0-9]{14}$")) {
-            errors.add("Valid 14-digit FSSAI license is required");
+        // Certifications - OPTIONAL validation
+        if (request.getFssaiLicense() != null && !request.getFssaiLicense().trim().isEmpty() 
+            && !request.getFssaiLicense().matches("^[0-9]{14}$")) {
+            errors.add("FSSAI license must be exactly 14 digits when provided");
         }
 
         return errors;
@@ -1702,6 +1703,50 @@ public class VendorManagementService {
                 e.printStackTrace();
             }
         }
+
+        // Handle key features
+        if (dto.getKeyFeatures() != null) {
+            product.setKeyFeatures(dto.getKeyFeatures());
+        }
+
+        // Handle product highlights
+        if (dto.getProductHighlights() != null) {
+            try {
+                List<Map<String, String>> highlights = dto.getProductHighlights().stream()
+                    .map(highlight -> {
+                        Map<String, String> map = new HashMap<>();
+                        map.put("title", highlight.getTitle());
+                        map.put("description", highlight.getDescription());
+                        map.put("icon", highlight.getIcon());
+                        return map;
+                    })
+                    .collect(Collectors.toList());
+                product.setProductHighlights(highlights);
+            } catch (Exception e) {
+                System.err.println("Error converting product highlights: " + e.getMessage());
+            }
+        }
+
+        // Handle search keywords
+        if (dto.getKeywords() != null) {
+            product.setSearchKeywords(dto.getKeywords());
+        }
+        
+        // Handle certification fields - MISSING MAPPINGS ADDED
+        if (dto.getFssaiLicense() != null) {
+            product.setFssaiLicense(dto.getFssaiLicense());
+        }
+        
+        if (dto.getQualityCertifications() != null) {
+            // Convert qualityCertifications to JSON string
+            try {
+                String certificationsJson = objectMapper.writeValueAsString(dto.getQualityCertifications());
+                product.setQualityCertifications(certificationsJson);
+            } catch (Exception e) {
+                System.err.println("Error converting quality certifications to JSON: " + e.getMessage());
+                // Keep existing certifications if conversion fails
+            }
+        }
     }
 
     private void copyProductFields(Product source, Product target) {
@@ -1779,16 +1824,21 @@ public class VendorManagementService {
         }
     }
 
-    private String convertProductHighlights(List<ProductCreateRequestDto.ProductHighlight> highlights) {
+    private List<Map<String, String>> convertProductHighlights(List<ProductCreateRequestDto.ProductHighlight> highlights) {
         if (highlights == null || highlights.isEmpty()) {
             return null;
         }
         
         try {
-            // Convert directly to JSON string for Hibernate
-            String json = objectMapper.writeValueAsString(highlights);
-            System.out.println("=== DEBUG: Successfully converted product highlights to JSON: " + json);
-            return json;
+            return highlights.stream()
+                .map(highlight -> {
+                    Map<String, String> map = new HashMap<>();
+                    map.put("title", highlight.getTitle());
+                    map.put("description", highlight.getDescription());
+                    map.put("icon", highlight.getIcon());
+                    return map;
+                })
+                .collect(Collectors.toList());
         } catch (Exception e) {
             System.err.println("Error converting product highlights: " + e.getMessage());
             return null;

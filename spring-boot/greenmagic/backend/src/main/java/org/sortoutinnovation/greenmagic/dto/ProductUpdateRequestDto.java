@@ -111,12 +111,18 @@ public class ProductUpdateRequestDto {
     private String detailedDescription;
 
     private List<String> keyFeatures;
+    private List<ProductHighlight> productHighlights;
 
     // Certifications & Compliance
     private List<String> certifications;
     private String hsnCode;
     private BigDecimal gstRate;
+    
+    @Size(max = 14, message = "FSSAI license must be 14 digits")
+    @Pattern(regexp = "^[0-9]{14}$|^$", message = "FSSAI license must be 14 digits")
     private String fssaiLicense;
+    
+    private List<QualityCertification> qualityCertifications;
 
     // SEO Optimization
     @Size(max = 60, message = "Meta title cannot exceed 60 characters")
@@ -174,5 +180,27 @@ public class ProductUpdateRequestDto {
         private Integer stockQuantity;
         private String sku;
         private Boolean isDefault = false;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProductHighlight {
+        @Size(max = 30, message = "Title must not exceed 30 characters")
+        private String title;
+
+        @Size(max = 100, message = "Description must not exceed 100 characters")
+        private String description;
+
+        private String icon;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class QualityCertification {
+        private String type; // quality_check_lab, isi, iso_22000, haccp, gmp, halal, organic, etc
+        private String certificateNumber;
+        private String certificateFileUrl;
     }
 } 

@@ -303,14 +303,7 @@ const ProductAdd = () => {
             shortDescription: descriptions.shortDescription || '',
             detailedDescription: descriptions.detailedDescription || '',
             keyFeatures: descriptions.keyFeatures || [],
-            productHighlights: (() => {
-              try {
-                return descriptions.productHighlights ? JSON.parse(descriptions.productHighlights || '[]') : [];
-              } catch (e) {
-                console.warn('Error parsing productHighlights:', e);
-                return [];
-              }
-            })(),
+            productHighlights: descriptions.productHighlights || [],
             usageInstructions: descriptions.usageInstructions || '',
             storageInstructions: descriptions.storageInstructions || '',
 
@@ -378,7 +371,21 @@ const ProductAdd = () => {
             isoCertification: certifications.isoCertification || '',
             qualityCertifications: (() => {
               try {
-                return certifications.qualityCertifications ? JSON.parse(certifications.qualityCertifications || '[]') : [];
+                console.log('Raw qualityCertifications from API:', certifications.qualityCertifications);
+                
+                // If it's already an array, return it
+                if (Array.isArray(certifications.qualityCertifications)) {
+                  return certifications.qualityCertifications;
+                }
+                
+                // If it's a string, try to parse it
+                if (typeof certifications.qualityCertifications === 'string') {
+                  const parsed = JSON.parse(certifications.qualityCertifications || '[]');
+                  return Array.isArray(parsed) ? parsed : [];
+                }
+                
+                // If it's null, undefined, or any other type, return empty array
+                return [];
               } catch (e) {
                 console.warn('Error parsing qualityCertifications:', e);
                 return [];
@@ -455,6 +462,17 @@ const ProductAdd = () => {
     }
   }, [formData.categoryId, categories]);
 
+  // Ensure qualityCertifications is always an array
+  useEffect(() => {
+    if (!Array.isArray(formData.qualityCertifications)) {
+      console.warn('qualityCertifications is not an array, fixing:', formData.qualityCertifications);
+      setFormData(prev => ({
+        ...prev,
+        qualityCertifications: []
+      }));
+    }
+  }, [formData.qualityCertifications]);
+
   const loadCategories = async () => {
     try {
       const response = await vendorService.getProductCategories();
@@ -506,9 +524,12 @@ const ProductAdd = () => {
   const handleArrayAdd = (field, value = '') => {
     console.log('handleArrayAdd called:', { field, value });
     setFormData(prev => {
+      // Ensure the field exists and is an array
+      const currentArray = Array.isArray(prev[field]) ? prev[field] : [];
+      
       // If value is provided, use it directly
       if (value && typeof value === 'object') {
-        const newArray = [...(prev[field] || []), value];
+        const newArray = [...currentArray, value];
         console.log('Updated array with provided value:', { field, newArray });
         return { ...prev, [field]: newArray };
       }
@@ -525,35 +546,57 @@ const ProductAdd = () => {
         };
       }
       
-      const newArray = [...(prev[field] || []), newValue];
+      const newArray = [...currentArray, newValue];
       console.log('Updated array:', { field, newArray });
       return { ...prev, [field]: newArray };
     });
   };
 
   const handleArrayRemove = (field, index) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: prev[field].filter((_, i) => i !== index)
-    }));
+    setFormData(prev => {
+      // Ensure the field exists and is an array
+      const currentArray = Array.isArray(prev[field]) ? prev[field] : [];
+      
+      return {
+        ...prev,
+        [field]: currentArray.filter((_, i) => i !== index)
+      };
+    });
   };
 
   const handleArrayUpdate = (field, index, value) => {
     console.log('handleArrayUpdate called:', { field, index, value });
+    console.log('Current formData[field]:', formData[field]);
+    
     setFormData(prev => {
-      const newArray = [...prev[field]];
+      // Ensure the field exists and is an array
+      const currentArray = Array.isArray(prev[field]) ? prev[field] : [];
+      console.log('Current array:', currentArray);
       
-      // Special handling for bulk pricing tiers
-      if (field === 'bulkPricingTiers') {
-        const tier = newArray[index];
-        const updatedTier = { ...tier, ...value };
-        newArray[index] = updatedTier;
+      // Create a copy of the array
+      const newArray = [...currentArray];
+      
+      // Ensure the index exists
+      if (index >= 0 && index < newArray.length) {
+        // Special handling for bulk pricing tiers
+        if (field === 'bulkPricingTiers') {
+          const tier = newArray[index] || {};
+          const updatedTier = { ...tier, ...value };
+          newArray[index] = updatedTier;
+        } else {
+          // For other arrays, make sure to preserve existing object properties
+          const currentItem = newArray[index] || {};
+          newArray[index] = typeof value === 'object' ? { ...currentItem, ...value } : value;
+        }
+        
+        console.log('Updated array item:', { field, index, oldValue: currentArray[index], newValue: newArray[index] });
       } else {
-        newArray[index] = value;
+        console.warn('Invalid array index for field:', field, 'index:', index, 'array length:', newArray.length);
       }
       
-      console.log('Updated array item:', { field, index, oldValue: prev[field][index], newValue: newArray[index] });
-      return { ...prev, [field]: newArray };
+      const updatedFormData = { ...prev, [field]: newArray };
+      console.log('Updated formData:', updatedFormData);
+      return updatedFormData;
     });
 
     // Clear errors for bulk pricing tiers when user updates values
@@ -913,6 +956,27 @@ const ProductAdd = () => {
       isReturnable: data.isReturnable !== undefined ? data.isReturnable : true,
       returnWindow: data.returnWindow || 'SEVEN_DAYS',
       isCodAvailable: data.isCodAvailable !== undefined ? data.isCodAvailable : true,
+      
+      // Product Descriptions
+      shortDescription: data.shortDescription?.trim(),
+      detailedDescription: data.detailedDescription?.trim(),
+      keyFeatures: data.keyFeatures.filter(feature => feature.trim() !== ''),
+      productHighlights: data.productHighlights.filter(highlight => highlight.title?.trim() !== '' || highlight.description?.trim() !== '').map(highlight => ({
+        title: highlight.title?.trim() || '',
+        description: highlight.description?.trim() || '',
+        icon: highlight.icon || ''
+      })),
+      
+      // Certifications & Compliance
+      fssaiLicense: data.fssaiLicense?.trim() || null,
+      qualityCertifications: Array.isArray(data.qualityCertifications) ? 
+        data.qualityCertifications.filter(cert => 
+          cert && (cert.type || cert.certificateNumber || cert.certificateFileUrl)
+        ).map(cert => ({
+          type: cert.type || '',
+          certificateNumber: cert.certificateNumber || '',
+          certificateFileUrl: cert.certificateFileUrl || ''
+        })) : [],
       
       // Clean up gallery images
       imageUrls: cleanGalleryImages,
@@ -2006,7 +2070,7 @@ const ProductAdd = () => {
            <FiShield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
            <input
              type="text"
-             value={formData.fssaiLicense}
+             value={formData.fssaiLicense || ''}
              onChange={(e) => handleInputChange('fssaiLicense', e.target.value)}
              className={`w-full pl-10 pr-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
                errors.fssaiLicense ? 'border-red-300' : 'border-gray-300'
@@ -2026,12 +2090,12 @@ const ProductAdd = () => {
            Other Certifications (Quality Check Lab Test, ISI, etc.)
          </label>
          <div className="space-y-3">
-           {formData.qualityCertifications.map((cert, index) => (
+           {Array.isArray(formData.qualityCertifications) && formData.qualityCertifications.map((cert, index) => (
              <div key={index} className="border border-gray-200 rounded-lg p-4">
                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                  <select
-                   value={cert.type}
-                   onChange={(e) => handleArrayUpdate('qualityCertifications', index, {...cert, type: e.target.value})}
+                   value={cert?.type || ''}
+                   onChange={(e) => handleArrayUpdate('qualityCertifications', index, {...(cert || {}), type: e.target.value})}
                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                  >
                    <option value="">Select Certificate Type</option>
@@ -2049,8 +2113,8 @@ const ProductAdd = () => {
                  </select>
                  <input
                    type="text"
-                   value={cert.certificateNumber}
-                   onChange={(e) => handleArrayUpdate('qualityCertifications', index, {...cert, certificateNumber: e.target.value})}
+                   value={cert?.certificateNumber || ''}
+                   onChange={(e) => handleArrayUpdate('qualityCertifications', index, {...(cert || {}), certificateNumber: e.target.value})}
                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                    placeholder="Certificate Number"
                  />
@@ -2058,8 +2122,8 @@ const ProductAdd = () => {
                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                  <input
                    type="url"
-                   value={cert.certificateFileUrl}
-                   onChange={(e) => handleArrayUpdate('qualityCertifications', index, {...cert, certificateFileUrl: e.target.value})}
+                   value={cert?.certificateFileUrl || ''}
+                   onChange={(e) => handleArrayUpdate('qualityCertifications', index, {...(cert || {}), certificateFileUrl: e.target.value})}
                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                    placeholder="Certificate Image URL (https://...)"
                  />
@@ -2071,7 +2135,7 @@ const ProductAdd = () => {
                    Remove
                  </button>
                </div>
-               {cert.certificateFileUrl && (
+               {cert?.certificateFileUrl && (
                  <div className="mt-3">
                    <img
                      src={cert.certificateFileUrl}

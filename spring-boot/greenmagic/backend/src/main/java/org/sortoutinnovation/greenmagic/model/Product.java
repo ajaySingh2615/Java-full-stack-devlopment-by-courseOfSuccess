@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -216,7 +217,7 @@ public class Product {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "product_highlights", columnDefinition = "JSON")
-    private String productHighlights;
+    private List<Map<String, String>> productHighlights;
 
     // ===========================
     // CERTIFICATIONS & COMPLIANCE

@@ -642,7 +642,7 @@ const ProductAdd = () => {
         alert('Please select a category first');
         return;
       }
-
+      
       // Set loading state
       setLoading(true);
 
@@ -1143,7 +1143,7 @@ const ProductAdd = () => {
       console.log('=== TRANSFORMED DATA ===');
       console.log('URL slug after transformation:', transformedData.urlSlug);
       console.log('Full transformed data:', transformedData);
-      
+
       // Submit to API - either create or update
       let response;
       if (isEditMode) {
@@ -2294,12 +2294,12 @@ const ProductAdd = () => {
            </div>
            <div className="mt-2 space-y-1">
              <p className="text-sm text-gray-500">
-               By default, we'll generate a URL from your product title. You can provide a custom URL here if you want something different.
-               Use only lowercase letters, numbers, and hyphens.
-             </p>
-             {errors.urlSlug && (
+             By default, we'll generate a URL from your product title. You can provide a custom URL here if you want something different.
+             Use only lowercase letters, numbers, and hyphens.
+           </p>
+           {errors.urlSlug && (
                <p className="text-sm text-red-600">{errors.urlSlug}</p>
-             )}
+           )}
              {formData.urlSlug && (
                <p className="text-sm text-green-600">
                  Preview: https://greenmagic.com/products/{formData.urlSlug}

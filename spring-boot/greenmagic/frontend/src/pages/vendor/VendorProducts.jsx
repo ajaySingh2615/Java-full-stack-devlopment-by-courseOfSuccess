@@ -17,7 +17,8 @@ import {
   FiBarChart,
   FiAlertCircle,
   FiChevronDown,
-  FiX
+  FiX,
+  FiToggleLeft
 } from 'react-icons/fi';
 
 /**
@@ -263,6 +264,24 @@ const VendorProducts = () => {
     navigate(`/vendor/products/edit/${productId}`);
   };
 
+  const handleToggleStatus = async (product) => {
+    const newStatus = product.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    try {
+      const response = await vendorService.updateProductStatus(vendorId, product.productId, newStatus);
+      if (response.success) {
+        setProducts(prevProducts =>
+          prevProducts.map(p =>
+            p.productId === product.productId ? { ...p, status: newStatus } : p
+          )
+        );
+      } else {
+        alert('Failed to update product status');
+      }
+    } catch (err) {
+      alert('Failed to update product status');
+    }
+  };
+
   const ProductStatsCard = ({ title, value, icon: Icon, color, change }) => (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between">
@@ -383,16 +402,33 @@ const VendorProducts = () => {
               <FiTrash2 className="h-5 w-5" />
             </button>
           </div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/vendor/products/variants/${product.productId}`);
-            }}
-            className="text-gray-600 hover:text-gray-700"
-            title="Manage variants"
-          >
-            <FiPackage className="h-5 w-5" />
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleStatus(product);
+              }}
+              className={`inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                product.status === 'ACTIVE' 
+                  ? 'bg-red-600 text-white hover:bg-red-700' 
+                  : 'bg-green-600 text-white hover:bg-green-700'
+              }`}
+              title={product.status === 'ACTIVE' ? 'Deactivate product' : 'Activate product'}
+            >
+              <FiToggleLeft className={`h-3.5 w-3.5 mr-1 ${product.status === 'ACTIVE' ? 'transform rotate-180' : ''}`} />
+              {product.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/vendor/products/variants/${product.productId}`);
+              }}
+              className="text-gray-600 hover:text-gray-700"
+              title="Manage variants"
+            >
+              <FiPackage className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -48,20 +48,6 @@ const ProductDetailModal = ({
       description: 'Edit product details'
     },
     {
-      name: 'Toggle Status',
-      icon: FiToggleLeft,
-      action: 'toggle',
-      color: 'green',
-      description: 'Activate/Deactivate product'
-    },
-    {
-      name: 'Duplicate',
-      icon: FiCopy,
-      action: 'duplicate',
-      color: 'gray',
-      description: 'Create a copy of this product'
-    },
-    {
       name: 'Delete',
       icon: FiTrash2,
       action: 'delete',
@@ -124,6 +110,8 @@ const ProductDetailModal = ({
   const handleQuickAction = async (action) => {
     if (!product) return;
 
+    console.log('handleQuickAction called with:', action, 'product:', product);
+
     try {
       setActionLoading(action);
 
@@ -134,14 +122,34 @@ const ProductDetailModal = ({
           break;
 
         case 'toggle':
-          const newStatus = product.status === 'active' ? 'inactive' : 'active';
+          const currentStatus = product.status?.toLowerCase();
+          const newStatus = currentStatus === 'active' ? 'INACTIVE' : 'ACTIVE';
+          
+          console.log('Toggling status from', product.status, 'to', newStatus);
+          
           const response = await vendorService.updateProductStatus(vendorId, product.productId, newStatus);
+          
+          console.log('API response:', response);
+          
           if (response.success) {
-            onProductUpdate?.({...product, status: newStatus});
-            // Update local product details if available
-            if (productDetails) {
-              setProductDetails(prev => ({...prev, basic: {...prev.basic, status: newStatus}}));
-            }
+            // Update the product state in parent component
+            onProductUpdate?.({
+              ...product,
+              status: newStatus
+            });
+            
+            // Update local state
+            setProductDetails(prev => ({
+              ...prev,
+              basic: {
+                ...prev?.basic,
+                status: newStatus
+              }
+            }));
+            
+            console.log('Status updated successfully');
+          } else {
+            throw new Error(response.error || 'Failed to update product status');
           }
           break;
 
@@ -199,8 +207,8 @@ const ProductDetailModal = ({
                 </h2>
                 {product && (
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    product.status === 'active' ? 'bg-green-100 text-green-800' :
-                    product.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                    product.status?.toLowerCase() === 'active' ? 'bg-green-100 text-green-800' :
+                    product.status?.toLowerCase() === 'draft' ? 'bg-gray-100 text-gray-800' :
                     'bg-yellow-100 text-yellow-800'
                   }`}>
                     {product.status}

@@ -234,13 +234,28 @@ const vendorService = {
 
   async updateProductStatus(vendorId, productId, status) {
     try {
-      const response = await apiClient.put(`/vendor/products/${productId}/status`, { status }, {
-        params: { vendorId }
-      });
-      return { success: true, data: response.data };
+      const response = await apiClient.put(
+        `/vendor/products/${productId}/status`,
+        { status },
+        {
+          params: { vendorId }
+        }
+      );
+      
+      if (response.data?.success === false) {
+        throw new Error(response.data.message || 'Failed to update product status');
+      }
+      
+      return {
+        success: true,
+        data: response.data
+      };
     } catch (error) {
       console.error('Error updating product status:', error);
-      return { success: false, error: error.message };
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Failed to update product status'
+      };
     }
   },
 

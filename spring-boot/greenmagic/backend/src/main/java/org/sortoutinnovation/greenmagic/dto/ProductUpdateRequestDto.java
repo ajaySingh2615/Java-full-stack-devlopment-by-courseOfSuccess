@@ -104,7 +104,7 @@ public class ProductUpdateRequestDto {
     private Boolean isCodAvailable;
 
     // Product Descriptions
-    @Size(max = 200, message = "Short description cannot exceed 200 characters")
+    @Size(max = 300, message = "Short description cannot exceed 300 characters")
     private String shortDescription;
 
     @Size(max = 2000, message = "Full description cannot exceed 2000 characters")

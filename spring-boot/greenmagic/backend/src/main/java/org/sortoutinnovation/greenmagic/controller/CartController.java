@@ -40,7 +40,7 @@ public class CartController {
     }
 
     @GetMapping("/{cartId}/items")
-    public ResponseEntity<ApiResponseDto<List<CartItem>>> getCartItems(@PathVariable Long cartId) {
+    public ResponseEntity<ApiResponseDto<List<CartItem>>> getCartItems(@PathVariable Integer cartId) {
         try {
             List<CartItem> items = cartService.getCartItems(cartId);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Cart items retrieved successfully", items));
@@ -69,8 +69,8 @@ public class CartController {
 
     @PostMapping("/{cartId}/items")
     public ResponseEntity<ApiResponseDto<CartItem>> addItemToCart(
-            @PathVariable Long cartId,
-            @RequestParam Long productId,
+            @PathVariable Integer cartId,
+            @RequestParam Integer productId,
             @RequestParam Integer quantity) {
         
         try {
@@ -88,7 +88,7 @@ public class CartController {
     }
 
     @DeleteMapping("/items/{itemId}")
-    public ResponseEntity<ApiResponseDto<Void>> removeItemFromCart(@PathVariable Long itemId) {
+    public ResponseEntity<ApiResponseDto<Void>> removeItemFromCart(@PathVariable Integer itemId) {
         try {
             cartService.removeItemFromCart(itemId);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Item removed from cart successfully", null));
@@ -102,7 +102,7 @@ public class CartController {
     }
 
     @DeleteMapping("/{cartId}")
-    public ResponseEntity<ApiResponseDto<Void>> clearCart(@PathVariable Long cartId) {
+    public ResponseEntity<ApiResponseDto<Void>> clearCart(@PathVariable Integer cartId) {
         try {
             cartService.clearCart(cartId);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Cart cleared successfully", null));
@@ -116,7 +116,7 @@ public class CartController {
     }
 
     @GetMapping("/{cartId}/total")
-    public ResponseEntity<ApiResponseDto<BigDecimal>> getCartTotal(@PathVariable Long cartId) {
+    public ResponseEntity<ApiResponseDto<BigDecimal>> getCartTotal(@PathVariable Integer cartId) {
         try {
             BigDecimal total = cartService.getCartTotal(cartId);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Cart total calculated successfully", total));
@@ -128,7 +128,7 @@ public class CartController {
     }
 
     @GetMapping("/{cartId}/count")
-    public ResponseEntity<ApiResponseDto<Integer>> getCartItemCount(@PathVariable Long cartId) {
+    public ResponseEntity<ApiResponseDto<Integer>> getCartItemCount(@PathVariable Integer cartId) {
         try {
             Integer count = cartService.getCartItemCount(cartId);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Cart item count retrieved successfully", count));

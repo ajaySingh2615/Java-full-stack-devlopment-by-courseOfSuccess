@@ -81,7 +81,7 @@ public class UserController {
      * GET /api/users/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponseDto<UserResponseDto>> getUserById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponseDto<UserResponseDto>> getUserById(@PathVariable Integer id) {
         try {
             UserResponseDto responseDto = userService.getUserById(id);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "User found", responseDto));
@@ -134,7 +134,7 @@ public class UserController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponseDto<UserResponseDto>> updateUser(
-            @PathVariable Long id,
+            @PathVariable Integer id,
             @Valid @RequestBody UserRegistrationRequestDto updateRequest) {
         
         try {
@@ -155,7 +155,7 @@ public class UserController {
      * DELETE /api/users/{id}
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponseDto<Void>> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponseDto<Void>> deleteUser(@PathVariable Integer id) {
         try {
             userService.deleteUser(id);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "User deleted successfully", null));

@@ -52,7 +52,7 @@ public class CartService {
      * @return List<CartItem>
      */
     @Transactional(readOnly = true)
-    public List<CartItem> getCartItems(Long cartId) {
+    public List<CartItem> getCartItems(Integer cartId) {
         return cartItemRepository.findByCartId(cartId);
     }
 
@@ -88,7 +88,7 @@ public class CartService {
      * @return CartItem
      * @throws RuntimeException if cart/product not found or insufficient stock
      */
-    public CartItem addItemToCart(Long cartId, Long productId, Integer quantity) {
+    public CartItem addItemToCart(Integer cartId, Integer productId, Integer quantity) {
         // Validate cart exists
         Cart cart = cartRepository.findById(cartId)
             .orElseThrow(() -> new RuntimeException("Cart not found with id: " + cartId));
@@ -132,12 +132,12 @@ public class CartService {
      * @return CartItem
      * @throws RuntimeException if item not found or insufficient stock
      */
-    public CartItem updateCartItemQuantity(Long itemId, Integer quantity) {
+    public CartItem updateCartItemQuantity(Integer itemId, Integer quantity) {
         CartItem item = cartItemRepository.findById(itemId)
             .orElseThrow(() -> new RuntimeException("Cart item not found with id: " + itemId));
 
         // Validate stock
-        if (!productService.isInStock(item.getProduct().getProductId().longValue(), quantity)) {
+        if (!productService.isInStock(item.getProduct().getProductId(), quantity)) {
             throw new RuntimeException("Insufficient stock for requested quantity");
         }
 
@@ -150,7 +150,7 @@ public class CartService {
      * @param itemId cart item ID
      * @throws RuntimeException if item not found
      */
-    public void removeItemFromCart(Long itemId) {
+    public void removeItemFromCart(Integer itemId) {
         if (!cartItemRepository.existsById(itemId)) {
             throw new RuntimeException("Cart item not found with id: " + itemId);
         }
@@ -162,7 +162,7 @@ public class CartService {
      * @param cartId cart ID
      * @throws RuntimeException if cart not found
      */
-    public void clearCart(Long cartId) {
+    public void clearCart(Integer cartId) {
         if (!cartRepository.existsById(cartId)) {
             throw new RuntimeException("Cart not found with id: " + cartId);
         }
@@ -177,7 +177,7 @@ public class CartService {
      * @return BigDecimal total amount
      */
     @Transactional(readOnly = true)
-    public BigDecimal getCartTotal(Long cartId) {
+    public BigDecimal getCartTotal(Integer cartId) {
         List<CartItem> items = cartItemRepository.findByCartId(cartId);
         return items.stream()
             .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
@@ -190,7 +190,7 @@ public class CartService {
      * @return Integer total items count
      */
     @Transactional(readOnly = true)
-    public Integer getCartItemCount(Long cartId) {
+    public Integer getCartItemCount(Integer cartId) {
         List<CartItem> items = cartItemRepository.findByCartId(cartId);
         return items.stream()
             .mapToInt(CartItem::getQuantity)
@@ -203,7 +203,7 @@ public class CartService {
      * @return boolean
      */
     @Transactional(readOnly = true)
-    public boolean isCartEmpty(Long cartId) {
+    public boolean isCartEmpty(Integer cartId) {
         List<CartItem> items = cartItemRepository.findByCartId(cartId);
         return items.isEmpty();
     }
@@ -228,7 +228,7 @@ public class CartService {
         List<Cart> abandonedCarts = getAbandonedCarts(days);
         
         for (Cart cart : abandonedCarts) {
-            clearCart(cart.getCartId().longValue());
+            clearCart(cart.getCartId());
             cartRepository.delete(cart);
         }
         
@@ -241,7 +241,7 @@ public class CartService {
      * @param userId user ID
      * @return Cart merged cart
      */
-    public Cart mergeGuestCart(Long guestCartId, Long userId) {
+    public Cart mergeGuestCart(Integer guestCartId, Long userId) {
         // Get or create user cart
         Cart userCart = getUserCart(userId);
         if (userCart == null) {
@@ -254,8 +254,8 @@ public class CartService {
         // Merge items
         for (CartItem guestItem : guestItems) {
             try {
-                addItemToCart(userCart.getCartId().longValue(), 
-                    guestItem.getProduct().getProductId().longValue(), 
+                addItemToCart(userCart.getCartId(), 
+                    guestItem.getProduct().getProductId(), 
                     guestItem.getQuantity());
             } catch (RuntimeException e) {
                 // Skip items that can't be added (out of stock, etc.)
@@ -277,7 +277,7 @@ public class CartService {
      * @throws RuntimeException if validation fails
      */
     @Transactional(readOnly = true)
-    public boolean validateCartForCheckout(Long cartId) {
+    public boolean validateCartForCheckout(Integer cartId) {
         List<CartItem> items = getCartItems(cartId);
         
         if (items.isEmpty()) {
@@ -286,7 +286,7 @@ public class CartService {
 
         // Check stock availability for all items
         for (CartItem item : items) {
-            if (!productService.isInStock(item.getProduct().getProductId().longValue(), item.getQuantity())) {
+            if (!productService.isInStock(item.getProduct().getProductId(), item.getQuantity())) {
                 throw new RuntimeException("Product out of stock: " + item.getProduct().getName());
             }
         }

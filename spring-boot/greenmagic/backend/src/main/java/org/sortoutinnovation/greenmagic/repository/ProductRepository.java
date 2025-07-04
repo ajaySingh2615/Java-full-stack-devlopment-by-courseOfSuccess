@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ProductRepository extends JpaRepository<Product, Long> {
+public interface ProductRepository extends JpaRepository<Product, Integer> {
     
     Optional<Product> findBySku(String sku);
     Optional<Product> findByUrlSlug(String urlSlug);
@@ -24,7 +24,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findAllActiveProducts(Pageable pageable);
     
     @Query("SELECT p FROM Product p WHERE p.category.categoryId = :categoryId AND p.status = 'ACTIVE' ORDER BY p.name")
-    Page<Product> findByCategoryId(@Param("categoryId") Long categoryId, Pageable pageable);
+    Page<Product> findByCategoryId(@Param("categoryId") Integer categoryId, Pageable pageable);
     
     @Query("SELECT p FROM Product p WHERE p.status = 'ACTIVE' AND LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%')) ORDER BY p.name")
     Page<Product> findByNameContaining(@Param("name") String name, Pageable pageable);
@@ -89,7 +89,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
            "ORDER BY p.createdAt DESC")
     Page<Product> findByVendorIdWithFilters(@Param("vendorId") Integer vendorId,
                                            @Param("status") Product.ProductStatus status,
-                                           @Param("categoryId") Long categoryId,
+                                           @Param("categoryId") Integer categoryId,
                                            Pageable pageable);
     
     /**
@@ -120,4 +120,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      */
     @Query("SELECT COUNT(p) > 0 FROM Product p WHERE p.productId = :productId AND p.createdBy.userId = :vendorId")
     boolean isProductOwnedByVendor(@Param("productId") Integer productId, @Param("vendorId") Integer vendorId);
+    
+    /**
+     * Find all products by vendor ID
+     */
+    @Query("SELECT p FROM Product p WHERE p.createdBy.userId = :vendorId")
+    List<Product> findByVendorId(@Param("vendorId") Integer vendorId);
 } 

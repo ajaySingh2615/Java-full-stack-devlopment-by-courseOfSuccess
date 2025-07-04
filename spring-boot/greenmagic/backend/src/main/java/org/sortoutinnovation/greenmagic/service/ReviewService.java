@@ -29,7 +29,7 @@ public class ReviewService {
      * @return Page<Review>
      */
     @Transactional(readOnly = true)
-    public Page<Review> getProductReviews(Long productId, Pageable pageable) {
+    public Page<Review> getProductReviews(Integer productId, Pageable pageable) {
         return reviewRepository.findByProductId(productId, pageable);
     }
 
@@ -66,7 +66,7 @@ public class ReviewService {
         // Check if user already reviewed this product
         if (reviewRepository.findByUserIdAndProductId(
             review.getUser().getUserId().longValue(), 
-            review.getProduct().getProductId().longValue()).isPresent()) {
+            review.getProduct().getProductId()).isPresent()) {
             throw new RuntimeException("User has already reviewed this product");
         }
 
@@ -116,7 +116,7 @@ public class ReviewService {
      * @return BigDecimal average rating
      */
     @Transactional(readOnly = true)
-    public BigDecimal getAverageRating(Long productId) {
+    public BigDecimal getAverageRating(Integer productId) {
         BigDecimal average = reviewRepository.calculateAverageRatingForProduct(productId);
         return average != null ? average.setScale(1, RoundingMode.HALF_UP) : BigDecimal.ZERO;
     }
@@ -127,7 +127,7 @@ public class ReviewService {
      * @return Long review count
      */
     @Transactional(readOnly = true)
-    public Long getReviewCount(Long productId) {
+    public Long getReviewCount(Integer productId) {
         return reviewRepository.countByProductId(productId);
     }
 
@@ -138,7 +138,7 @@ public class ReviewService {
      * @return boolean true if user can review
      */
     @Transactional(readOnly = true)
-    public boolean canUserReviewProduct(Long userId, Long productId) {
+    public boolean canUserReviewProduct(Long userId, Integer productId) {
         return reviewRepository.findByUserIdAndProductId(userId, productId).isEmpty();
     }
 
@@ -150,7 +150,7 @@ public class ReviewService {
      * @return Page<Review>
      */
     @Transactional(readOnly = true)
-    public Page<Review> getReviewsByRating(Long productId, Integer rating, Pageable pageable) {
+    public Page<Review> getReviewsByRating(Integer productId, Integer rating, Pageable pageable) {
         // This method would need to be implemented in repository
         // For now, return all product reviews
         return reviewRepository.findByProductId(productId, pageable);

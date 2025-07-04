@@ -195,7 +195,7 @@ public class AuthController {
      */
     @PutMapping("/users/{userId}/password")
     public ResponseEntity<?> changePassword(
-            @PathVariable Long userId,
+            @PathVariable Integer userId,
             @Valid @RequestBody PasswordChangeRequest passwordChangeRequest) {
         try {
             UserResponseDto user = userService.updatePassword(
@@ -224,7 +224,7 @@ public class AuthController {
      */
     @PutMapping("/admin/users/{userId}/reset-password")
     public ResponseEntity<?> resetPassword(
-            @PathVariable Long userId,
+            @PathVariable Integer userId,
             @Valid @RequestBody PasswordResetRequest passwordResetRequest) {
         try {
             UserResponseDto user = userService.resetPassword(
@@ -291,7 +291,7 @@ public class AuthController {
      * @return update result
      */
     @PostMapping("/debug/make-admin/{userId}")
-    public ResponseEntity<?> makeUserAdmin(@PathVariable Long userId) {
+    public ResponseEntity<?> makeUserAdmin(@PathVariable Integer userId) {
         try {
             UserResponseDto updatedUser = userService.updateUserRole(userId, "ADMIN");
             

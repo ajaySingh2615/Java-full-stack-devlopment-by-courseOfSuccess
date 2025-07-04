@@ -3,9 +3,11 @@ package org.sortoutinnovation.greenmagic.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.sortoutinnovation.greenmagic.dto.ApiResponseDto;
 import org.sortoutinnovation.greenmagic.dto.ProductCreateRequestDto;
+import org.sortoutinnovation.greenmagic.dto.ProductPerformanceDto;
 import org.sortoutinnovation.greenmagic.dto.ProductUpdateRequestDto;
 import org.sortoutinnovation.greenmagic.dto.ProductResponseDto;
 import org.sortoutinnovation.greenmagic.model.*;
+import org.sortoutinnovation.greenmagic.service.ProductService;
 import org.sortoutinnovation.greenmagic.service.VendorManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -38,6 +40,9 @@ public class VendorManagementController {
 
     @Autowired
     private VendorManagementService vendorManagementService;
+    
+    @Autowired
+    private ProductService productService;
     
     @Autowired
     private ObjectMapper objectMapper;
@@ -151,6 +156,35 @@ public class VendorManagementController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to retrieve product statistics: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get product performance data for a vendor
+     * GET /api/vendor/products/performance
+     * 
+     * @param vendorId The ID of the vendor
+     * @return List of product performance data
+     */
+    @GetMapping("/products/performance")
+    public ResponseEntity<ApiResponseDto<List<ProductPerformanceDto>>> getProductPerformance(
+            @RequestParam Integer vendorId) {
+        
+        try {
+            List<ProductPerformanceDto> performanceData = productService.getProductPerformanceByVendor(vendorId);
+            
+            ApiResponseDto<List<ProductPerformanceDto>> response = new ApiResponseDto<>();
+            response.setSuccess(true);
+            response.setData(performanceData);
+            response.setMessage("Product performance data retrieved successfully");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponseDto<List<ProductPerformanceDto>> response = new ApiResponseDto<>();
+            response.setSuccess(false);
+            response.setMessage("Error retrieving product performance data: " + e.getMessage());
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 

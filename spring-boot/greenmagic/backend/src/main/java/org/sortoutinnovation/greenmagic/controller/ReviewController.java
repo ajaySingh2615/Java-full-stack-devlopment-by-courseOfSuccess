@@ -24,7 +24,7 @@ public class ReviewController {
 
     @GetMapping("/product/{productId}")
     public ResponseEntity<ApiResponseDto<Page<Review>>> getReviewsByProduct(
-            @PathVariable Long productId,
+            @PathVariable Integer productId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
@@ -53,7 +53,7 @@ public class ReviewController {
     }
 
     @GetMapping("/product/{productId}/average-rating")
-    public ResponseEntity<ApiResponseDto<BigDecimal>> getAverageRating(@PathVariable Long productId) {
+    public ResponseEntity<ApiResponseDto<BigDecimal>> getAverageRating(@PathVariable Integer productId) {
         try {
             BigDecimal averageRating = reviewService.getAverageRating(productId);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Average rating calculated", averageRating));
@@ -92,7 +92,7 @@ public class ReviewController {
     }
 
     @GetMapping("/product/{productId}/count")
-    public ResponseEntity<ApiResponseDto<Long>> getReviewCount(@PathVariable Long productId) {
+    public ResponseEntity<ApiResponseDto<Long>> getReviewCount(@PathVariable Integer productId) {
         try {
             Long count = reviewService.getReviewCount(productId);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Review count retrieved", count));

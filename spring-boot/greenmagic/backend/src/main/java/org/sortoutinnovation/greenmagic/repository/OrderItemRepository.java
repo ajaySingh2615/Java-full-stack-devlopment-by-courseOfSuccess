@@ -31,7 +31,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @return List<OrderItem>
      */
     @Query("SELECT oi FROM OrderItem oi WHERE oi.product.productId = :productId ORDER BY oi.order.orderDate DESC")
-    List<OrderItem> findByProductId(@Param("productId") Long productId);
+    List<OrderItem> findByProductId(@Param("productId") Integer productId);
     
     /**
      * Find order items by user ID
@@ -47,7 +47,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @return Integer total quantity sold
      */
     @Query("SELECT COALESCE(SUM(oi.quantity), 0) FROM OrderItem oi WHERE oi.product.productId = :productId AND oi.order.paymentStatus = 'COMPLETED'")
-    Integer calculateTotalQuantitySoldForProduct(@Param("productId") Long productId);
+    Integer calculateTotalQuantitySoldForProduct(@Param("productId") Integer productId);
     
     /**
      * Calculate total revenue for a product
@@ -55,7 +55,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @return BigDecimal total revenue
      */
     @Query("SELECT COALESCE(SUM(oi.price * oi.quantity), 0) FROM OrderItem oi WHERE oi.product.productId = :productId AND oi.order.paymentStatus = 'COMPLETED'")
-    BigDecimal calculateTotalRevenueForProduct(@Param("productId") Long productId);
+    BigDecimal calculateTotalRevenueForProduct(@Param("productId") Integer productId);
     
     /**
      * Find top selling products by quantity
@@ -105,4 +105,16 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      */
     @Query("SELECT oi FROM OrderItem oi WHERE oi.price BETWEEN :minPrice AND :maxPrice ORDER BY oi.price DESC")
     List<OrderItem> findByPriceRange(@Param("minPrice") BigDecimal minPrice, @Param("maxPrice") BigDecimal maxPrice);
+    
+    /**
+     * Count order items by product ID
+     */
+    @Query("SELECT COUNT(oi) FROM OrderItem oi WHERE oi.product.productId = :productId")
+    Integer countByProductId(@Param("productId") Integer productId);
+    
+    /**
+     * Count order items by product ID before a specific date
+     */
+    @Query("SELECT COUNT(oi) FROM OrderItem oi WHERE oi.product.productId = :productId AND oi.order.orderDate < :date")
+    Integer countByProductIdBeforeDate(@Param("productId") Integer productId, @Param("date") LocalDateTime date);
 } 

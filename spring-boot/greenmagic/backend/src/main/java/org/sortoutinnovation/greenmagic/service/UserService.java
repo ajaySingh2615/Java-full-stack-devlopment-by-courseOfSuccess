@@ -162,7 +162,7 @@ public class UserService {
      * @throws RuntimeException if user not found
      */
     @Transactional(readOnly = true)
-    public UserResponseDto getUserById(Long id) {
+    public UserResponseDto getUserById(Integer id) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
         return UserMapper.toResponseDto(user);
@@ -200,7 +200,7 @@ public class UserService {
      * @return UserResponseDto
      * @throws RuntimeException if user not found or email already exists
      */
-    public UserResponseDto updateUser(Long id, UserRegistrationRequestDto updateRequest) {
+    public UserResponseDto updateUser(Integer id, UserRegistrationRequestDto updateRequest) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
 
@@ -246,7 +246,7 @@ public class UserService {
      * @return UserResponseDto
      * @throws RuntimeException if user not found or current password is incorrect
      */
-    public UserResponseDto updatePassword(Long id, String currentPassword, String newPassword) {
+    public UserResponseDto updatePassword(Integer id, String currentPassword, String newPassword) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
 
@@ -267,7 +267,7 @@ public class UserService {
      * @param id user ID
      * @throws RuntimeException if user not found
      */
-    public void deleteUser(Long id) {
+    public void deleteUser(Integer id) {
         if (!userRepository.existsById(id)) {
             throw new RuntimeException("User not found with id: " + id);
         }
@@ -346,7 +346,7 @@ public class UserService {
      * @return UserResponseDto
      * @throws RuntimeException if user not found
      */
-    public UserResponseDto resetPassword(Long userId, String newPassword) {
+    public UserResponseDto resetPassword(Integer userId, String newPassword) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
@@ -364,7 +364,7 @@ public class UserService {
      * @return UserResponseDto
      * @throws RuntimeException if user or role not found
      */
-    public UserResponseDto updateUserRole(Long userId, String roleName) {
+    public UserResponseDto updateUserRole(Integer userId, String roleName) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         
@@ -382,7 +382,7 @@ public class UserService {
      * @return UserResponseDto
      * @throws RuntimeException if user not found
      */
-    public UserResponseDto updateRegistrationStatus(Long userId, RegistrationStatus status) {
+    public UserResponseDto updateRegistrationStatus(Integer userId, RegistrationStatus status) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         

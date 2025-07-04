@@ -11,7 +11,7 @@ import java.util.Optional;
  * Provides CRUD operations and custom queries for category management
  */
 @Repository
-public interface CategoryRepository extends JpaRepository<Category, Long> {
+public interface CategoryRepository extends JpaRepository<Category, Integer> {
     
     /**
      * Find category by name

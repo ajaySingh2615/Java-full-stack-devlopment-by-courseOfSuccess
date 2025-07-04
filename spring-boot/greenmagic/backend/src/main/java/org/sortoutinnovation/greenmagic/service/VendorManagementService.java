@@ -156,10 +156,10 @@ public class VendorManagementService {
             }
             
             // Parse category if provided
-            Long categoryId = null;
+            Integer categoryId = null;
             if (category != null && !category.isEmpty()) {
                 try {
-                    categoryId = Long.valueOf(category);
+                    categoryId = Integer.valueOf(category);
                 } catch (NumberFormatException e) {
                     // Invalid category ID, ignore and continue
                 }
@@ -203,7 +203,7 @@ public class VendorManagementService {
      * Create new product
      */
     public Product createProduct(Integer vendorId, Product product) {
-        User vendor = userRepository.findById(vendorId.longValue())
+        User vendor = userRepository.findById(vendorId)
             .orElseThrow(() -> new RuntimeException("Vendor not found"));
         
         product.setCreatedBy(vendor);
@@ -226,7 +226,7 @@ public class VendorManagementService {
      * Update product
      */
     public Product updateProduct(Integer vendorId, Integer productId, Product productData) {
-        Product existingProduct = productRepository.findById(productId.longValue())
+        Product existingProduct = productRepository.findById(productId)
             .orElseThrow(() -> new RuntimeException("Product not found"));
         
         // Verify ownership
@@ -255,7 +255,7 @@ public class VendorManagementService {
      * Delete product
      */
     public void deleteProduct(Integer vendorId, Integer productId) {
-        Product product = productRepository.findById(productId.longValue())
+        Product product = productRepository.findById(productId)
             .orElseThrow(() -> new RuntimeException("Product not found"));
         
         // Verify ownership
@@ -279,9 +279,7 @@ public class VendorManagementService {
      * Bulk update product status
      */
     public void bulkUpdateProductStatus(Integer vendorId, List<Integer> productIds, String status) {
-        List<Product> products = productRepository.findAllById(
-            productIds.stream().map(Long::valueOf).collect(Collectors.toList())
-        );
+        List<Product> products = productRepository.findAllById(productIds);
         
         Product.ProductStatus newStatus = Product.ProductStatus.valueOf(status.toUpperCase());
         
@@ -299,9 +297,7 @@ public class VendorManagementService {
      * Bulk update product prices
      */
     public void bulkUpdateProductPrices(Integer vendorId, List<Integer> productIds, String updateType, BigDecimal value) {
-        List<Product> products = productRepository.findAllById(
-            productIds.stream().map(Long::valueOf).collect(Collectors.toList())
-        );
+        List<Product> products = productRepository.findAllById(productIds);
         
         for (Product product : products) {
             // Verify ownership
@@ -335,7 +331,7 @@ public class VendorManagementService {
      * Get product variants
      */
     public List<ProductVariant> getProductVariants(Integer vendorId, Integer productId) {
-        Product product = productRepository.findById(productId.longValue())
+        Product product = productRepository.findById(productId)
             .orElseThrow(() -> new RuntimeException("Product not found"));
         
         // Verify ownership
@@ -350,7 +346,7 @@ public class VendorManagementService {
      * Create product variant
      */
     public ProductVariant createProductVariant(Integer vendorId, Integer productId, ProductVariant variant) {
-        Product product = productRepository.findById(productId.longValue())
+        Product product = productRepository.findById(productId)
             .orElseThrow(() -> new RuntimeException("Product not found"));
         
         // Verify ownership
@@ -554,7 +550,7 @@ public class VendorManagementService {
         // Implementation would fetch from VendorProfile and User entities
         Map<String, Object> settings = new HashMap<>();
         
-        User vendor = userRepository.findById(vendorId.longValue())
+        User vendor = userRepository.findById(vendorId)
             .orElseThrow(() -> new RuntimeException("Vendor not found"));
         
         Optional<VendorProfile> profileOpt = vendorProfileRepository.findByUser(vendor);
@@ -577,7 +573,7 @@ public class VendorManagementService {
      * Update vendor settings
      */
     public Map<String, Object> updateVendorSettings(Integer vendorId, Map<String, Object> settings) {
-        User vendor = userRepository.findById(vendorId.longValue())
+        User vendor = userRepository.findById(vendorId)
             .orElseThrow(() -> new RuntimeException("Vendor not found"));
         
         // Update user fields (only email and username are available)
@@ -763,7 +759,7 @@ public class VendorManagementService {
         // Get category code (2 letters)
         String categoryCode = "GM"; // Default if no category
         if (categoryId != null) {
-            Category category = categoryRepository.findById(categoryId.longValue()).orElse(null);
+            Category category = categoryRepository.findById(categoryId).orElse(null);
             if (category != null && category.getName() != null) {
                 String categoryName = category.getName().toUpperCase();
                 // Remove any non-alphabetic characters
@@ -840,7 +836,7 @@ public class VendorManagementService {
             System.out.println("=== DEBUG: Product Title: " + request.getProductTitle());
             
             // Find vendor
-            User vendor = userRepository.findById(vendorId.longValue())
+            User vendor = userRepository.findById(vendorId)
                 .orElseThrow(() -> new RuntimeException("Vendor not found with ID: " + vendorId));
             System.out.println("=== DEBUG: Vendor found: " + vendor.getName());
 
@@ -985,7 +981,7 @@ public class VendorManagementService {
      * Get vendor product by ID as DTO
      */
     public ProductResponseDto getVendorProductById(Integer vendorId, Integer productId) {
-        Product product = productRepository.findById(productId.longValue())
+        Product product = productRepository.findById(productId)
             .orElseThrow(() -> new RuntimeException("Product not found"));
         
         // Verify ownership
@@ -1000,7 +996,7 @@ public class VendorManagementService {
      * Update product from DTO
      */
     public ProductResponseDto updateProductFromDto(Integer vendorId, Integer productId, ProductUpdateRequestDto dto) {
-        Product existingProduct = productRepository.findById(productId.longValue())
+        Product existingProduct = productRepository.findById(productId)
             .orElseThrow(() -> new RuntimeException("Product not found"));
         
         // Verify ownership
@@ -1025,7 +1021,7 @@ public class VendorManagementService {
      * Duplicate product
      */
     public ProductResponseDto duplicateProduct(Integer vendorId, Integer productId, String newTitle) {
-        Product originalProduct = productRepository.findById(productId.longValue())
+        Product originalProduct = productRepository.findById(productId)
             .orElseThrow(() -> new RuntimeException("Product not found"));
         
         // Verify ownership
@@ -1049,7 +1045,7 @@ public class VendorManagementService {
      * Get detailed product information for comprehensive editing
      */
     public Map<String, Object> getProductDetails(Integer vendorId, Integer productId) {
-        Product product = productRepository.findById(productId.longValue())
+        Product product = productRepository.findById(productId)
             .orElseThrow(() -> new RuntimeException("Product not found"));
         
         // Verify ownership
@@ -1204,7 +1200,7 @@ public class VendorManagementService {
      * Get product analytics data
      */
     public Map<String, Object> getProductAnalytics(Integer vendorId, Integer productId) {
-        Product product = productRepository.findById(productId.longValue())
+        Product product = productRepository.findById(productId)
             .orElseThrow(() -> new RuntimeException("Product not found"));
         
         // Verify ownership
@@ -1230,7 +1226,7 @@ public class VendorManagementService {
      * Quick update product fields
      */
     public ProductResponseDto quickUpdateProduct(Integer vendorId, Integer productId, Map<String, Object> updateFields) {
-        Product product = productRepository.findById(productId.longValue())
+        Product product = productRepository.findById(productId)
             .orElseThrow(() -> new RuntimeException("Product not found"));
         
         // Verify ownership
@@ -1271,7 +1267,7 @@ public class VendorManagementService {
      * Update product status
      */
     public ProductResponseDto updateProductStatus(Integer vendorId, Integer productId, String status) {
-        Product product = productRepository.findById(productId.longValue())
+        Product product = productRepository.findById(productId)
             .orElseThrow(() -> new RuntimeException("Product not found"));
         
         // Verify ownership
@@ -1311,7 +1307,7 @@ public class VendorManagementService {
      * Bulk update product stock
      */
     public void bulkUpdateProductStock(Integer vendorId, List<Integer> productIds, String updateType, Integer value) {
-        List<Product> products = productRepository.findAllById(productIds.stream().map(Long::valueOf).collect(Collectors.toList()));
+        List<Product> products = productRepository.findAllById(productIds);
         
         for (Product product : products) {
             // Verify ownership
@@ -1446,7 +1442,7 @@ public class VendorManagementService {
             // ===========================
             if (dto.getCategoryId() != null) {
                 try {
-                    Category category = categoryRepository.findById(dto.getCategoryId().longValue())
+                    Category category = categoryRepository.findById(dto.getCategoryId())
                         .orElseThrow(() -> new RuntimeException("Category not found with ID: " + dto.getCategoryId()));
                     product.setCategory(category);
                     System.out.println("=== DEBUG: Category set successfully: " + category.getName());
@@ -1671,7 +1667,7 @@ public class VendorManagementService {
         // Update category if provided - FIXED IMPLEMENTATION
         if (dto.getCategoryId() != null) {
             try {
-                Category category = categoryRepository.findById(dto.getCategoryId().longValue())
+                Category category = categoryRepository.findById(dto.getCategoryId())
                     .orElseThrow(() -> new RuntimeException("Category not found with ID: " + dto.getCategoryId()));
             product.setCategory(category);
                 System.out.println("=== DEBUG: Category updated successfully: " + category.getName());

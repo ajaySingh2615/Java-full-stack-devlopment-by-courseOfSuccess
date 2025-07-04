@@ -32,7 +32,7 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponseDto<CategoryResponseDto>> getCategoryById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponseDto<CategoryResponseDto>> getCategoryById(@PathVariable Integer id) {
         try {
             CategoryResponseDto category = categoryService.getCategoryById(id);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Category found", category));
@@ -72,7 +72,7 @@ public class CategoryController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponseDto<CategoryResponseDto>> updateCategory(
-            @PathVariable Long id, 
+            @PathVariable Integer id, 
             @Valid @RequestBody Category categoryRequest) {
         try {
             CategoryResponseDto updatedCategory = categoryService.updateCategory(id, categoryRequest);
@@ -87,7 +87,7 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponseDto<Void>> deleteCategory(@PathVariable Long id) {
+    public ResponseEntity<ApiResponseDto<Void>> deleteCategory(@PathVariable Integer id) {
         try {
             categoryService.deleteCategory(id);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Category deleted successfully", null));
@@ -101,7 +101,7 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}/subcategories")
-    public ResponseEntity<ApiResponseDto<List<CategoryResponseDto>>> getSubcategories(@PathVariable Long id) {
+    public ResponseEntity<ApiResponseDto<List<CategoryResponseDto>>> getSubcategories(@PathVariable Integer id) {
         try {
             List<CategoryResponseDto> subcategories = List.of();
             return ResponseEntity.ok(new ApiResponseDto<>(true, "No subcategories found (hierarchy not supported)", subcategories));

@@ -15,7 +15,7 @@ import java.util.Optional;
  * Provides CRUD operations and custom queries for cart management
  */
 @Repository
-public interface CartRepository extends JpaRepository<Cart, Long> {
+public interface CartRepository extends JpaRepository<Cart, Integer> {
     
     /**
      * Find cart by user ID

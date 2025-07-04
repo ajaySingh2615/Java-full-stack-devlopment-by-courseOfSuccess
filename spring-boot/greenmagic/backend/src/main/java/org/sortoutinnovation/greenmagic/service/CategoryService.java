@@ -38,7 +38,7 @@ public class CategoryService {
      * @throws RuntimeException if category not found
      */
     @Transactional(readOnly = true)
-    public CategoryResponseDto getCategoryById(Long id) {
+    public CategoryResponseDto getCategoryById(Integer id) {
         Category category = categoryRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
         return CategoryMapper.toResponseDto(category);
@@ -51,7 +51,7 @@ public class CategoryService {
      * @throws RuntimeException if category not found
      */
     @Transactional(readOnly = true)
-    public Category getCategoryEntityById(Long id) {
+    public Category getCategoryEntityById(Integer id) {
         return categoryRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
     }
@@ -92,7 +92,7 @@ public class CategoryService {
      * @return CategoryResponseDto
      * @throws RuntimeException if category not found or name conflict
      */
-    public CategoryResponseDto updateCategory(Long id, Category updatedCategory) {
+    public CategoryResponseDto updateCategory(Integer id, Category updatedCategory) {
         Category existingCategory = categoryRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
 
@@ -117,7 +117,7 @@ public class CategoryService {
      * @param id category ID
      * @throws RuntimeException if category not found
      */
-    public void deleteCategory(Long id) {
+    public void deleteCategory(Integer id) {
         if (!categoryRepository.existsById(id)) {
             throw new RuntimeException("Category not found with id: " + id);
         }

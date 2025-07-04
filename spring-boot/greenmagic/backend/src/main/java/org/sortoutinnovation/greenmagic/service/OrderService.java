@@ -115,10 +115,10 @@ public class OrderService {
         // Calculate total and validate stock
         BigDecimal calculatedTotal = BigDecimal.ZERO;
         for (OrderItem item : order.getOrderItems()) {
-            Product product = productService.getProductById(item.getProduct().getProductId().longValue());
+            Product product = productService.getProductById(item.getProduct().getProductId());
             
             // Check stock availability
-            if (!productService.isInStock(product.getProductId().longValue(), item.getQuantity())) {
+            if (!productService.isInStock(product.getProductId(), item.getQuantity())) {
                 throw new RuntimeException("Insufficient stock for product: " + product.getName());
             }
 
@@ -149,7 +149,7 @@ public class OrderService {
 
         // Reduce stock for each item
         for (OrderItem item : savedOrder.getOrderItems()) {
-            productService.reduceStock(item.getProduct().getProductId().longValue(), item.getQuantity());
+            productService.reduceStock(item.getProduct().getProductId(), item.getQuantity());
         }
 
         return savedOrder;

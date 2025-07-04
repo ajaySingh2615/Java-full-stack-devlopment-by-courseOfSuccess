@@ -94,8 +94,10 @@ const ProductDetailModal = ({
       setError(null);
       
       const response = await vendorService.getProductDetails(vendorId, product.productId);
+      console.log('Product details API response:', response);
+      
       if (response.success) {
-        setProductDetails(response.data);
+        setProductDetails(response);
       } else {
         setError('Failed to load product details');
       }
@@ -139,13 +141,24 @@ const ProductDetailModal = ({
             });
             
             // Update local state
-            setProductDetails(prev => ({
-              ...prev,
-              basic: {
-                ...prev?.basic,
-                status: newStatus
+            setProductDetails(prev => {
+              if (prev?.data?.data?.basic) {
+                return {
+                  ...prev,
+                  data: {
+                    ...prev.data,
+                    data: {
+                      ...prev.data.data,
+                      basic: {
+                        ...prev.data.data.basic,
+                        status: newStatus
+                      }
+                    }
+                  }
+                };
               }
-            }));
+              return prev;
+            });
             
             console.log('Status updated successfully');
           } else {

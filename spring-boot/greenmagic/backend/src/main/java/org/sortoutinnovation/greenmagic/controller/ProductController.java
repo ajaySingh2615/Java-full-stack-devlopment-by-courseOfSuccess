@@ -1,12 +1,17 @@
 package org.sortoutinnovation.greenmagic.controller;
 
 import org.sortoutinnovation.greenmagic.dto.ApiResponseDto;
+import org.sortoutinnovation.greenmagic.dto.ProductCreateRequestDto;
+import org.sortoutinnovation.greenmagic.dto.ProductResponseDto;
+import org.sortoutinnovation.greenmagic.dto.ProductUpdateRequestDto;
+import org.sortoutinnovation.greenmagic.mapper.ProductMapper;
 import org.sortoutinnovation.greenmagic.model.Product;
 import org.sortoutinnovation.greenmagic.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -14,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 
 /**
  * REST Controller for Product management operations
@@ -73,7 +80,7 @@ public class ProductController {
      * GET /api/products/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponseDto<Product>> getProductById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponseDto<Product>> getProductById(@PathVariable Integer id) {
         try {
             Product product = productService.getProductById(id);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Product found", product));
@@ -131,7 +138,7 @@ public class ProductController {
      */
     @GetMapping("/category/{categoryId}")
     public ResponseEntity<ApiResponseDto<Page<Product>>> getProductsByCategory(
-            @PathVariable Long categoryId,
+            @PathVariable Integer categoryId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         
@@ -192,7 +199,7 @@ public class ProductController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponseDto<Product>> updateProduct(
-            @PathVariable Long id,
+            @PathVariable Integer id,
             @Valid @RequestBody Product product) {
         
         try {
@@ -213,7 +220,7 @@ public class ProductController {
      * DELETE /api/products/{id}
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponseDto<Void>> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<ApiResponseDto<Void>> deleteProduct(@PathVariable Integer id) {
         try {
             productService.deleteProduct(id);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Product deleted successfully", null));
@@ -267,4 +274,6 @@ public class ProductController {
                 .body(new ApiResponseDto<>(false, "Failed to retrieve products: " + e.getMessage(), null));
         }
     }
+
+
 } 

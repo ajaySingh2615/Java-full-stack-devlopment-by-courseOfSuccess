@@ -58,7 +58,7 @@ public class VendorProfileService {
      */
     public VendorProfileResponseDto completeVendorProfile(Integer userId, VendorProfileCompletionDto profileDto) {
         // Validate user exists
-        User user = userRepository.findById(Long.valueOf(userId))
+        User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
         // Check if vendor profile already exists for this user
@@ -117,7 +117,7 @@ public class VendorProfileService {
         VendorProfile savedProfile = vendorProfileRepository.save(vendorProfile);
         
         // Update user registration status
-        userService.updateRegistrationStatus(Long.valueOf(userId), RegistrationStatus.COMPLETE);
+        userService.updateRegistrationStatus(userId, RegistrationStatus.COMPLETE);
         
         return VendorProfileMapper.toResponseDto(savedProfile);
     }
@@ -133,7 +133,7 @@ public class VendorProfileService {
     public String uploadVendorDocument(Integer userId, String documentType, MultipartFile file) {
         try {
             // Validate user exists
-            User user = userRepository.findById(Long.valueOf(userId))
+            User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
             
             // Create upload directory if it doesn't exist
@@ -202,7 +202,7 @@ public class VendorProfileService {
      */
     public VendorProfileResponseDto createVendorProfile(Integer userId, VendorProfileCreateRequestDto requestDto) {
         // Validate user exists
-        User user = userRepository.findById(Long.valueOf(userId))
+        User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
         // Check if vendor profile already exists for this user

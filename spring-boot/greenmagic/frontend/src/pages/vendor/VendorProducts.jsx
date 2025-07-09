@@ -488,8 +488,8 @@ const VendorProducts = () => {
               product={product}
               onView={handleProductClick}
               onEdit={(p) => navigate(`/vendor/products/edit/${p.productId}`)}
-              onDelete={handleDeleteProduct}
-              onDuplicate={handleDuplicateProduct}
+              onDelete={(p) => handleDeleteProduct(p.productId)}
+              onDuplicate={(p) => handleDuplicateProduct(p.productId)}
               onToggleStatus={handleToggleStatus}
               onManageVariants={(p) => navigate(`/vendor/products/variants/${p.productId}`)}
               loading={isLoading}

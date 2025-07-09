@@ -1021,24 +1021,53 @@ public class VendorManagementService {
      * Duplicate product
      */
     public ProductResponseDto duplicateProduct(Integer vendorId, Integer productId, String newTitle) {
+        System.out.println("=== DEBUG: Starting duplicateProduct - vendorId: " + vendorId + ", productId: " + productId + ", newTitle: " + newTitle);
+        
         Product originalProduct = productRepository.findById(productId)
             .orElseThrow(() -> new RuntimeException("Product not found"));
         
+        System.out.println("=== DEBUG: Found original product: " + originalProduct.getName());
+        
         // Verify ownership
         if (!originalProduct.getCreatedBy().getUserId().equals(vendorId)) {
+            System.out.println("=== DEBUG: Unauthorized access - original product created by: " + originalProduct.getCreatedBy().getUserId() + ", current vendor: " + vendorId);
             throw new RuntimeException("Unauthorized to duplicate this product");
         }
         
+        System.out.println("=== DEBUG: Ownership verified");
+        
+        // Get the current vendor/user
+        User vendor = userRepository.findById(vendorId)
+            .orElseThrow(() -> new RuntimeException("Vendor not found"));
+        
+        System.out.println("=== DEBUG: Found vendor: " + vendor.getName());
+        
         Product duplicatedProduct = new Product();
         copyProductFields(originalProduct, duplicatedProduct);
+        
+        System.out.println("=== DEBUG: Copied product fields");
         
         // Set new title and SKU
         duplicatedProduct.setName(newTitle != null ? newTitle : originalProduct.getName() + " - Copy");
         duplicatedProduct.setSku(generateSkuFromProduct(vendorId, duplicatedProduct));
         duplicatedProduct.setCreatedAt(LocalDateTime.now());
         
-        Product savedProduct = productRepository.save(duplicatedProduct);
-        return productMapper.toDto(savedProduct);
+        System.out.println("=== DEBUG: Set new title and SKU: " + duplicatedProduct.getName() + ", " + duplicatedProduct.getSku());
+        
+        // IMPORTANT: Set the createdBy to the current vendor, not the original product's creator
+        duplicatedProduct.setCreatedBy(vendor);
+        
+        System.out.println("=== DEBUG: Set createdBy to vendor: " + vendor.getName());
+        
+        try {
+            Product savedProduct = productRepository.save(duplicatedProduct);
+            System.out.println("=== DEBUG: Product saved successfully with ID: " + savedProduct.getProductId());
+            return productMapper.toDto(savedProduct);
+        } catch (Exception e) {
+            System.err.println("=== ERROR: Failed to save product: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to save duplicated product: " + e.getMessage());
+        }
     }
 
     /**
@@ -1746,21 +1775,67 @@ public class VendorManagementService {
     }
 
     private void copyProductFields(Product source, Product target) {
+        // Basic information
         target.setName(source.getName());
         target.setDescription(source.getDescription());
         target.setShortDescription(source.getShortDescription());
+        target.setBrand(source.getBrand());
+        target.setCategory(source.getCategory());
+        target.setSubcategoryId(source.getSubcategoryId());
+        target.setProductType(source.getProductType());
+        
+        // Pricing
         target.setMrp(source.getMrp());
         target.setPrice(source.getPrice());
         target.setCostPrice(source.getCostPrice());
+        target.setOfferStartDate(source.getOfferStartDate());
+        target.setOfferEndDate(source.getOfferEndDate());
+        target.setBulkPricingTiers(source.getBulkPricingTiers());
+        
+        // Inventory
         target.setQuantity(source.getQuantity());
-        target.setBrand(source.getBrand());
-        target.setWeightForShipping(source.getWeightForShipping());
-        target.setDeliveryTimeEstimate(source.getDeliveryTimeEstimate());
+        target.setUnitOfMeasurement(source.getUnitOfMeasurement());
+        target.setMinimumOrderQuantity(source.getMinimumOrderQuantity());
+        target.setMaximumOrderQuantity(source.getMaximumOrderQuantity());
+        target.setMinStockAlert(source.getMinStockAlert());
+        target.setTrackQuantity(source.getTrackQuantity());
+        target.setRestockDate(source.getRestockDate());
+        
+        // Media
         target.setImageUrl(source.getImageUrl());
         target.setVideoUrl(source.getVideoUrl());
+        target.setGalleryImages(source.getGalleryImages());
+        target.setImageAltTags(source.getImageAltTags());
+        
+        // Shipping
+        target.setWeightForShipping(source.getWeightForShipping());
+        target.setDimensions(source.getDimensions());
+        target.setDeliveryTimeEstimate(source.getDeliveryTimeEstimate());
+        target.setShippingClass(source.getShippingClass());
+        target.setColdStorageRequired(source.getColdStorageRequired());
+        target.setSpecialPackaging(source.getSpecialPackaging());
+        target.setInsuranceRequired(source.getInsuranceRequired());
+        target.setFreeShipping(source.getFreeShipping());
+        target.setFreeShippingThreshold(source.getFreeShippingThreshold());
+        target.setIsReturnable(source.getIsReturnable());
+        target.setReturnWindow(source.getReturnWindow());
+        target.setReturnConditions(source.getReturnConditions());
+        target.setIsCodAvailable(source.getIsCodAvailable());
+        
+        // Features and Descriptions
+        target.setKeyFeatures(source.getKeyFeatures());
+        target.setProductHighlights(source.getProductHighlights());
+        
+        // SEO
         target.setMetaTitle(source.getMetaTitle());
         target.setMetaDescription(source.getMetaDescription());
-        target.setCreatedBy(source.getCreatedBy());
+        target.setSearchKeywords(source.getSearchKeywords());
+        
+        // Certifications
+        target.setFssaiLicense(source.getFssaiLicense());
+        target.setQualityCertifications(source.getQualityCertifications());
+        
+        // Status
         target.setStatus(Product.ProductStatus.DRAFT); // New product starts as draft
     }
 

@@ -95,7 +95,7 @@ public class ProductResponseDto {
     @AllArgsConstructor
     public static class BulkPricingTier {
         private Integer minQuantity;
-        private Integer maxQuantity;
-        private BigDecimal price;
+        private String discountType;
+        private BigDecimal discountValue;
     }
 } 

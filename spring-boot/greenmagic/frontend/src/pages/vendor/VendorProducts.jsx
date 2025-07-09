@@ -26,6 +26,10 @@ import {
 import ProductPerformanceBadge from '../../components/product/ProductPerformanceBadge';
 import StockLevelIndicator from '../../components/product/StockLevelIndicator';
 import QuickActionMenu from '../../components/product/QuickActionMenu';
+import BulkActionToolbar from '../../components/bulk/BulkActionToolbar';
+import BulkOperationModal from '../../components/bulk/BulkOperationModal';
+import ProgressIndicator from '../../components/bulk/ProgressIndicator';
+import { useBulkOperations } from '../../hooks/useBulkOperations';
 
 /**
  * Vendor Products Component - Phase 1 Foundation
@@ -53,15 +57,30 @@ const VendorProducts = () => {
   });
   
   // UI states
-  const [selectedProducts, setSelectedProducts] = useState([]);
-  const [showBulkActions, setShowBulkActions] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [actionMenuOpen, setActionMenuOpen] = useState(null);
   
-  // Bulk action states
-  const [bulkAction, setBulkAction] = useState('');
-  const [bulkValue, setBulkValue] = useState('');
-  const [bulkLoading, setBulkLoading] = useState(false);
+  // Bulk operations hook
+  const {
+    selectedProducts,
+    selectAll,
+    bulkToolbarVisible,
+    activeOperation,
+    operationProgress,
+    selectProduct,
+    selectAllProducts,
+    selectFilteredProducts,
+    clearSelection,
+    isProductSelected,
+    getSelectedCount,
+    getSelectedProductIds,
+    startBulkOperation,
+    cancelBulkOperation,
+    validateBulkOperation,
+    getProgressPercentage,
+    isOperationInProgress,
+    getOperationStatusText
+  } = useBulkOperations();
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -80,6 +99,11 @@ const VendorProducts = () => {
   const [duplicateProductId, setDuplicateProductId] = useState(null);
   const [duplicateLoading, setDuplicateLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Bulk operation modal state
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [selectedBulkOperation, setSelectedBulkOperation] = useState(null);
+  const [bulkCategories, setBulkCategories] = useState([]);
 
   const vendorId = vendorService.getCurrentVendorId();
 
@@ -130,7 +154,15 @@ const VendorProducts = () => {
     try {
       const response = await vendorService.getProductCategories();
       if (response.success) {
-        setCategories(response.data);
+        // Set categories for bulk operations (array format)
+        setBulkCategories(response.data);
+        
+        // Transform to object format for existing filter dropdown
+        const categoriesObj = {};
+        response.data.forEach(category => {
+          categoriesObj[category.id] = category;
+        });
+        setCategories(categoriesObj);
       }
     } catch (err) {
       console.error('Error loading categories:', err);
@@ -177,63 +209,44 @@ const VendorProducts = () => {
   };
 
   const handleSelectProduct = (productId) => {
-    setSelectedProducts(prev => {
-      const isSelected = prev.includes(productId);
-      const newSelection = isSelected 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId];
-      
-      setShowBulkActions(newSelection.length > 0);
-      return newSelection;
-    });
+    selectProduct(productId);
   };
 
   const handleSelectAll = () => {
     const allProductIds = products.map(p => p.productId);
-    const allSelected = selectedProducts.length === products.length;
-    
-    if (allSelected) {
-      setSelectedProducts([]);
-      setShowBulkActions(false);
-    } else {
-      setSelectedProducts(allProductIds);
-      setShowBulkActions(true);
+    selectAllProducts(allProductIds);
+  };
+
+  const handleBulkAction = (operation) => {
+    setSelectedBulkOperation(operation);
+    setShowBulkModal(true);
+  };
+
+  const handleBulkOperationExecute = async (parameters) => {
+    try {
+      const result = await startBulkOperation(vendorId, selectedBulkOperation, parameters);
+      
+      if (result.success) {
+        // Operation started successfully, progress will be tracked automatically
+        // Refresh products list when operation is complete
+        setTimeout(() => {
+          loadProducts();
+          loadStats();
+        }, 2000); // Give some time for the operation to complete
+        
+        return result;
+      } else {
+        throw new Error(result.error || 'Failed to start bulk operation');
+      }
+    } catch (error) {
+      console.error('Bulk operation failed:', error);
+      throw error;
     }
   };
 
-  const handleBulkAction = async () => {
-    if (!bulkAction || selectedProducts.length === 0) return;
-
-    try {
-      setBulkLoading(true);
-      
-      switch (bulkAction) {
-        case 'status':
-          await vendorService.bulkUpdateProductStatus(vendorId, selectedProducts, bulkValue);
-          break;
-        case 'price':
-          await vendorService.bulkUpdateProductPrices(vendorId, selectedProducts, 'percentage', parseFloat(bulkValue));
-          break;
-        case 'stock':
-          await vendorService.bulkUpdateProductStock(vendorId, selectedProducts, 'increase', parseInt(bulkValue));
-          break;
-        default:
-          break;
-      }
-      
-      // Reset selections and reload
-      setSelectedProducts([]);
-      setShowBulkActions(false);
-      setBulkAction('');
-      setBulkValue('');
-      loadProducts();
-      loadStats();
-    } catch (err) {
-      console.error('Bulk action error:', err);
-      alert('Failed to perform bulk action');
-    } finally {
-      setBulkLoading(false);
-    }
+  const handleBulkModalClose = () => {
+    setShowBulkModal(false);
+    setSelectedBulkOperation(null);
   };
 
   const handleDeleteProduct = async (productId) => {
@@ -473,6 +486,7 @@ const VendorProducts = () => {
     const isEditing = editingField && editingField.productId === product.productId;
     const isLoading = quickActionLoading[product.productId];
     const performance = performanceData[product.productId] || {};
+    const isSelected = isProductSelected(product.productId);
     
     // Get average values for comparison - handle empty data
     const totalSales = Object.values(performanceData).reduce((sum, p) => sum + (p?.salesCount || 0), 0);
@@ -484,10 +498,18 @@ const VendorProducts = () => {
     
     return (
       <div 
-        className="relative bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 group"
+        className={`relative bg-white rounded-lg shadow-sm border transition-all duration-300 group ${
+          isSelected 
+            ? 'border-blue-500 shadow-lg ring-2 ring-blue-500 ring-opacity-50' 
+            : 'border-gray-200 hover:shadow-lg'
+        }`}
         onMouseEnter={() => handleCardHover(product.productId, true)}
         onMouseLeave={() => handleCardHover(product.productId, false)}
       >
+        {/* Selection Overlay */}
+        {isSelected && (
+          <div className="absolute inset-0 bg-blue-500 bg-opacity-10 rounded-lg pointer-events-none z-10" />
+        )}
         <div className="relative">
           <div 
             className="aspect-w-16 aspect-h-9 rounded-t-lg overflow-hidden cursor-pointer"
@@ -532,14 +554,20 @@ const VendorProducts = () => {
           </div>
           
           {/* Checkbox for bulk selection */}
-          <div className="absolute top-2 right-2 z-20">
-            <input
-              type="checkbox"
-              checked={selectedProducts.includes(product.productId)}
-              onChange={() => handleSelectProduct(product.productId)}
-              className="h-4 w-4 text-green-600 rounded border-gray-300 shadow-sm"
-              onClick={(e) => e.stopPropagation()}
-            />
+          <div className="absolute top-2 left-2 z-20">
+            <div className={`p-1 rounded-full shadow-sm transition-all duration-200 ${
+              isSelected 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-white hover:bg-gray-50'
+            }`}>
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => handleSelectProduct(product.productId)}
+                className="h-4 w-4 text-blue-600 rounded border-gray-300 shadow-sm"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
           </div>
         </div>
         
@@ -975,67 +1003,76 @@ const VendorProducts = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map(product => (
-                <ProductCard key={product.productId} product={product} />
-              ))}
-            </div>
-          )}
-
-          {/* Bulk Actions */}
-          {showBulkActions && (
-            <div className="fixed bottom-0 inset-x-0 bg-white border-t shadow-lg p-4">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <span className="text-sm font-medium text-blue-900">
-                      {selectedProducts.length} products selected
-                    </span>
-                    
-                    <select
-                      value={bulkAction}
-                      onChange={(e) => setBulkAction(e.target.value)}
-                      className="px-3 py-1 border border-blue-300 rounded text-sm"
-                    >
-                      <option value="">Choose action...</option>
-                      <option value="status">Update Status</option>
-                      <option value="price">Adjust Prices</option>
-                      <option value="stock">Update Stock</option>
-                    </select>
-                    
-                    {(bulkAction === 'price' || bulkAction === 'stock') && (
-                      <input
-                        type="number"
-                        value={bulkValue}
-                        onChange={(e) => setBulkValue(e.target.value)}
-                        placeholder={bulkAction === 'price' ? '% change' : 'Quantity'}
-                        className="px-3 py-1 border border-blue-300 rounded text-sm w-24"
-                      />
-                    )}
-                    
-                    <button
-                      onClick={handleBulkAction}
-                      disabled={!bulkAction || !bulkValue || bulkLoading}
-                      className="px-4 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      {bulkLoading ? 'Processing...' : 'Apply'}
-                    </button>
+            <>
+              {/* Select All Checkbox and Selection Summary */}
+              {products.length > 0 && (
+                <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg mb-4">
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={selectAll}
+                      onChange={handleSelectAll}
+                      className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                    />
+                    <label className="text-sm font-medium text-gray-700">
+                      Select all products ({products.length})
+                    </label>
                   </div>
                   
-                  <button
-                    onClick={() => {
-                      setSelectedProducts([]);
-                      setShowBulkActions(false);
-                      setBulkAction('');
-                      setBulkValue('');
-                    }}
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    <FiX className="h-4 w-4" />
-                  </button>
+                  {getSelectedCount() > 0 && (
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-full">
+                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <span className="text-sm font-medium text-blue-800">
+                          {getSelectedCount()} selected
+                        </span>
+                      </div>
+                      <button
+                        onClick={clearSelection}
+                        className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+                      >
+                        Clear selection
+                      </button>
+                    </div>
+                  )}
                 </div>
+              )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {products.map(product => (
+                  <ProductCard key={product.productId} product={product} />
+                ))}
               </div>
-            </div>
+            </>
+          )}
+
+          {/* Enhanced Bulk Action Toolbar */}
+          <BulkActionToolbar
+            selectedCount={getSelectedCount()}
+            onClearSelection={clearSelection}
+            onBulkAction={handleBulkAction}
+            isOperationInProgress={isOperationInProgress()}
+            visible={bulkToolbarVisible}
+          />
+
+          {/* Progress Indicator */}
+          <ProgressIndicator
+            isVisible={isOperationInProgress()}
+            operationProgress={operationProgress}
+            operationStatusText={getOperationStatusText()}
+            onClose={cancelBulkOperation}
+            onCancel={cancelBulkOperation}
+          />
+
+          {/* Bulk Operation Modal */}
+          {showBulkModal && selectedBulkOperation && (
+            <BulkOperationModal
+              operation={selectedBulkOperation}
+              selectedCount={getSelectedCount()}
+              categories={bulkCategories}
+              onClose={handleBulkModalClose}
+              onExecute={handleBulkOperationExecute}
+            />
           )}
 
           {/* Product Detail Modal */}

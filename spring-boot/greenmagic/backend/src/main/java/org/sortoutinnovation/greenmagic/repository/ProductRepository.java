@@ -126,4 +126,10 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
      */
     @Query("SELECT p FROM Product p WHERE p.createdBy.userId = :vendorId")
     List<Product> findByVendorId(@Param("vendorId") Integer vendorId);
+    
+    /**
+     * Find products by IDs and vendor ID for bulk operations
+     */
+    @Query("SELECT p FROM Product p WHERE p.productId IN :productIds AND p.createdBy.userId = :vendorId")
+    List<Product> findByIdInAndCreatedByUserId(@Param("productIds") List<Integer> productIds, @Param("vendorId") Integer vendorId);
 } 

@@ -2,11 +2,14 @@ package org.sortoutinnovation.greenmagic.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.sortoutinnovation.greenmagic.dto.ApiResponseDto;
+import org.sortoutinnovation.greenmagic.dto.BulkOperationRequestDto;
+import org.sortoutinnovation.greenmagic.dto.BulkOperationResponseDto;
 import org.sortoutinnovation.greenmagic.dto.ProductCreateRequestDto;
 import org.sortoutinnovation.greenmagic.dto.ProductPerformanceDto;
 import org.sortoutinnovation.greenmagic.dto.ProductUpdateRequestDto;
 import org.sortoutinnovation.greenmagic.dto.ProductResponseDto;
 import org.sortoutinnovation.greenmagic.model.*;
+import org.sortoutinnovation.greenmagic.service.BulkOperationService;
 import org.sortoutinnovation.greenmagic.service.ProductService;
 import org.sortoutinnovation.greenmagic.service.VendorManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +49,9 @@ public class VendorManagementController {
     
     @Autowired
     private ObjectMapper objectMapper;
+    
+    @Autowired
+    private BulkOperationService bulkOperationService;
 
     // ===========================
     // VENDOR DASHBOARD ANALYTICS
@@ -502,6 +508,70 @@ public class VendorManagementController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponseDto<>(false, "Failed to export products: " + e.getMessage(), null));
+        }
+    }
+
+    // ===========================
+    // ENHANCED BULK OPERATIONS
+    // ===========================
+
+    /**
+     * Execute bulk operation on products
+     * POST /api/vendor/products/bulk/execute
+     */
+    @PostMapping("/products/bulk/execute")
+    public ResponseEntity<ApiResponseDto<BulkOperationResponseDto>> executeBulkOperation(
+            @RequestParam Integer vendorId,
+            @Valid @RequestBody BulkOperationRequestDto request) {
+        try {
+            BulkOperationResponseDto response = bulkOperationService.executeBulkOperation(vendorId, request);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Bulk operation started successfully", response));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to start bulk operation: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get bulk operation status
+     * GET /api/vendor/products/bulk/status/{operationId}
+     */
+    @GetMapping("/products/bulk/status/{operationId}")
+    public ResponseEntity<ApiResponseDto<BulkOperationResponseDto>> getBulkOperationStatus(
+            @PathVariable String operationId) {
+        try {
+            BulkOperationResponseDto response = bulkOperationService.getOperationStatus(operationId);
+            if (response == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Operation status retrieved successfully", response));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to retrieve operation status: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Toggle product status
+     * POST /api/vendor/products/{productId}/toggle-status
+     */
+    @PostMapping("/products/{productId}/toggle-status")
+    public ResponseEntity<ApiResponseDto<ProductResponseDto>> toggleProductStatus(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId) {
+        try {
+            ProductResponseDto product = vendorManagementService.getVendorProductById(vendorId, productId);
+            String currentStatus = product.getStatus().name();
+            String newStatus = "ACTIVE".equals(currentStatus) ? "INACTIVE" : "ACTIVE";
+            
+            ProductResponseDto updatedProduct = vendorManagementService.updateProductStatus(vendorId, productId, newStatus);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Product status toggled successfully", updatedProduct));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(new ApiResponseDto<>(false, e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to toggle product status: " + e.getMessage(), null));
         }
     }
 

@@ -411,20 +411,64 @@ const vendorService = {
     return response.data;
   },
 
+  // ===========================
+  // ENHANCED BULK OPERATIONS
+  // ===========================
+
+  async executeBulkOperation(vendorId, operationData) {
+    try {
+      const response = await apiClient.post(`/vendor/products/bulk/execute`, operationData, {
+        params: { vendorId }
+      });
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      console.error('Error executing bulk operation:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || error.message || 'Failed to execute bulk operation'
+      };
+    }
+  },
+
+  async getBulkOperationStatus(operationId) {
+    try {
+      const response = await apiClient.get(`/vendor/products/bulk/status/${operationId}`);
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      console.error('Error getting bulk operation status:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || error.message || 'Failed to get operation status'
+      };
+    }
+  },
+
+  async toggleProductStatus(vendorId, productId) {
+    try {
+      const response = await apiClient.post(`/vendor/products/${productId}/toggle-status`, {}, {
+        params: { vendorId }
+      });
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      console.error('Error toggling product status:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || error.message || 'Failed to toggle product status'
+      };
+    }
+  },
+
   async getProductCategories() {
     try {
       // Use the new category service for cleaner data
       const response = await apiClient.get(`/categories`);
       const categories = response.data.data || response.data;
       
-      // Transform to the format expected by the product form
-      const transformedCategories = {};
-      categories.forEach(category => {
-        transformedCategories[category.categoryId] = {
-          id: category.categoryId,
-          name: category.name
-        };
-      });
+      // Transform to the format expected by the bulk operation modal (array format)
+      const transformedCategories = categories.map(category => ({
+        id: category.categoryId,
+        name: category.name
+      }));
       
       return {
         success: true,
@@ -432,10 +476,10 @@ const vendorService = {
       };
     } catch (error) {
       console.error('Error fetching categories:', error);
-      // Fallback to empty categories
+      // Fallback to empty categories array
       return {
         success: true,
-        data: {}
+        data: []
       };
     }
   },

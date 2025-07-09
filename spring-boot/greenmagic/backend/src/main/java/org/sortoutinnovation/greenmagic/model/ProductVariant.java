@@ -33,6 +33,7 @@ public class ProductVariant {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", referencedColumnName = "product_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonBackReference
     private Product product;
 
     @Size(max = 100, message = "Variant SKU must not exceed 100 characters")

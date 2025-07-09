@@ -306,6 +306,11 @@ const ProductVariants = () => {
       return;
     }
 
+    if (!product) {
+      setError('Product data is not loaded yet. Please wait...');
+      return;
+    }
+
     try {
       setLoading(true);
       const newVariants = generateVariantCombinations(attributes, product);
@@ -556,10 +561,15 @@ const ProductVariants = () => {
                 <div className="mt-6 pt-4 border-t border-gray-200">
                   <button
                     onClick={regenerateVariants}
-                    className="w-full px-4 py-2 border border-green-600 text-green-600 rounded-md hover:bg-green-50 text-sm font-medium"
+                    disabled={!product || loading}
+                    className={`w-full px-4 py-2 border rounded-md text-sm font-medium transition-colors ${
+                      !product || loading
+                        ? 'border-gray-300 text-gray-400 cursor-not-allowed'
+                        : 'border-green-600 text-green-600 hover:bg-green-50'
+                    }`}
                   >
                     <Grid3X3 className="w-4 h-4 mr-2 inline" />
-                    Generate Variants
+                    {!product ? 'Loading Product...' : loading ? 'Generating...' : 'Generate Variants'}
                   </button>
                   <p className="text-xs text-gray-500 mt-2 text-center">
                     This will create {attributes.reduce((acc, attr) => acc * attr.values.filter(v => v.trim()).length, 1)} variants

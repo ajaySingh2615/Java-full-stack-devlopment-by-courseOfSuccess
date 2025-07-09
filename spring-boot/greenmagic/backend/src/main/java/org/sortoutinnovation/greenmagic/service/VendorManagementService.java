@@ -420,8 +420,14 @@ public class VendorManagementService {
                 BigDecimal currentPrice = variant.getPrice();
                 BigDecimal newPrice;
                 
-                if ("percentage".equals(updateType)) {
+                if ("percentage_increase".equals(updateType)) {
                     newPrice = currentPrice.multiply(BigDecimal.ONE.add(value.divide(BigDecimal.valueOf(100))));
+                } else if ("percentage_decrease".equals(updateType)) {
+                    newPrice = currentPrice.multiply(BigDecimal.ONE.subtract(value.divide(BigDecimal.valueOf(100))));
+                } else if ("fixed_increase".equals(updateType)) {
+                    newPrice = currentPrice.add(value);
+                } else if ("fixed_decrease".equals(updateType)) {
+                    newPrice = currentPrice.subtract(value);
                 } else {
                     newPrice = currentPrice.add(value);
                 }
@@ -432,6 +438,174 @@ public class VendorManagementService {
                 }
                 
                 variant.setPrice(newPrice.setScale(2, RoundingMode.HALF_UP));
+                // Also update MRP proportionally
+                if (variant.getRegularPrice() != null) {
+                    BigDecimal mrpRatio = variant.getRegularPrice().divide(currentPrice, 4, RoundingMode.HALF_UP);
+                    variant.setRegularPrice(newPrice.multiply(mrpRatio).setScale(2, RoundingMode.HALF_UP));
+                }
+                variant.setUpdatedAt(LocalDateTime.now());
+            }
+        }
+        
+        productVariantRepository.saveAll(variants);
+    }
+
+    /**
+     * Bulk update variant stock
+     */
+    public void bulkUpdateVariantStock(Integer vendorId, Integer productId, List<Long> variantIds, String updateType, Integer value) {
+        List<ProductVariant> variants = productVariantRepository.findAllById(variantIds);
+        
+        for (ProductVariant variant : variants) {
+            // Verify ownership
+            if (variant.getProduct().getCreatedBy().getUserId().equals(vendorId)) {
+                Integer currentStock = variant.getStockQuantity();
+                Integer newStock;
+                
+                switch (updateType) {
+                    case "set":
+                        newStock = value;
+                        break;
+                    case "add":
+                        newStock = currentStock + value;
+                        break;
+                    case "subtract":
+                        newStock = Math.max(0, currentStock - value);
+                        break;
+                    default:
+                        newStock = value;
+                }
+                
+                variant.setStockQuantity(newStock);
+                variant.setUpdatedAt(LocalDateTime.now());
+                
+                // Update status based on stock
+                if (newStock <= 0) {
+                    variant.setStatus(ProductVariant.VariantStatus.OUT_OF_STOCK);
+                } else if (variant.getStatus() == ProductVariant.VariantStatus.OUT_OF_STOCK) {
+                    variant.setStatus(ProductVariant.VariantStatus.ACTIVE);
+                }
+            }
+        }
+        
+        productVariantRepository.saveAll(variants);
+    }
+
+    /**
+     * Bulk update variant status
+     */
+    public void bulkUpdateVariantStatus(Integer vendorId, Integer productId, List<Long> variantIds, String status) {
+        List<ProductVariant> variants = productVariantRepository.findAllById(variantIds);
+        
+        for (ProductVariant variant : variants) {
+            // Verify ownership
+            if (variant.getProduct().getCreatedBy().getUserId().equals(vendorId)) {
+                ProductVariant.VariantStatus variantStatus = ProductVariant.VariantStatus.valueOf(status.toUpperCase());
+                variant.setStatus(variantStatus);
+                variant.setUpdatedAt(LocalDateTime.now());
+            }
+        }
+        
+        productVariantRepository.saveAll(variants);
+    }
+
+    /**
+     * Combined bulk update for variants (price, stock, status)
+     */
+    public void bulkUpdateVariants(Integer vendorId, Integer productId, List<Long> variantIds, Map<String, Object> updateData) {
+        List<ProductVariant> variants = productVariantRepository.findAllById(variantIds);
+        
+        for (ProductVariant variant : variants) {
+            // Verify ownership
+            if (variant.getProduct().getCreatedBy().getUserId().equals(vendorId)) {
+                
+                // Price update
+                if (updateData.containsKey("priceAdjustment")) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> priceAdjustment = (Map<String, Object>) updateData.get("priceAdjustment");
+                    String priceType = (String) priceAdjustment.get("type");
+                    
+                    if (!"none".equals(priceType)) {
+                        BigDecimal value = new BigDecimal(priceAdjustment.get("value").toString());
+                        BigDecimal currentPrice = variant.getPrice();
+                        BigDecimal newPrice;
+                        
+                        switch (priceType) {
+                            case "percentage_increase":
+                                newPrice = currentPrice.multiply(BigDecimal.ONE.add(value.divide(BigDecimal.valueOf(100))));
+                                break;
+                            case "percentage_decrease":
+                                newPrice = currentPrice.multiply(BigDecimal.ONE.subtract(value.divide(BigDecimal.valueOf(100))));
+                                break;
+                            case "fixed_increase":
+                                newPrice = currentPrice.add(value);
+                                break;
+                            case "fixed_decrease":
+                                newPrice = currentPrice.subtract(value);
+                                break;
+                            default:
+                                newPrice = currentPrice;
+                        }
+                        
+                        if (newPrice.compareTo(BigDecimal.ZERO) < 0) {
+                            newPrice = BigDecimal.ZERO;
+                        }
+                        
+                        variant.setPrice(newPrice.setScale(2, RoundingMode.HALF_UP));
+                        
+                        // Update MRP proportionally
+                        if (variant.getRegularPrice() != null && currentPrice.compareTo(BigDecimal.ZERO) > 0) {
+                            BigDecimal mrpRatio = variant.getRegularPrice().divide(currentPrice, 4, RoundingMode.HALF_UP);
+                            variant.setRegularPrice(newPrice.multiply(mrpRatio).setScale(2, RoundingMode.HALF_UP));
+                        }
+                    }
+                }
+                
+                // Stock update
+                if (updateData.containsKey("stockUpdate")) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> stockUpdate = (Map<String, Object>) updateData.get("stockUpdate");
+                    String stockType = (String) stockUpdate.get("type");
+                    
+                    if (!"none".equals(stockType)) {
+                        Integer value = Integer.parseInt(stockUpdate.get("value").toString());
+                        Integer currentStock = variant.getStockQuantity();
+                        Integer newStock;
+                        
+                        switch (stockType) {
+                            case "set":
+                                newStock = value;
+                                break;
+                            case "add":
+                                newStock = currentStock + value;
+                                break;
+                            case "subtract":
+                                newStock = Math.max(0, currentStock - value);
+                                break;
+                            default:
+                                newStock = currentStock;
+                        }
+                        
+                        variant.setStockQuantity(newStock);
+                        
+                        // Update status based on stock
+                        if (newStock <= 0) {
+                            variant.setStatus(ProductVariant.VariantStatus.OUT_OF_STOCK);
+                        } else if (variant.getStatus() == ProductVariant.VariantStatus.OUT_OF_STOCK) {
+                            variant.setStatus(ProductVariant.VariantStatus.ACTIVE);
+                        }
+                    }
+                }
+                
+                // Status update
+                if (updateData.containsKey("status")) {
+                    String status = (String) updateData.get("status");
+                    if (!"no_change".equals(status)) {
+                        ProductVariant.VariantStatus variantStatus = ProductVariant.VariantStatus.valueOf(status.toUpperCase());
+                        variant.setStatus(variantStatus);
+                    }
+                }
+                
                 variant.setUpdatedAt(LocalDateTime.now());
             }
         }

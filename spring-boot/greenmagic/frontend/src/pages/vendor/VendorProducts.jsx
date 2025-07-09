@@ -526,7 +526,7 @@ const VendorProducts = () => {
               onDelete={(p) => handleDeleteProduct(p.productId)}
               onDuplicate={(p) => handleDuplicateProduct(p.productId)}
               onToggleStatus={handleToggleStatus}
-              onManageVariants={(p) => navigate(`/vendor/products/variants/${p.productId}`)}
+              onManageVariants={(p) => navigate(`/vendor/products/${p.productId}/variants`)}
               loading={isLoading}
             />
           </div>
@@ -772,7 +772,7 @@ const VendorProducts = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/vendor/products/variants/${product.productId}`);
+                  navigate(`/vendor/products/${product.productId}/variants`);
                 }}
                 disabled={isLoading}
                 className={`text-gray-600 hover:text-gray-700 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}

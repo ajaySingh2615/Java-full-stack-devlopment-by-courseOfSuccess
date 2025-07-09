@@ -641,6 +641,74 @@ public class VendorManagementController {
         }
     }
 
+    /**
+     * Bulk update variant stock
+     * POST /api/vendor/products/{productId}/variants/bulk-stock
+     */
+    @PostMapping("/products/{productId}/variants/bulk-stock")
+    public ResponseEntity<ApiResponseDto<String>> bulkUpdateVariantStock(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<Long> variantIds = (List<Long>) request.get("variantIds");
+            String updateType = (String) request.get("updateType");
+            Integer value = Integer.parseInt(request.get("value").toString());
+            
+            vendorManagementService.bulkUpdateVariantStock(vendorId, productId, variantIds, updateType, value);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Variant stock updated successfully", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to update variant stock: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Bulk update variant status
+     * POST /api/vendor/products/{productId}/variants/bulk-status
+     */
+    @PostMapping("/products/{productId}/variants/bulk-status")
+    public ResponseEntity<ApiResponseDto<String>> bulkUpdateVariantStatus(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<Long> variantIds = (List<Long>) request.get("variantIds");
+            String status = (String) request.get("status");
+            
+            vendorManagementService.bulkUpdateVariantStatus(vendorId, productId, variantIds, status);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Variant status updated successfully", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to update variant status: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Combined bulk update for variants (price, stock, status)
+     * POST /api/vendor/products/{productId}/variants/bulk-update
+     */
+    @PostMapping("/products/{productId}/variants/bulk-update")
+    public ResponseEntity<ApiResponseDto<String>> bulkUpdateVariants(
+            @RequestParam Integer vendorId,
+            @PathVariable Integer productId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<Long> variantIds = (List<Long>) request.get("variantIds");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> updateData = (Map<String, Object>) request.get("updateData");
+            
+            vendorManagementService.bulkUpdateVariants(vendorId, productId, variantIds, updateData);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Variants updated successfully", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDto<>(false, "Failed to update variants: " + e.getMessage(), null));
+        }
+    }
+
     // ===========================
     // ORDER MANAGEMENT
     // ===========================

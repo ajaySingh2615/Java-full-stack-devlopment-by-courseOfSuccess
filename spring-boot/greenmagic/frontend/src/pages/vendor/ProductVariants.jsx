@@ -18,6 +18,8 @@ import {
   Tag,
   Settings
 } from 'lucide-react';
+import { variantService } from '../../services/variantService';
+import { useAuth } from '../../contexts/AuthContext';
 
 /**
  * Product Variants Management Component - Phase 2
@@ -28,8 +30,14 @@ import {
 const ProductVariants = () => {
   const navigate = useNavigate();
   const { productId } = useParams();
+  const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  
+  console.log('ProductVariants component rendered');
+  console.log('Initial productId from useParams:', productId);
+  console.log('Initial currentUser from useAuth:', currentUser);
 
   // Product and variants state
   const [product, setProduct] = useState(null);
@@ -44,6 +52,9 @@ const ProductVariants = () => {
     stockUpdate: { type: 'none', value: 0 },
     status: 'no_change'
   });
+
+  // Get vendor ID from auth context
+  const vendorId = currentUser?.userId;
 
   // Common attribute templates
   const attributeTemplates = {
@@ -70,122 +81,116 @@ const ProductVariants = () => {
   };
 
   useEffect(() => {
-    loadProductData();
-  }, [productId]);
+    console.log('ProductVariants useEffect triggered');
+    console.log('productId:', productId);
+    console.log('vendorId:', vendorId);
+    console.log('currentUser:', currentUser);
+    
+    if (vendorId && productId) {
+      console.log('Both vendorId and productId are available, calling loadProductData');
+      loadProductData();
+    } else {
+      console.log('Missing required data - vendorId:', vendorId, 'productId:', productId);
+    }
+  }, [productId, vendorId, currentUser]);
 
   const loadProductData = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Loading variants for product:', productId, 'vendor:', vendorId);
       
-      // Mock product data
-      const mockProduct = {
-        id: productId,
-        title: 'Organic Basmati Rice Premium Quality',
-        category: 'organic_grains',
-        subcategory: 'rice',
-        basePrice: 299,
-        baseMrp: 349,
-        baseStock: 100,
-        productType: 'variable'
-      };
-
-      // Mock attributes
-      const mockAttributes = [
-        {
-          id: 1,
-          name: 'Weight',
-          values: ['1kg', '2kg', '5kg', '10kg']
-        },
-        {
-          id: 2,
-          name: 'Quality',
-          values: ['Premium', 'Super Premium']
-        }
-      ];
-
-      // Generate variants from attributes
-      const mockVariants = generateVariantCombinations(mockAttributes, mockProduct);
-
-      setProduct(mockProduct);
-      setAttributes(mockAttributes);
-      setVariants(mockVariants);
+      // Load existing variants from backend
+      const response = await variantService.getProductVariants(vendorId, productId);
+      
+      console.log('Variants API response:', response);
+      
+      if (response.success && response.data) {
+        // Transform backend variants to frontend format
+        const transformedVariants = response.data.map(variant => 
+          variantService.transformVariantForFrontend(variant)
+        );
+        
+        setVariants(transformedVariants);
+        
+        // Generate attributes from existing variants
+        const generatedAttributes = generateAttributesFromVariants(transformedVariants);
+        setAttributes(generatedAttributes);
+        
+        // Mock product data (you might want to fetch this from a separate endpoint)
+        const mockProduct = {
+          id: productId,
+          title: 'Organic Basmati Rice Premium Quality',
+          category: 'organic_grains',
+          subcategory: 'rice',
+          basePrice: 299,
+          baseMrp: 349,
+          baseStock: 100,
+          productType: 'variable'
+        };
+        
+        setProduct(mockProduct);
+      } else {
+        // No variants exist yet, set empty state
+        setVariants([]);
+        setAttributes([]);
+        
+        // Mock product data
+        const mockProduct = {
+          id: productId,
+          title: 'Organic Basmati Rice Premium Quality',
+          category: 'organic_grains',
+          subcategory: 'rice',
+          basePrice: 299,
+          baseMrp: 349,
+          baseStock: 100,
+          productType: 'variable'
+        };
+        
+        setProduct(mockProduct);
+      }
     } catch (error) {
       console.error('Error loading product data:', error);
+      setError('Failed to load product variants. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  const generateAttributesFromVariants = (variants) => {
+    if (!variants || variants.length === 0) return [];
+
+    const attributeMap = new Map();
+
+    variants.forEach(variant => {
+      if (variant.attributes && Array.isArray(variant.attributes)) {
+        variant.attributes.forEach(attr => {
+          if (!attributeMap.has(attr.attribute)) {
+            attributeMap.set(attr.attribute, new Set());
+          }
+          attributeMap.get(attr.attribute).add(attr.value);
+        });
+      }
+    });
+
+    const attributes = [];
+    attributeMap.forEach((values, name) => {
+      attributes.push({
+        id: Date.now() + Math.random(),
+        name,
+        values: Array.from(values)
+      });
+    });
+
+    return attributes;
+  };
+
   const generateVariantCombinations = (attrs, baseProduct) => {
-    if (attrs.length === 0) return [];
-
-    const combinations = [];
-    const generateCombos = (current, index) => {
-      if (index === attrs.length) {
-        combinations.push([...current]);
-        return;
-      }
-
-      for (const value of attrs[index].values) {
-        current.push({ attribute: attrs[index].name, value });
-        generateCombos(current, index + 1);
-        current.pop();
-      }
-    };
-
-    generateCombos([], 0);
-
-    return combinations.map((combo, index) => {
-      const variantName = combo.map(c => c.value).join(' / ');
-      const priceMultiplier = calculatePriceMultiplier(combo);
-      
-      return {
-        id: `variant_${index + 1}`,
-        name: variantName,
-        attributes: combo,
-        sku: `${baseProduct.id}_${index + 1}`,
-        price: Math.round(baseProduct.basePrice * priceMultiplier),
-        mrp: Math.round(baseProduct.baseMrp * priceMultiplier),
-        stock: Math.floor(baseProduct.baseStock / combinations.length),
-        status: 'ACTIVE',
-        image: null,
-        weight: getWeightFromCombo(combo),
-        enabled: true
-      };
-    });
+    return variantService.generateVariantCombinations(attrs, baseProduct);
   };
 
-  const calculatePriceMultiplier = (combo) => {
-    let multiplier = 1;
-    
-    combo.forEach(attr => {
-      // Price adjustments based on attributes
-      if (attr.attribute === 'Weight') {
-        switch (attr.value) {
-          case '1kg': multiplier *= 1; break;
-          case '2kg': multiplier *= 1.8; break;
-          case '5kg': multiplier *= 4.2; break;
-          case '10kg': multiplier *= 8; break;
-        }
-      }
-      if (attr.attribute === 'Quality') {
-        switch (attr.value) {
-          case 'Premium': multiplier *= 1; break;
-          case 'Super Premium': multiplier *= 1.3; break;
-        }
-      }
-    });
-    
-    return multiplier;
-  };
 
-  const getWeightFromCombo = (combo) => {
-    const weightAttr = combo.find(c => c.attribute === 'Weight');
-    return weightAttr ? weightAttr.value : '1kg';
-  };
 
   const addAttribute = () => {
     const newAttribute = {
@@ -233,114 +238,146 @@ const ProductVariants = () => {
     setAttributes(attributes.filter(attr => attr.id !== id));
   };
 
-  const updateVariant = (variantId, field, value) => {
-    setVariants(variants.map(variant => 
-      variant.id === variantId ? { ...variant, [field]: value } : variant
-    ));
+  const updateVariant = async (variantId, field, value) => {
+    try {
+      // Update locally first for immediate feedback
+      setVariants(variants.map(variant => 
+        variant.id === variantId ? { ...variant, [field]: value } : variant
+      ));
+
+      // Find the variant to update
+      const variant = variants.find(v => v.id === variantId);
+      if (!variant) return;
+
+      // Update the variant in the backend
+      const updatedVariant = { ...variant, [field]: value };
+      const backendData = variantService.transformVariantForBackend(updatedVariant, productId);
+      
+      await variantService.updateVariant(vendorId, productId, variantId, backendData);
+    } catch (error) {
+      console.error('Error updating variant:', error);
+      setError('Failed to update variant. Please try again.');
+      
+      // Revert the change on error
+      setVariants(variants.map(variant => 
+        variant.id === variantId ? { ...variant, [field]: variant[field] } : variant
+      ));
+    }
   };
 
-  const toggleVariantEnabled = (variantId) => {
-    setVariants(variants.map(variant => 
-      variant.id === variantId 
-        ? { ...variant, enabled: !variant.enabled }
-        : variant
-    ));
+  const toggleVariantEnabled = async (variantId) => {
+    try {
+      const variant = variants.find(v => v.id === variantId);
+      if (!variant) return;
+
+      const newEnabled = !variant.enabled;
+      const newStatus = newEnabled ? 'ACTIVE' : 'INACTIVE';
+      
+      // Update locally first for immediate feedback
+      setVariants(variants.map(v => 
+        v.id === variantId 
+          ? { ...v, enabled: newEnabled, status: newStatus }
+          : v
+      ));
+
+      // Update in backend
+      const backendData = variantService.transformVariantForBackend(
+        { ...variant, enabled: newEnabled, status: newStatus }, 
+        productId
+      );
+      
+      await variantService.updateVariant(vendorId, productId, variantId, backendData);
+    } catch (error) {
+      console.error('Error toggling variant status:', error);
+      setError('Failed to toggle variant status. Please try again.');
+      
+      // Revert the change on error
+      setVariants(variants.map(v => 
+        v.id === variantId 
+          ? { ...v, enabled: !v.enabled }
+          : v
+      ));
+    }
   };
 
-  const regenerateVariants = () => {
+  const regenerateVariants = async () => {
     if (attributes.length === 0) {
       setVariants([]);
       return;
     }
 
-    const newVariants = generateVariantCombinations(attributes, product);
-    setVariants(newVariants);
+    try {
+      setLoading(true);
+      const newVariants = generateVariantCombinations(attributes, product);
+      
+      // Create variants in the backend
+      const results = await variantService.createVariantsFromAttributes(
+        vendorId, 
+        productId, 
+        newVariants.map(variant => variantService.transformVariantForBackend(variant, productId))
+      );
+      
+      if (results.successful.length > 0) {
+        // Transform successful results back to frontend format
+        const transformedVariants = results.successful.map(result => 
+          variantService.transformVariantForFrontend(result.data)
+        );
+        setVariants(transformedVariants);
+      }
+      
+      if (results.failed.length > 0) {
+        console.warn('Some variants failed to create:', results.failed);
+        setError(`${results.failed.length} variants failed to create. Please try again.`);
+      }
+    } catch (error) {
+      console.error('Error regenerating variants:', error);
+      setError('Failed to generate variants. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleBulkEdit = () => {
+  const handleBulkEdit = async () => {
     if (selectedVariants.length === 0) return;
 
-    const updatedVariants = variants.map(variant => {
-      if (!selectedVariants.includes(variant.id)) return variant;
-
-      let updatedVariant = { ...variant };
-
-      // Price adjustment
-      if (bulkEditData.priceAdjustment.type !== 'none') {
-        const adjustment = parseFloat(bulkEditData.priceAdjustment.value);
-        switch (bulkEditData.priceAdjustment.type) {
-          case 'percentage_increase':
-            updatedVariant.price = Math.round(variant.price * (1 + adjustment / 100));
-            updatedVariant.mrp = Math.round(variant.mrp * (1 + adjustment / 100));
-            break;
-          case 'percentage_decrease':
-            updatedVariant.price = Math.round(variant.price * (1 - adjustment / 100));
-            updatedVariant.mrp = Math.round(variant.mrp * (1 - adjustment / 100));
-            break;
-          case 'fixed_increase':
-            updatedVariant.price += adjustment;
-            updatedVariant.mrp += adjustment;
-            break;
-          case 'fixed_decrease':
-            updatedVariant.price = Math.max(1, variant.price - adjustment);
-            updatedVariant.mrp = Math.max(1, variant.mrp - adjustment);
-            break;
-        }
-      }
-
-      // Stock update
-      if (bulkEditData.stockUpdate.type !== 'none') {
-        const stockValue = parseInt(bulkEditData.stockUpdate.value);
-        switch (bulkEditData.stockUpdate.type) {
-          case 'set':
-            updatedVariant.stock = stockValue;
-            break;
-          case 'add':
-            updatedVariant.stock += stockValue;
-            break;
-          case 'subtract':
-            updatedVariant.stock = Math.max(0, variant.stock - stockValue);
-            break;
-        }
-      }
-
-      // Status update
-      if (bulkEditData.status !== 'no_change') {
-        updatedVariant.status = bulkEditData.status;
-      }
-
-      return updatedVariant;
-    });
-
-    setVariants(updatedVariants);
-    setSelectedVariants([]);
-    setShowBulkEdit(false);
-    setBulkEditData({
-      priceAdjustment: { type: 'none', value: 0 },
-      stockUpdate: { type: 'none', value: 0 },
-      status: 'no_change'
-    });
+    try {
+      setLoading(true);
+      
+      // Use the combined bulk update API
+      await variantService.bulkUpdateVariants(vendorId, productId, selectedVariants, bulkEditData);
+      
+      // Reload variants to get updated data
+      await loadProductData();
+      
+      setSelectedVariants([]);
+      setShowBulkEdit(false);
+      setBulkEditData({
+        priceAdjustment: { type: 'none', value: 0 },
+        stockUpdate: { type: 'none', value: 0 },
+        status: 'no_change'
+      });
+    } catch (error) {
+      console.error('Error bulk updating variants:', error);
+      setError('Failed to bulk update variants. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const saveVariants = async () => {
     try {
       setSaving(true);
+      setError(null);
       
-      const payload = {
-        productId,
-        attributes,
-        variants: variants.filter(v => v.enabled)
-      };
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // All variants are already saved in the backend through individual operations
+      // This function can be used for final validation or navigation
       
-      console.log('Variants saved:', payload);
       navigate('/vendor/products', { 
         state: { message: 'Product variants updated successfully!' }
       });
     } catch (error) {
       console.error('Error saving variants:', error);
+      setError('Failed to save variants. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -362,6 +399,17 @@ const ProductVariants = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading product variants...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!vendorId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+          <p className="text-gray-600">Please log in to access vendor features.</p>
         </div>
       </div>
     );
@@ -398,6 +446,22 @@ const ProductVariants = () => {
             </div>
           </div>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <AlertTriangle className="h-5 w-5 text-red-600 mr-3" />
+              <p className="text-red-800">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="ml-auto text-red-600 hover:text-red-800"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Attributes Panel */}

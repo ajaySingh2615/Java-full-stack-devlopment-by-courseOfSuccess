@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import vendorService from '../../services/vendorService';
 import ProductDetailModal from '../../components/modals/ProductDetailModal';
+import ConfirmModal from '../../components/modals/ConfirmModal';
+import SuccessModal from '../../components/modals/SuccessModal';
 import {
   FiPlus,
   FiSearch,
@@ -71,6 +73,13 @@ const VendorProducts = () => {
   const [hoveredCard, setHoveredCard] = useState(null);
   const [quickActionLoading, setQuickActionLoading] = useState({});
   const [performanceData, setPerformanceData] = useState({});
+
+  // Modal states for duplication
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [duplicateProductId, setDuplicateProductId] = useState(null);
+  const [duplicateLoading, setDuplicateLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const vendorId = vendorService.getCurrentVendorId();
 
@@ -249,22 +258,48 @@ const VendorProducts = () => {
   };
 
   const handleDuplicateProduct = async (productId) => {
-    setQuickActionLoading(prev => ({ ...prev, [productId]: true }));
+    setDuplicateProductId(productId);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmDuplicate = async () => {
+    if (!duplicateProductId) return;
+
+    setDuplicateLoading(true);
+    setQuickActionLoading(prev => ({ ...prev, [duplicateProductId]: true }));
     
     try {
-      const response = await vendorService.duplicateProduct(vendorId, productId);
+      const response = await vendorService.duplicateProduct(vendorId, duplicateProductId);
       if (response.success) {
-        // Add the new product to the list
-        setProducts(prevProducts => [...prevProducts, response.data]);
-        alert('Product duplicated successfully!');
+        // Refresh the entire product list to ensure correct ordering
+        await loadProducts();
+        
+        // Show success modal
+        setSuccessMessage(`Product duplicated successfully! New product "${response.data.name}" has been created.`);
+        setShowConfirmModal(false);
+        setShowSuccessModal(true);
       } else {
         alert(`Failed to duplicate product: ${response.error || 'Unknown error'}`);
+        setShowConfirmModal(false);
       }
     } catch (err) {
       alert(`Error duplicating product: ${err.message}`);
+      setShowConfirmModal(false);
     } finally {
-      setQuickActionLoading(prev => ({ ...prev, [productId]: false }));
+      setDuplicateLoading(false);
+      setQuickActionLoading(prev => ({ ...prev, [duplicateProductId]: false }));
+      setDuplicateProductId(null);
     }
+  };
+
+  const handleCancelDuplicate = () => {
+    setShowConfirmModal(false);
+    setDuplicateProductId(null);
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    setSuccessMessage('');
   };
 
   const handleExportProducts = async () => {
@@ -761,269 +796,281 @@ const VendorProducts = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-            <Link
-              to="/vendor/products/add"
-              className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 font-medium inline-flex items-center"
-            >
-              <FiPlus className="h-5 w-5 mr-2" />
-              Add Product
-            </Link>
-          </div>
-        </div>
-
-        {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <ProductStatsCard
-            title="Total Products"
-            value={stats.totalProducts || 0}
-            icon={FiPackage}
-            color="bg-blue-600"
-            change={stats.productGrowth}
-          />
-          <ProductStatsCard
-            title="Active Products"
-            value={stats.activeProducts || 0}
-            icon={FiBarChart}
-            color="bg-green-600"
-          />
-          <ProductStatsCard
-            title="Low Stock"
-            value={stats.lowStockProducts || 0}
-            icon={FiAlertCircle}
-            color="bg-yellow-600"
-          />
-          <ProductStatsCard
-            title="Total Revenue"
-            value={`₹${stats.totalRevenue || 0}`}
-            icon={FiDollarSign}
-            color="bg-purple-600"
-            change={stats.revenueGrowth}
-          />
-        </div>
-
-        {/* Filters and Actions */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <div className="flex-1 min-w-0">
-              <div className="relative rounded-md shadow-sm">
-                <input
-                  type="text"
-                  value={filters.search}
-                  onChange={handleSearch}
-                  placeholder="Search products..."
-                  className="block w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <FiSearch className="h-5 w-5 text-gray-400" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-              >
-                <FiFilter className="h-5 w-5 mr-2" />
-                Filters
-              </button>
-              
-              <button
-                onClick={handleExportProducts}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-              >
-                <FiDownload className="h-5 w-5 mr-2" />
-                Export
-              </button>
-            </div>
-          </div>
-
-          {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
-              <select
-                value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="">All Status</option>
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
-                <option value="DRAFT">Draft</option>
-              </select>
-              
-              <select
-                value={filters.category}
-                onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="">All Categories</option>
-                {Object.entries(categories).map(([key, category]) => (
-                  <option key={key} value={key}>{category.name}</option>
-                ))}
-              </select>
-              
-              <select
-                value={`${filters.sortBy}-${filters.sortDir}`}
-                onChange={(e) => {
-                  const [sortBy, sortDir] = e.target.value.split('-');
-                  handleFilterChange('sortBy', sortBy);
-                  handleFilterChange('sortDir', sortDir);
-                }}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="createdAt-desc">Newest First</option>
-                <option value="createdAt-asc">Oldest First</option>
-                <option value="name-asc">Name A-Z</option>
-                <option value="name-desc">Name Z-A</option>
-                <option value="price-desc">Price High-Low</option>
-                <option value="price-asc">Price Low-High</option>
-              </select>
-            </div>
-          )}
-        </div>
-
-        {/* Products Grid */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-            <p className="text-lg text-gray-600">Loading products...</p>
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-8">
-            <div className="flex items-center">
-              <FiAlertCircle className="h-5 w-5 text-red-400 mr-3" />
-              <span className="text-red-800">{error}</span>
-            </div>
-          </div>
-        ) : products.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-            <FiPackage className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-900 mb-2">No products found</h3>
-            <p className="text-gray-500 mb-6">
-              {filters.search || filters.status || filters.category 
-                ? 'No products match your current filters. Try adjusting your search criteria.' 
-                : 'You haven\'t added any products yet. Start by creating your first product.'}
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+    <div className="container mx-auto px-4 py-8">
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold text-gray-900">Products</h1>
               <Link
                 to="/vendor/products/add"
                 className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 font-medium inline-flex items-center"
               >
                 <FiPlus className="h-5 w-5 mr-2" />
-                Add Your First Product
+                Add Product
               </Link>
-              {(filters.search || filters.status || filters.category) && (
-                <button
-                  onClick={() => {
-                    setFilters({
-                      search: '',
-                      status: '',
-                      category: '',
-                      page: 0,
-                      size: 10,
-                      sortBy: 'createdAt',
-                      sortDir: 'desc'
-                    });
-                  }}
-                  className="text-green-600 hover:text-green-700 font-medium"
-                >
-                  Clear Filters
-                </button>
-              )}
             </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map(product => (
-              <ProductCard key={product.productId} product={product} />
-            ))}
-          </div>
-        )}
 
-        {/* Bulk Actions */}
-        {showBulkActions && (
-          <div className="fixed bottom-0 inset-x-0 bg-white border-t shadow-lg p-4">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <span className="text-sm font-medium text-blue-900">
-                    {selectedProducts.length} products selected
-                  </span>
-                  
-                  <select
-                    value={bulkAction}
-                    onChange={(e) => setBulkAction(e.target.value)}
-                    className="px-3 py-1 border border-blue-300 rounded text-sm"
-                  >
-                    <option value="">Choose action...</option>
-                    <option value="status">Update Status</option>
-                    <option value="price">Adjust Prices</option>
-                    <option value="stock">Update Stock</option>
-                  </select>
-                  
-                  {bulkAction === 'status' && (
-                    <select
-                      value={bulkValue}
-                      onChange={(e) => setBulkValue(e.target.value)}
-                      className="px-3 py-1 border border-blue-300 rounded text-sm"
-                    >
-                      <option value="">Select status...</option>
-                      <option value="ACTIVE">Active</option>
-                      <option value="INACTIVE">Inactive</option>
-                      <option value="DRAFT">Draft</option>
-                    </select>
-                  )}
-                  
-                  {(bulkAction === 'price' || bulkAction === 'stock') && (
-                    <input
-                      type="number"
-                      value={bulkValue}
-                      onChange={(e) => setBulkValue(e.target.value)}
-                      placeholder={bulkAction === 'price' ? '% change' : 'Quantity'}
-                      className="px-3 py-1 border border-blue-300 rounded text-sm w-24"
-                    />
-                  )}
-                  
-                  <button
-                    onClick={handleBulkAction}
-                    disabled={!bulkAction || !bulkValue || bulkLoading}
-                    className="px-4 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {bulkLoading ? 'Processing...' : 'Apply'}
-                  </button>
+          {/* Stats Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <ProductStatsCard
+              title="Total Products"
+              value={stats.totalProducts || 0}
+              icon={FiPackage}
+              color="bg-blue-600"
+              change={stats.productGrowth}
+            />
+            <ProductStatsCard
+              title="Active Products"
+              value={stats.activeProducts || 0}
+              icon={FiBarChart}
+              color="bg-green-600"
+            />
+            <ProductStatsCard
+              title="Low Stock"
+              value={stats.lowStockProducts || 0}
+              icon={FiAlertCircle}
+              color="bg-yellow-600"
+            />
+            <ProductStatsCard
+              title="Total Revenue"
+              value={`₹${stats.totalRevenue || 0}`}
+              icon={FiDollarSign}
+              color="bg-purple-600"
+              change={stats.revenueGrowth}
+            />
+          </div>
+
+          {/* Filters and Actions */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+              <div className="flex-1 min-w-0">
+                <div className="relative rounded-md shadow-sm">
+                  <input
+                    type="text"
+                    value={filters.search}
+                    onChange={handleSearch}
+                    placeholder="Search products..."
+                    className="block w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <FiSearch className="h-5 w-5 text-gray-400" />
+                  </div>
                 </div>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  <FiFilter className="h-5 w-5 mr-2" />
+                  Filters
+                </button>
                 
                 <button
-                  onClick={() => {
-                    setSelectedProducts([]);
-                    setShowBulkActions(false);
-                    setBulkAction('');
-                    setBulkValue('');
-                  }}
-                  className="text-blue-600 hover:text-blue-800"
+                  onClick={handleExportProducts}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                 >
-                  <FiX className="h-4 w-4" />
+                  <FiDownload className="h-5 w-5 mr-2" />
+                  Export
                 </button>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Product Detail Modal */}
-        <ProductDetailModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          product={selectedProduct}
-          onProductUpdate={handleProductUpdate}
-          onProductDelete={handleProductDelete}
-          onNavigateToEdit={handleNavigateToEdit}
-        />
+            {showFilters && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+                <select
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value="">All Status</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                  <option value="DRAFT">Draft</option>
+                </select>
+                
+                <select
+                  value={filters.category}
+                  onChange={(e) => handleFilterChange('category', e.target.value)}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value="">All Categories</option>
+                  {Object.entries(categories).map(([key, category]) => (
+                    <option key={key} value={key}>{category.name}</option>
+                  ))}
+                </select>
+                
+                <select
+                  value={`${filters.sortBy}-${filters.sortDir}`}
+                  onChange={(e) => {
+                    const [sortBy, sortDir] = e.target.value.split('-');
+                    handleFilterChange('sortBy', sortBy);
+                    handleFilterChange('sortDir', sortDir);
+                  }}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value="createdAt-desc">Newest First</option>
+                  <option value="createdAt-asc">Oldest First</option>
+                  <option value="name-asc">Name A-Z</option>
+                  <option value="name-desc">Name Z-A</option>
+                  <option value="price-desc">Price High-Low</option>
+                  <option value="price-asc">Price Low-High</option>
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* Products Grid */}
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+              <p className="text-lg text-gray-600">Loading products...</p>
+            </div>
+          ) : error ? (
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-8">
+              <div className="flex items-center">
+                <FiAlertCircle className="h-5 w-5 text-red-400 mr-3" />
+                <span className="text-red-800">{error}</span>
+              </div>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+              <FiPackage className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-medium text-gray-900 mb-2">No products found</h3>
+              <p className="text-gray-500 mb-6">
+                {filters.search || filters.status || filters.category 
+                  ? 'No products match your current filters. Try adjusting your search criteria.' 
+                  : 'You haven\'t added any products yet. Start by creating your first product.'}
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link
+                  to="/vendor/products/add"
+                  className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 font-medium inline-flex items-center"
+                >
+                  <FiPlus className="h-5 w-5 mr-2" />
+                  Add Your First Product
+                </Link>
+                {(filters.search || filters.status || filters.category) && (
+                  <button
+                    onClick={() => {
+                      setFilters({
+                        search: '',
+                        status: '',
+                        category: '',
+                        page: 0,
+                        size: 10,
+                        sortBy: 'createdAt',
+                        sortDir: 'desc'
+                      });
+                    }}
+                    className="text-green-600 hover:text-green-700 font-medium"
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {products.map(product => (
+                <ProductCard key={product.productId} product={product} />
+              ))}
+            </div>
+          )}
+
+          {/* Bulk Actions */}
+          {showBulkActions && (
+            <div className="fixed bottom-0 inset-x-0 bg-white border-t shadow-lg p-4">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <span className="text-sm font-medium text-blue-900">
+                      {selectedProducts.length} products selected
+                    </span>
+                    
+                    <select
+                      value={bulkAction}
+                      onChange={(e) => setBulkAction(e.target.value)}
+                      className="px-3 py-1 border border-blue-300 rounded text-sm"
+                    >
+                      <option value="">Choose action...</option>
+                      <option value="status">Update Status</option>
+                      <option value="price">Adjust Prices</option>
+                      <option value="stock">Update Stock</option>
+                    </select>
+                    
+                    {(bulkAction === 'price' || bulkAction === 'stock') && (
+                      <input
+                        type="number"
+                        value={bulkValue}
+                        onChange={(e) => setBulkValue(e.target.value)}
+                        placeholder={bulkAction === 'price' ? '% change' : 'Quantity'}
+                        className="px-3 py-1 border border-blue-300 rounded text-sm w-24"
+                      />
+                    )}
+                    
+                    <button
+                      onClick={handleBulkAction}
+                      disabled={!bulkAction || !bulkValue || bulkLoading}
+                      className="px-4 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {bulkLoading ? 'Processing...' : 'Apply'}
+                    </button>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      setSelectedProducts([]);
+                      setShowBulkActions(false);
+                      setBulkAction('');
+                      setBulkValue('');
+                    }}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <FiX className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Product Detail Modal */}
+          <ProductDetailModal
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            product={selectedProduct}
+            onProductUpdate={handleProductUpdate}
+            onProductDelete={handleProductDelete}
+            onNavigateToEdit={handleNavigateToEdit}
+          />
+
+          {/* Confirmation Modal */}
+          <ConfirmModal
+            isOpen={showConfirmModal}
+            onClose={handleCancelDuplicate}
+            onConfirm={handleConfirmDuplicate}
+            title="Duplicate Product"
+            message="Are you sure you want to duplicate this product? This will create a new copy with &quot;-Copy&quot; added to the name."
+            confirmText="Yes, Duplicate"
+            cancelText="Cancel"
+            type="info"
+            icon={FiCopy}
+            loading={duplicateLoading}
+          />
+
+          {/* Success Modal */}
+          <SuccessModal
+            isOpen={showSuccessModal}
+            onClose={handleCloseSuccessModal}
+            title="Product Duplicated Successfully!"
+            message={successMessage}
+            buttonText="Continue"
+          />
+        </div>
       </div>
     </div>
   );

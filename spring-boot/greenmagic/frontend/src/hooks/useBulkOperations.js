@@ -123,19 +123,9 @@ export const useBulkOperations = () => {
                     return { valid: false, message: 'Stock value cannot be negative' };
                 }
                 break;
-            case 'tag_management':
-                if (!parameters?.tags || parameters.tags.length === 0) {
-                    return { valid: false, message: 'Tags cannot be empty' };
-                }
-                break;
             case 'category_assignment':
                 if (!parameters?.categoryId) {
                     return { valid: false, message: 'Category must be selected' };
-                }
-                break;
-            case 'export':
-                if (!parameters?.format) {
-                    return { valid: false, message: 'Export format must be selected' };
                 }
                 break;
         }
@@ -143,64 +133,10 @@ export const useBulkOperations = () => {
         return { valid: true };
     }, [selectedProducts]);
     
-    /**
-     * Start bulk operation
-     */
-    const startBulkOperation = useCallback(async (vendorId, operation, parameters) => {
-        const validation = validateBulkOperation(operation, parameters);
-        if (!validation.valid) {
-            throw new Error(validation.message);
-        }
-        
-        const productIds = Array.from(selectedProducts);
-        
-        try {
-            // Start the operation
-            const response = await vendorService.executeBulkOperation(vendorId, {
-                operation,
-                productIds,
-                parameters
-            });
-            
-            if (response.success) {
-                const operationData = response.data;
-                setActiveOperation({
-                    id: operationData.operationId,
-                    type: operation,
-                    parameters,
-                    productIds,
-                    startTime: new Date()
-                });
-                setOperationProgress(operationData);
-                
-                // Start polling for progress
-                startProgressPolling(operationData.operationId);
-                
-                return { success: true, operationId: operationData.operationId };
-            } else {
-                throw new Error(response.error || 'Failed to start bulk operation');
-            }
-        } catch (error) {
-            throw new Error(`Failed to start bulk operation: ${error.message}`);
-        }
-    }, [selectedProducts, validateBulkOperation]);
-    
-    /**
-     * Cancel bulk operation
-     */
-    const cancelBulkOperation = useCallback(() => {
-        if (pollInterval) {
-            clearInterval(pollInterval);
-            setPollInterval(null);
-        }
-        setActiveOperation(null);
-        setOperationProgress(null);
-    }, [pollInterval]);
-    
-    /**
+        /**
      * Start progress polling
      */
-    const startProgressPolling = useCallback((operationId) => {
+    const startProgressPolling = useCallback((operationId, onComplete) => {
         if (pollInterval) {
             clearInterval(pollInterval);
         }
@@ -230,6 +166,11 @@ export const useBulkOperations = () => {
                             result: progressData
                         }]);
                         
+                        // Call completion callback if provided
+                        if (onComplete) {
+                            onComplete(progressData);
+                        }
+                        
                         // Clear operation after a brief delay
                         setTimeout(() => {
                             setActiveOperation(null);
@@ -244,14 +185,88 @@ export const useBulkOperations = () => {
                 if (pollCount >= maxPolls) {
                     clearInterval(interval);
                     setPollInterval(null);
-                    setActiveOperation(null);
-                    setOperationProgress(null);
+                    
+                    // Set error state
+                    setOperationProgress(prev => ({
+                        ...prev,
+                        status: 'failed',
+                        progress: {
+                            ...prev?.progress,
+                            currentPhase: 'Connection timeout - operation may still be running'
+                        }
+                    }));
+                    
+                    // Call completion callback with error
+                    if (onComplete) {
+                        onComplete({ status: 'failed', error: 'Connection timeout' });
+                    }
+                    
+                    setTimeout(() => {
+                        setActiveOperation(null);
+                        setOperationProgress(null);
+                    }, 5000);
                 }
             }
         }, 2000);
         
         setPollInterval(interval);
     }, [activeOperation, pollInterval]);
+
+    /**
+     * Start bulk operation
+     */
+    const startBulkOperation = useCallback(async (vendorId, operation, parameters, onComplete) => {
+        const validation = validateBulkOperation(operation, parameters);
+        if (!validation.valid) {
+            throw new Error(validation.message);
+        }
+        
+        const productIds = Array.from(selectedProducts);
+        
+        try {
+            // Start the operation
+            const requestData = {
+                operation,
+                productIds,
+                parameters
+            };
+            
+            const response = await vendorService.executeBulkOperation(vendorId, requestData);
+            
+            if (response.success) {
+                const operationData = response.data;
+                setActiveOperation({
+                    id: operationData.operationId,
+                    type: operation,
+                    parameters,
+                    productIds,
+                    startTime: new Date()
+                });
+                setOperationProgress(operationData);
+                
+                // Start polling for progress
+                startProgressPolling(operationData.operationId, onComplete);
+                
+                return { success: true, operationId: operationData.operationId };
+            } else {
+                throw new Error(response.error || 'Failed to start bulk operation');
+            }
+        } catch (error) {
+            throw new Error(`Failed to start bulk operation: ${error.message}`);
+        }
+    }, [selectedProducts, validateBulkOperation, startProgressPolling]);
+    
+    /**
+     * Cancel bulk operation
+     */
+    const cancelBulkOperation = useCallback(() => {
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            setPollInterval(null);
+        }
+        setActiveOperation(null);
+        setOperationProgress(null);
+    }, [pollInterval]);
     
     /**
      * Get progress percentage

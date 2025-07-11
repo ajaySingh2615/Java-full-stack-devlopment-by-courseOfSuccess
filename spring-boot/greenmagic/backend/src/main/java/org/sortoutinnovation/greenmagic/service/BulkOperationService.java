@@ -60,8 +60,15 @@ public class BulkOperationService {
         
         operations.put(operationId, response);
         
-        // Process asynchronously (in production, use @Async or message queue)
-        new Thread(() -> processBulkOperation(vendorId, request, response)).start();
+        // Process synchronously for now to ensure proper transaction handling
+        // In production, use @Async with proper transaction management
+        try {
+            processBulkOperation(vendorId, request, response);
+        } catch (Exception e) {
+            System.out.println("Error in bulk operation: " + e.getMessage());
+            e.printStackTrace();
+            handleOperationFailure(response, "Operation failed: " + e.getMessage());
+        }
         
         return response;
     }

@@ -224,16 +224,26 @@ const VendorProducts = () => {
 
   const handleBulkOperationExecute = async (parameters) => {
     try {
-      const result = await startBulkOperation(vendorId, selectedBulkOperation, parameters);
+      const result = await startBulkOperation(vendorId, selectedBulkOperation, parameters, (progressData) => {
+        // This callback is called when the operation completes
+        if (progressData.status === 'completed') {
+          // Refresh products list and stats
+          loadProducts();
+          loadStats();
+          // Clear selection after successful operation
+          clearSelection();
+        } else if (progressData.status === 'failed') {
+          // Handle failed operations
+          console.error('Bulk operation failed:', progressData);
+          // Don't clear selection so user can retry
+          // Optionally show error message
+          alert(`Bulk operation failed: ${progressData.error || 'Unknown error'}`);
+        }
+      });
       
       if (result.success) {
         // Operation started successfully, progress will be tracked automatically
-        // Refresh products list when operation is complete
-        setTimeout(() => {
-          loadProducts();
-          loadStats();
-        }, 2000); // Give some time for the operation to complete
-        
+        console.log('Bulk operation started successfully:', result.operationId);
         return result;
       } else {
         throw new Error(result.error || 'Failed to start bulk operation');

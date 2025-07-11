@@ -69,22 +69,6 @@ const BulkOperationModal = ({
       confirmations: 1,
       description: 'Assign products to a category'
     },
-    tag_management: {
-      title: 'Manage Tags',
-      icon: FiTag,
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-50',
-      confirmations: 1,
-      description: 'Add, remove, or replace product tags'
-    },
-    export: {
-      title: 'Export Products',
-      icon: FiDownload,
-      color: 'text-gray-600',
-      bgColor: 'bg-gray-50',
-      confirmations: 1,
-      description: 'Export selected products in various formats'
-    },
     delete: {
       title: 'Delete Products',
       icon: FiTrash2,
@@ -145,21 +129,6 @@ const BulkOperationModal = ({
           newErrors.categoryId = 'Category is required';
         }
         break;
-      
-      case 'tag_management':
-        if (!formData.method) {
-          newErrors.method = 'Tag method is required';
-        }
-        if (!formData.tags || formData.tags.length === 0) {
-          newErrors.tags = 'At least one tag is required';
-        }
-        break;
-      
-      case 'export':
-        if (!formData.format) {
-          newErrors.format = 'Export format is required';
-        }
-        break;
     }
 
     setErrors(newErrors);
@@ -182,7 +151,9 @@ const BulkOperationModal = ({
     setIsSubmitting(true);
     
     try {
-      await onExecute(formData);
+      // Transform frontend form data to backend DTO format
+      const transformedData = transformFormDataToBackendFormat(formData);
+      await onExecute(transformedData);
       onClose();
     } catch (error) {
       setErrors({ submit: error.message });
@@ -190,6 +161,47 @@ const BulkOperationModal = ({
       setIsSubmitting(false);
     }
   };
+
+  // Transform frontend form data to match backend DTO structure
+const transformFormDataToBackendFormat = (formData) => {
+  const parameters = {};
+  
+  switch (operation) {
+    case 'status_change':
+      parameters.statusChange = {
+        newStatus: formData.newStatus?.toUpperCase()
+      };
+      break;
+    
+    case 'price_update':
+      parameters.priceUpdate = {
+        method: formData.method,
+        value: parseFloat(formData.value),
+        applyToVariants: formData.applyToVariants || false
+      };
+      break;
+    
+    case 'stock_update':
+      parameters.stockUpdate = {
+        method: formData.method,
+        value: parseInt(formData.value, 10),
+        applyToVariants: formData.applyToVariants || false
+      };
+      break;
+    
+    case 'category_assignment':
+      parameters.categoryAssignment = {
+        categoryId: parseInt(formData.categoryId, 10)
+      };
+      break;
+    
+    case 'delete':
+      // No parameters needed for delete operation
+      break;
+  }
+  
+  return parameters;
+};
 
   const renderFormFields = () => {
     switch (operation) {
@@ -353,103 +365,6 @@ const BulkOperationModal = ({
           </div>
         );
       
-      case 'tag_management':
-        return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tag Method
-              </label>
-              <select
-                value={formData.method || ''}
-                onChange={(e) => handleInputChange('method', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">Select method...</option>
-                <option value="add_tags">Add Tags</option>
-                <option value="remove_tags">Remove Tags</option>
-                <option value="replace_tags">Replace All Tags</option>
-              </select>
-              {errors.method && (
-                <p className="mt-1 text-sm text-red-600">{errors.method}</p>
-              )}
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tags (comma-separated)
-              </label>
-              <input
-                type="text"
-                value={formData.tagsInput || ''}
-                onChange={(e) => {
-                  const tagsInput = e.target.value;
-                  const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag);
-                  handleInputChange('tagsInput', tagsInput);
-                  handleInputChange('tags', tags);
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="organic, fresh, local..."
-              />
-              {errors.tags && (
-                <p className="mt-1 text-sm text-red-600">{errors.tags}</p>
-              )}
-            </div>
-          </div>
-        );
-      
-      case 'export':
-        return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Export Format
-              </label>
-              <select
-                value={formData.format || ''}
-                onChange={(e) => handleInputChange('format', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
-              >
-                <option value="">Select format...</option>
-                <option value="csv">CSV</option>
-                <option value="excel">Excel</option>
-                <option value="pdf">PDF</option>
-              </select>
-              {errors.format && (
-                <p className="mt-1 text-sm text-red-600">{errors.format}</p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="includeVariants"
-                  checked={formData.includeVariants || false}
-                  onChange={(e) => handleInputChange('includeVariants', e.target.checked)}
-                  className="h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300 rounded"
-                />
-                <label htmlFor="includeVariants" className="ml-2 block text-sm text-gray-700">
-                  Include product variants
-                </label>
-              </div>
-              
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="includeImages"
-                  checked={formData.includeImages || false}
-                  onChange={(e) => handleInputChange('includeImages', e.target.checked)}
-                  className="h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300 rounded"
-                />
-                <label htmlFor="includeImages" className="ml-2 block text-sm text-gray-700">
-                  Include product images
-                </label>
-              </div>
-            </div>
-          </div>
-        );
-      
       case 'delete':
         return (
           <div className="space-y-4">
@@ -533,11 +448,15 @@ const BulkOperationModal = ({
               <div className="px-4 py-3 sm:px-6">
                 {renderFormFields()}
                 
-                {errors.submit && (
-                  <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-3">
-                    <p className="text-sm text-red-600">{errors.submit}</p>
-                  </div>
-                )}
+                            {errors.submit && (
+              <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-3">
+                <div className="flex items-center">
+                  <FiAlertTriangle className="h-4 w-4 text-red-600 mr-2" />
+                  <p className="text-sm text-red-600 font-medium">Operation Failed</p>
+                </div>
+                <p className="text-sm text-red-600 mt-1">{errors.submit}</p>
+              </div>
+            )}
               </div>
 
               {/* Actions */}

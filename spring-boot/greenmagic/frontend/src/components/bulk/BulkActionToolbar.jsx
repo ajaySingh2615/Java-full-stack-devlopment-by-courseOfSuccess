@@ -3,9 +3,7 @@ import {
   FiToggleLeft,
   FiDollarSign,
   FiPackage,
-  FiTag,
   FiFolder,
-  FiDownload,
   FiTrash2,
   FiX
 } from 'react-icons/fi';
@@ -49,20 +47,6 @@ const BulkActionToolbar = ({
       icon: FiFolder,
       color: 'bg-purple-600 hover:bg-purple-700',
       description: 'Assign categories'
-    },
-    {
-      id: 'tag_management',
-      label: 'Tags',
-      icon: FiTag,
-      color: 'bg-indigo-600 hover:bg-indigo-700',
-      description: 'Manage product tags'
-    },
-    {
-      id: 'export',
-      label: 'Export',
-      icon: FiDownload,
-      color: 'bg-gray-600 hover:bg-gray-700',
-      description: 'Export selected products'
     },
     {
       id: 'delete',

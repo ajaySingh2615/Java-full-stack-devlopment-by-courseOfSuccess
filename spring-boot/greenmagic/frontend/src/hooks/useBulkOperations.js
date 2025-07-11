@@ -102,6 +102,8 @@ export const useBulkOperations = () => {
      * Validate bulk operation
      */
     const validateBulkOperation = useCallback((operation, parameters) => {
+        console.log('🔍 Validating bulk operation:', { operation, parameters });
+        
         const selectedCount = selectedProducts.size;
         
         if (selectedCount === 0) {
@@ -114,17 +116,31 @@ export const useBulkOperations = () => {
         
         switch (operation) {
             case 'price_update':
-                if (!parameters?.value || parameters.value <= 0) {
-                    return { valid: false, message: 'Price value must be greater than 0' };
+                // Check the nested structure for price updates
+                const priceParams = parameters?.priceUpdate;
+                console.log('💰 Price update params:', priceParams);
+                
+                if (!priceParams?.method) {
+                    return { valid: false, message: 'Price update method is required' };
+                }
+                
+                if (priceParams.value === undefined || priceParams.value === null || isNaN(priceParams.value)) {
+                    return { valid: false, message: 'Price value must be a valid number' };
+                }
+                
+                // For "set_price" method, value must be positive
+                if (priceParams.method === 'set_price' && priceParams.value <= 0) {
+                    return { valid: false, message: 'Price must be greater than 0 when setting exact price' };
                 }
                 break;
             case 'stock_update':
-                if (parameters?.value < 0) {
+                const stockParams = parameters?.stockUpdate;
+                if (stockParams && stockParams.value < 0) {
                     return { valid: false, message: 'Stock value cannot be negative' };
                 }
                 break;
             case 'category_assignment':
-                if (!parameters?.categoryId) {
+                if (!parameters?.categoryAssignment?.categoryId) {
                     return { valid: false, message: 'Category must be selected' };
                 }
                 break;

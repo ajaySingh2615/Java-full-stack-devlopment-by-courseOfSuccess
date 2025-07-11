@@ -152,6 +152,7 @@ export const useBulkOperations = () => {
                 
                 if (response.success) {
                     const progressData = response.data;
+                    console.log('📊 Progress update:', progressData.status, progressData.progress?.percentage + '%');
                     setOperationProgress(progressData);
                     
                     // Stop polling if operation is completed or failed

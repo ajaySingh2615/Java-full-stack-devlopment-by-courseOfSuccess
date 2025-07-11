@@ -23,7 +23,8 @@ import {
   FiToggleLeft,
   FiCheck,
   FiCheckCircle,
-  FiXCircle
+  FiXCircle,
+  FiLoader
 } from 'react-icons/fi';
 import ProductPerformanceBadge from '../../components/product/ProductPerformanceBadge';
 import StockLevelIndicator from '../../components/product/StockLevelIndicator';
@@ -279,16 +280,22 @@ const VendorProducts = () => {
           // Clear selection after successful operation
           clearSelection();
           
-          // Show success toast notification
-          const operationType = selectedBulkOperation.replace('_', ' ').toLowerCase();
-          const successCount = progressData.results?.successfulIds?.length || 0;
-          showToast(`Successfully updated ${successCount} product${successCount !== 1 ? 's' : ''} (${operationType})`, 'success');
+          // Hide any existing processing toast and show success
+          hideToast();
+          setTimeout(() => {
+            const operationType = selectedBulkOperation.replace('_', ' ').toLowerCase();
+            const successCount = progressData.results?.successfulIds?.length || 0;
+            showToast(`✅ Successfully updated ${successCount} product${successCount !== 1 ? 's' : ''} (${operationType})`, 'success');
+          }, 100);
         } else if (progressData.status === 'failed') {
           // Handle failed operations
           console.error('Bulk operation failed:', progressData);
           // Don't clear selection so user can retry
-          // Show error toast notification
-          showToast(`Bulk operation failed: ${progressData.error || 'Unknown error'}`, 'error');
+          // Hide any existing processing toast and show error
+          hideToast();
+          setTimeout(() => {
+            showToast(`❌ Bulk operation failed: ${progressData.error || 'Unknown error'}`, 'error');
+          }, 100);
         }
       });
       
@@ -296,6 +303,11 @@ const VendorProducts = () => {
         // Close modal immediately for better UX
         setShowBulkModal(false);
         setSelectedBulkOperation(null);
+        
+        // Show immediate processing feedback
+        const operationType = selectedBulkOperation.replace('_', ' ').toLowerCase();
+        const selectedCount = getSelectedCount();
+        showToast(`⏳ Starting ${operationType} for ${selectedCount} product${selectedCount !== 1 ? 's' : ''}...`, 'success');
         
         // Operation started successfully, progress will be tracked automatically
         console.log(`🚀 Bulk operation started: ${result.operationId}`);
@@ -1122,14 +1134,16 @@ const VendorProducts = () => {
             visible={bulkToolbarVisible}
           />
 
-          {/* Progress Indicator */}
-          <ProgressIndicator
-            isVisible={isOperationInProgress()}
-            operationProgress={operationProgress}
-            operationStatusText={getOperationStatusText()}
-            onClose={cancelBulkOperation}
-            onCancel={cancelBulkOperation}
-          />
+          {/* Progress Indicator - More Prominent */}
+          {isOperationInProgress() && (
+            <ProgressIndicator
+              isVisible={true}
+              operationProgress={operationProgress}
+              operationStatusText={getOperationStatusText()}
+              onClose={cancelBulkOperation}
+              onCancel={cancelBulkOperation}
+            />
+          )}
 
           {/* Bulk Operation Modal */}
           {showBulkModal && selectedBulkOperation && (
@@ -1174,6 +1188,55 @@ const VendorProducts = () => {
             message={successMessage}
             buttonText="Continue"
           />
+
+          {/* Processing Overlay */}
+          {isOperationInProgress() && (
+            <div className="fixed inset-0 bg-black bg-opacity-10 z-40 pointer-events-none">
+              <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 pointer-events-auto">
+                                 <div className="flex items-center space-x-3">
+                   <FiLoader className="animate-spin h-6 w-6 text-blue-600" />
+                   <div>
+                     <h3 className="text-lg font-medium text-gray-900">
+                       {activeOperation ? 
+                         `Processing ${activeOperation.type.replace('_', ' ').toLowerCase()}` : 
+                         'Processing Bulk Operation'
+                       }
+                     </h3>
+                     <p className="text-sm text-gray-600">
+                       {operationProgress?.progress ? 
+                         `${operationProgress.progress.processed || 0} of ${operationProgress.progress.total || 0} products processed` :
+                         'Initializing operation...'
+                       }
+                     </p>
+                   </div>
+                 </div>
+                
+                {operationProgress?.progress && (
+                  <div className="mt-4">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="h-2 bg-blue-600 rounded-full transition-all duration-300"
+                        style={{ width: `${operationProgress.progress.percentage || 0}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-600 mt-1">
+                      <span>
+                        {operationProgress.progress.processed || 0} of {operationProgress.progress.total || 0} processed
+                      </span>
+                      <span>{Math.round(operationProgress.progress.percentage || 0)}%</span>
+                    </div>
+                  </div>
+                )}
+                
+                <button
+                  onClick={cancelBulkOperation}
+                  className="mt-4 px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                >
+                  Cancel Operation
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Toast Notifications */}
           {toast && (

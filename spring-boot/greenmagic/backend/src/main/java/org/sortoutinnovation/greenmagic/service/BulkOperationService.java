@@ -11,6 +11,10 @@ import org.sortoutinnovation.greenmagic.repository.ProductVariantRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -36,6 +40,9 @@ public class BulkOperationService {
     @Autowired
     private CategoryRepository categoryRepository;
     
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+    
     // In-memory storage for operation progress (in production, use Redis or database)
     private final Map<String, BulkOperationResponseDto> operations = new ConcurrentHashMap<>();
     
@@ -60,15 +67,17 @@ public class BulkOperationService {
         
         operations.put(operationId, response);
         
-        // Process synchronously for now to ensure proper transaction handling
-        // In production, use @Async with proper transaction management
-        try {
-            processBulkOperation(vendorId, request, response);
-        } catch (Exception e) {
-            System.out.println("Error in bulk operation: " + e.getMessage());
-            e.printStackTrace();
-            handleOperationFailure(response, "Operation failed: " + e.getMessage());
-        }
+        // Process asynchronously with proper transaction handling
+        new Thread(() -> {
+            try {
+                // Process the operation in the background
+                processBulkOperationAsync(vendorId, request, response, operationId);
+            } catch (Exception e) {
+                System.out.println("Error in bulk operation thread: " + e.getMessage());
+                e.printStackTrace();
+                handleOperationFailure(response, "Operation failed: " + e.getMessage());
+            }
+        }).start();
         
         return response;
     }
@@ -129,11 +138,34 @@ public class BulkOperationService {
             response.getProgress().setCurrentPhase("Completed");
             response.getProgress().setPercentage(100.0);
             
-        } catch (Exception e) {
+                } catch (Exception e) {
             handleOperationFailure(response, "Operation failed: " + e.getMessage());
         }
     }
-    
+
+    /**
+     * Process bulk operation asynchronously with proper transaction handling
+     */
+    private void processBulkOperationAsync(Integer vendorId, BulkOperationRequestDto request, 
+                                         BulkOperationResponseDto response, String operationId) {
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+        TransactionStatus status = transactionManager.getTransaction(def);
+        
+        try {
+            // Process the operation within a manual transaction
+            processBulkOperation(vendorId, request, response);
+            
+            // Commit the transaction
+            transactionManager.commit(status);
+            
+        } catch (Exception e) {
+            // Rollback the transaction on error
+            transactionManager.rollback(status);
+            handleOperationFailure(response, "Operation failed: " + e.getMessage());
+        }
+    }
+
     /**
      * Process status change operation
      */

@@ -21,7 +21,9 @@ import {
   FiChevronDown,
   FiX,
   FiToggleLeft,
-  FiCheck
+  FiCheck,
+  FiCheckCircle,
+  FiXCircle
 } from 'react-icons/fi';
 import ProductPerformanceBadge from '../../components/product/ProductPerformanceBadge';
 import StockLevelIndicator from '../../components/product/StockLevelIndicator';
@@ -30,6 +32,34 @@ import BulkActionToolbar from '../../components/bulk/BulkActionToolbar';
 import BulkOperationModal from '../../components/bulk/BulkOperationModal';
 import ProgressIndicator from '../../components/bulk/ProgressIndicator';
 import { useBulkOperations } from '../../hooks/useBulkOperations';
+
+// Toast notification component
+const Toast = ({ message, type, onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 4000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const icon = type === 'success' ? FiCheckCircle : FiXCircle;
+  const bgColor = type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200';
+  const textColor = type === 'success' ? 'text-green-800' : 'text-red-800';
+  const iconColor = type === 'success' ? 'text-green-600' : 'text-red-600';
+
+  return (
+    <div className={`fixed top-4 right-4 z-50 ${bgColor} border rounded-lg shadow-lg p-4 max-w-md transform transition-all duration-300 ease-in-out`}>
+      <div className="flex items-center">
+        {React.createElement(icon, { className: `h-5 w-5 ${iconColor} mr-3` })}
+        <p className={`text-sm font-medium ${textColor} flex-1`}>{message}</p>
+        <button
+          onClick={onClose}
+          className={`ml-2 ${textColor} hover:opacity-70`}
+        >
+          <FiX className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 /**
  * Vendor Products Component - Phase 1 Foundation
@@ -44,6 +74,9 @@ const VendorProducts = () => {
   const [error, setError] = useState(null);
   const [stats, setStats] = useState({});
   const [categories, setCategories] = useState({});
+  
+  // Toast notifications
+  const [toast, setToast] = useState(null);
   
   // Filters and pagination
   const [filters, setFilters] = useState({
@@ -107,6 +140,15 @@ const VendorProducts = () => {
 
   const vendorId = vendorService.getCurrentVendorId();
 
+  // Toast helper functions
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+  };
+
+  const hideToast = () => {
+    setToast(null);
+  };
+
   useEffect(() => {
     if (!vendorId) {
       setError('Unable to identify vendor. Please log in again.');
@@ -120,9 +162,11 @@ const VendorProducts = () => {
     loadPerformanceData();
   }, [filters]);
 
-  const loadProducts = async () => {
+  const loadProducts = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
       const response = await vendorService.getVendorProducts(vendorId, filters);
       
       if (response.success) {
@@ -135,7 +179,9 @@ const VendorProducts = () => {
       setError('Failed to load products');
       console.error('Error loading products:', err);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 
@@ -227,23 +273,32 @@ const VendorProducts = () => {
       const result = await startBulkOperation(vendorId, selectedBulkOperation, parameters, (progressData) => {
         // This callback is called when the operation completes
         if (progressData.status === 'completed') {
-          // Refresh products list and stats
-          loadProducts();
+          // Silently refresh products list and stats (no loading spinner)
+          loadProducts(true); // silent = true
           loadStats();
           // Clear selection after successful operation
           clearSelection();
+          
+          // Show success toast notification
+          const operationType = selectedBulkOperation.replace('_', ' ').toLowerCase();
+          const successCount = progressData.results?.successfulIds?.length || 0;
+          showToast(`Successfully updated ${successCount} product${successCount !== 1 ? 's' : ''} (${operationType})`, 'success');
         } else if (progressData.status === 'failed') {
           // Handle failed operations
           console.error('Bulk operation failed:', progressData);
           // Don't clear selection so user can retry
-          // Optionally show error message
-          alert(`Bulk operation failed: ${progressData.error || 'Unknown error'}`);
+          // Show error toast notification
+          showToast(`Bulk operation failed: ${progressData.error || 'Unknown error'}`, 'error');
         }
       });
       
       if (result.success) {
+        // Close modal immediately for better UX
+        setShowBulkModal(false);
+        setSelectedBulkOperation(null);
+        
         // Operation started successfully, progress will be tracked automatically
-        console.log('Bulk operation started successfully:', result.operationId);
+        console.log(`🚀 Bulk operation started: ${result.operationId}`);
         return result;
       } else {
         throw new Error(result.error || 'Failed to start bulk operation');
@@ -270,11 +325,12 @@ const VendorProducts = () => {
       const response = await vendorService.deleteProduct(vendorId, productId);
       if (response.success) {
         setProducts(prevProducts => prevProducts.filter(p => p.productId !== productId));
+        showToast('Product deleted successfully', 'success');
       } else {
-        alert(`Failed to delete product: ${response.error || 'Unknown error'}`);
+        showToast(`Failed to delete product: ${response.error || 'Unknown error'}`, 'error');
       }
     } catch (err) {
-      alert(`Error deleting product: ${err.message}`);
+      showToast(`Error deleting product: ${err.message}`, 'error');
     } finally {
       setQuickActionLoading(prev => ({ ...prev, [productId]: false }));
     }
@@ -302,11 +358,11 @@ const VendorProducts = () => {
         setShowConfirmModal(false);
         setShowSuccessModal(true);
       } else {
-        alert(`Failed to duplicate product: ${response.error || 'Unknown error'}`);
+        showToast(`Failed to duplicate product: ${response.error || 'Unknown error'}`, 'error');
         setShowConfirmModal(false);
       }
     } catch (err) {
-      alert(`Error duplicating product: ${err.message}`);
+      showToast(`Error duplicating product: ${err.message}`, 'error');
       setShowConfirmModal(false);
     } finally {
       setDuplicateLoading(false);
@@ -338,7 +394,7 @@ const VendorProducts = () => {
       }
     } catch (err) {
       console.error('Export error:', err);
-      alert('Failed to export products');
+      showToast('Failed to export products', 'error');
     }
   };
 
@@ -406,11 +462,12 @@ const VendorProducts = () => {
             p.productId === productId ? { ...p, [field]: editValue } : p
           )
         );
+        showToast(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully`, 'success');
       } else {
-        alert(`Failed to update ${field}: ${result.error}`);
+        showToast(`Failed to update ${field}: ${result.error}`, 'error');
       }
     } catch (error) {
-      alert(`Error updating ${field}: ${error.message}`);
+      showToast(`Error updating ${field}: ${error.message}`, 'error');
     } finally {
       setQuickActionLoading(prev => ({ ...prev, [productId]: false }));
       setEditingField(null);
@@ -1117,6 +1174,15 @@ const VendorProducts = () => {
             message={successMessage}
             buttonText="Continue"
           />
+
+          {/* Toast Notifications */}
+          {toast && (
+            <Toast
+              message={toast.message}
+              type={toast.type}
+              onClose={hideToast}
+            />
+          )}
         </div>
       </div>
     </div>
